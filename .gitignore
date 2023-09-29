@@ -5,4 +5,6 @@ data/**/preprocessed/*
 *_final_config*
 *_input_features.yaml
 data/bxs/*
+!data/bxs/readme.md
 data/rounds/*
+!data/rounds/readme.md
