@@ -1,0 +1,8 @@
+.idea
+data/**/combined/*
+data/**/preprocessed/*
+**/results/*
+*_final_config*
+*_input_features.yaml
+data/bxs/*
+data/rounds/*
