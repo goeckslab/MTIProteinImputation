@@ -37,11 +37,9 @@ def get_args():
     parser.add_argument("--file", "-f", action="store", required=True,
                         help="The file to create features for.")
 
-    # parser.add_argument("--neighbors", "-n", action="store", required=False, default=6, type=int,
-    #                    help="The amount of neighbors")
-
     parser.add_argument("--radius", "-r", action="store", required=False, default=46, type=int,
-                        help="The radius around the cell in px")  # 2 cells
+                        help="The radius around the cell in px",
+                        choices=[23, 46, 92, 138, 184])  # 46µm are roughly 2 cells
 
     parser.add_argument("--output", "-o", action="store", required=True, help="The output path")
 

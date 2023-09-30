@@ -8,3 +8,13 @@ data/bxs/*
 !data/bxs/readme.md
 data/rounds/*
 !data/rounds/readme.md
+data/bxs_15_µm/*
+!data/bxs_15_µm/readme.md
+data/bxs_30_µm/*
+!data/bxs_30_µm/readme.md
+data/bxs_60_µm/*
+!data/bxs_60_µm/readme.md
+data/bxs_90_µm/*
+!data/bxs_90_µm/readme.md
+data/bxs_120_µm/*
+!data/bxs_120_µm/readme.md
