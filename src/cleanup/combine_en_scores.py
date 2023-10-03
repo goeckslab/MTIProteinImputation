@@ -5,8 +5,8 @@ from tqdm import tqdm
 from typing import List
 
 EN_PATHS = [
-    Path("mesmer", "tumor_in_patient_en"),
-    Path("mesmer", "tumor_exp_patient_en"),
+    Path("src", "en", "in_patient"),
+    Path("src", "en", "exp_patient"),
 ]
 
 MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
@@ -15,7 +15,7 @@ MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 
 if __name__ == '__main__':
-    save_path = Path("data/cleaned_data/scores/en")
+    save_path = Path("results/scores/en")
     if save_path.exists():
         shutil.rmtree(save_path)
     save_path.mkdir(parents=True, exist_ok=True)
@@ -37,7 +37,7 @@ if __name__ == '__main__':
                 else:
                     biopsy = biopsy[:-1] + '1'
 
-            print(f"Loading biopsy: {biopsy}...")
+            print(f"Loading biosy: {biopsy}...")
             for marker in MARKERS:
                 print(f"Loading marker {marker} for biopsy {biopsy}...")
                 marker_dir = Path(biopsy_path, biopsy, marker)

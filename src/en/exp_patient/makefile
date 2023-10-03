@@ -1,7 +1,7 @@
 TEST_ID=$(test_id)
 MARKER=$(marker)
 PATIENT_ID=$(patient_id)
-OUTPUT_DIRECTORY = $(TEST_ID)/$(MARKER)
+OUTPUT_DIRECTORY = $(TEST_ID)/$(TEST_ID)/$(MARKER)
 DATA_DIRECTORY = ../../../data/bxs
 DATA_DIRECTORY_COMBINED = ../../../data/bxs/combined
 DATA_DIRECTORY_COMBINED_PREPROCESSED = ../../../data/bxs/combined/preprocessed
@@ -24,7 +24,7 @@ combine_data_sets:
 
 # Run a ludwig experiment using the preprocessed dataset. Results are placed into the $(SAMPLE) directory.
 run_en: combine_data_sets prepare_data
-	mkdir -p $(OUTPUT_DIRECTORY) && pushd $(OUTPUT_DIRECTORY) && python ../../elastic_net.py --marker "$(MARKER)" --train "../../$(DATA_DIRECTORY_COMBINED_PREPROCESSED)/$(COMBINED_PREPROCESSED_DATA)" --test "../../$(DATA_DIRECTORY_PREPROCESSED)/$(PREPROCESSED_DATASET)"
+	mkdir -p $(OUTPUT_DIRECTORY) && pushd $(OUTPUT_DIRECTORY) && python ../../../elastic_net.py --marker "$(MARKER)" --train "../../../$(DATA_DIRECTORY_COMBINED_PREPROCESSED)/$(COMBINED_PREPROCESSED_DATA)" --test "../../../$(DATA_DIRECTORY_PREPROCESSED)/$(PREPROCESSED_DATASET)"
 
 run-en-exa:
-	mkdir -p $(OUTPUT_DIRECTORY) && pushd $(OUTPUT_DIRECTORY) && python ../../elastic_net.py --marker "$(MARKER)" --train "../../$(DATA_DIRECTORY_COMBINED_PREPROCESSED)/$(COMBINED_PREPROCESSED_DATA)" --test "../../$(DATA_DIRECTORY_PREPROCESSED)/$(PREPROCESSED_DATASET)"
+	mkdir -p $(OUTPUT_DIRECTORY) && pushd $(OUTPUT_DIRECTORY) && python ../../../elastic_net.py --marker "$(MARKER)" --train "../../../$(DATA_DIRECTORY_COMBINED_PREPROCESSED)/$(COMBINED_PREPROCESSED_DATA)" --test "../../../$(DATA_DIRECTORY_PREPROCESSED)/$(PREPROCESSED_DATASET)"

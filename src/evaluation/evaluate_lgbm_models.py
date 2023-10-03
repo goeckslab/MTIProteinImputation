@@ -39,7 +39,7 @@ def get_logger(
 
 
 def create_scores_dir(mode: str, radius: int, hyper: bool) -> Path:
-    scores_directory = Path("data/scores/lgbm")
+    scores_directory = Path("results/temp_scores/lgbm")
     scores_directory = Path(scores_directory, mode)
 
     if not hyper:
@@ -92,14 +92,13 @@ def save_scores(save_folder: Path, file_name: str, scores: List):
 
 
 if __name__ == '__main__':
-
+    # TODO: Think about how that should be done
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', "--biopsy", type=str, required=True,
                         help="The biopsy. For an ip mode that is the train biopsy, for exp mode that is the test biopsy due to ludwigs setup")
     parser.add_argument('-sp', '--spatial', type=int, required=False, default=0, help="The radius",
                         choices=[23, 46, 92, 138, 184])
     parser.add_argument('--mode', type=str, choices=['ip', 'exp'], help="The mode", default='ip')
-    parser.add_argument('--hyper', action="store_true", help="Use hyperopt", default=False)
     parser.add_argument("--subsets", "-s", type=int, default=101, help="The number of subsets")
     args = parser.parse_args()
 
@@ -107,13 +106,11 @@ if __name__ == '__main__':
     spatial_radius: int = args.spatial
     mode = args.mode
     biopsy: str = args.biopsy
-    hyper: bool = args.hyper
     subsets: int = args.subsets
 
     logger.debug(f"Mode: {mode}")
     logger.debug(f"Biopsy: {biopsy}")
     logger.debug(f"Radius: {spatial_radius}")
-    logger.debug(f"Hyper: {hyper}")
     logger.debug(f"Subsets: {subsets}")
 
     if mode == "ip":
@@ -129,10 +126,8 @@ if __name__ == '__main__':
         if spatial_radius == 0:
             test_dataset: pd.DataFrame = pd.read_csv(
                 Path("data", "tumor_mesmer", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
-            if not hyper:
-                base_path = Path("mesmer", "tumor_in_patient", biopsy)
-            else:
-                base_path = Path("mesmer", "tumor_in_patient_hyper", biopsy)
+
+            base_path = Path("mesmer", "tumor_in_patient", biopsy)
 
 
         else:

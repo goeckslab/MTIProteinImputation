@@ -42,6 +42,17 @@ To run the Auto Encoder experiments, run the following script from the root dir:
 ```./src/experiments/auto_encoder/run_experiments.sh```
 
 
+## Evaluation
+
+To generate the evaluation results, run the following script from the root dir: 
+
+### EN
+```python3 src/cleanup/combine_en_scores.py```
+
+### LGBM & AE
+
+
+
 # Plotting
 
 To create the figures of the manuscript, **ALL** experiments have to be executed first.
