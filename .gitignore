@@ -1,3 +1,6 @@
+src/en/exp_patient/9_*
+src/en/in_patient/9_*
+
 .idea
 data/**/combined/*
 data/**/preprocessed/*

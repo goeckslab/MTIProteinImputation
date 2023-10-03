@@ -23,18 +23,12 @@ if __name__ == '__main__':
 
     experiment_id = 0
     save_path = Path(str(base_path) + "_" + str(experiment_id))
-    #save_path = Path(str(base_path))
+    # save_path = Path(str(base_path))
     while Path(save_path).exists():
         experiment_id += 1
         save_path = Path(str(base_path) + "_" + str(experiment_id))
 
-
     save_path.mkdir(parents=True, exist_ok=True)
-
-    # print current working dir
-    print(os.getcwd())
-    print(args.train)
-    input()
 
     train_df = pd.read_csv(args.train, sep="\t", header=0)
     test_df = pd.read_csv(args.test, sep="\t", header=0)
