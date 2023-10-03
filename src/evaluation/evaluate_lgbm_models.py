@@ -13,8 +13,8 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
 def get_logger(
         LOG_FORMAT='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
         LOG_NAME='',
-        LOG_FILE_INFO='ludwig_evaluation.log',
-        LOG_FILE_ERROR='ludwig_evaluation.err'):
+        LOG_FILE_INFO='src/evaluation/lgbm_evaluation.log',
+        LOG_FILE_ERROR='src/evaluation/lgbm_evaluation.err'):
     log = logging.getLogger(LOG_NAME)
     log_formatter = logging.Formatter(LOG_FORMAT)
 
@@ -38,14 +38,10 @@ def get_logger(
     return log
 
 
-def create_scores_dir(mode: str, radius: int, hyper: bool) -> Path:
+def create_scores_dir(mode: str, radius: int) -> Path:
     scores_directory = Path("results/temp_scores/lgbm")
     scores_directory = Path(scores_directory, mode)
-
-    if not hyper:
-        scores_directory = Path(scores_directory, f"{radius}")
-    else:
-        scores_directory = Path(scores_directory, f"Ludwig_hyper")
+    scores_directory = Path(scores_directory, f"{radius}")
 
     scores_directory = Path(scores_directory)
 
@@ -97,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', "--biopsy", type=str, required=True,
                         help="The biopsy. For an ip mode that is the train biopsy, for exp mode that is the test biopsy due to ludwigs setup")
     parser.add_argument('-sp', '--spatial', type=int, required=False, default=0, help="The radius",
-                        choices=[23, 46, 92, 138, 184])
+                        choices=[0, 15, 30, 60, 90, 120])
     parser.add_argument('--mode', type=str, choices=['ip', 'exp'], help="The mode", default='ip')
     parser.add_argument("--subsets", "-s", type=int, default=101, help="The number of subsets")
     args = parser.parse_args()
@@ -125,16 +121,16 @@ if __name__ == '__main__':
         assert test_biopsy_name[-1] != biopsy[-1], "The bx should not be the same"
         if spatial_radius == 0:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", "tumor_mesmer", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
+                Path("data", "bxs", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
 
-            base_path = Path("mesmer", "tumor_in_patient", biopsy)
+            base_path = Path("src", "lgbm", "in_patient", biopsy)
 
 
         else:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", f"tumor_mesmer_sp_{spatial_radius}", "preprocessed",
+                Path("data", f"bxs_{spatial_radius}_µm", "preprocessed",
                      f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
-            base_path = Path("mesmer", f"tumor_in_patient_sp_{spatial_radius}", biopsy)
+            base_path = Path("src", "lgbm", f"in_patient_{spatial_radius}_µm", biopsy)
 
     else:
         test_biopsy_name = biopsy
@@ -143,21 +139,20 @@ if __name__ == '__main__':
 
         if spatial_radius == 0:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", "tumor_mesmer", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
-            if not hyper:
-                base_path = Path("mesmer", "tumor_exp_patient", biopsy)
-            else:
-                base_path = Path("mesmer", "tumor_exp_patient_hyper", biopsy)
+                Path("data", "bxs", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
+
+            base_path: Path = Path("src", "lgbm", "exp_patient", biopsy)
+
         else:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", f"tumor_mesmer_sp_{spatial_radius}", "preprocessed",
+                Path("data", f"bxs_{spatial_radius}_µm", "preprocessed",
                      f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
-            base_path = Path("mesmer", f"tumor_exp_patient_sp_{spatial_radius}", biopsy)
+            base_path: Path = Path("src", "lgbm", f"exp_patient_{spatial_radius}_µm", biopsy)
 
     logger.debug(f"Base path: {base_path}")
-    scores = []
-    save_path = create_scores_dir(mode=mode, radius=spatial_radius, hyper=hyper)
-    score_file_name = f"{test_biopsy_name}_scores.csv"
+    scores: list = []
+    save_path: Path = create_scores_dir(mode=mode, radius=spatial_radius)
+    score_file_name: str = f"{test_biopsy_name}_scores.csv"
     logger.debug(f"Save path:  {str(save_path)}")
     logger.debug(f"Score file name: {score_file_name}")
     try:
@@ -206,7 +201,7 @@ if __name__ == '__main__':
                                     "Mode": mode,
                                     "FE": spatial_radius,
                                     "Network": "Ludwig",
-                                    "Hyper": int(hyper),
+                                    "Hyper": 0,
                                     "Load Path": str(Path(results_path, experiment, 'model')),
                                     "Random Seed": int(random_seed),
                                 }

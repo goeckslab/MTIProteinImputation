@@ -1,5 +1,9 @@
 src/en/exp_patient/9_*
 src/en/in_patient/9_*
+src/ae/single_imputation/ip/*
+src/ae/single_imputation/exp/*
+src/ae/multi_imputation/ip/*
+src/ae/multi_imputation/exp/*
 
 .idea
 data/**/combined/*

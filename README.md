@@ -13,6 +13,15 @@ To replicate all results and findings **ALL** scripts have to be executed in ord
 Additionally, experiments for the Elastic Net, LGBM and Auto Encoder have to be repeated at least 30x, which can take 2 weeks plus.
 
 
+Run this scripts from the root dir:  
+```./run_all.sh```
+
+This script will run all experiments and scripts in order as well as generating the figures.  
+**Warning** This script will take a long time to execute.  
+
+
+If you wish to execute only parts of the research use the scripts below.
+
 ## Data Preparation
 
 To create all spatial features, run the following script from the root dir:
@@ -23,28 +32,32 @@ To create all spatial features, run the following script from the root dir:
 
 ### Elastic Net
 To run the Elastic Net experiments, run the following script from the root dir:
-```./src/experiments/elastic_net/run_experiments.sh```
+```./src/en/run_experiments.sh```
 
 To specify the number of repetitions, 
 add the number at the end of the script as an additional parameter.
 
 E.g.  
-```./src/experiments/elastic_net/run_experiments.sh 30 ```
+```./src/en/run_experiments.sh 30 ```
 This will run the experiments 30 times.
 
 ### LGBM
 To run the LGBM experiments, run the following script from the root dir:
-```./src/experiments/lgbm/run_experiments.sh```
+```./src/lgbm/run_experiments.sh```
 
 
 ### Auto Encoder
 To run the Auto Encoder experiments, run the following script from the root dir:
-```./src/experiments/auto_encoder/run_experiments.sh```
+```./src/ae/run_experiments.sh```
+
+To specify the number of repetitions, 
+```./src/ae/run_experiments.sh 30 ```
+This will run the experiments 30 times.
 
 
 ## Evaluation
 
-To generate the evaluation results, run the following script from the root dir: 
+To generate the results, run the following script from the root dir: 
 
 ### EN
 ```python3 src/cleanup/combine_en_scores.py```

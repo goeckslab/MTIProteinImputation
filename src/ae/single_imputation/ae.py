@@ -24,7 +24,7 @@ SHARED_SPATIAL_FEATURES = ['pRB_mean', "CD45_mean", "CK19_mean", "Ki67_mean", "a
 logging.root.handlers = []
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
-                        logging.FileHandler("ae_imputation_m/debug.log"),
+                        logging.FileHandler(Path("src", "ae", "single_imputation", "debug.log")),
                         logging.StreamHandler()
                     ])
 
@@ -166,7 +166,7 @@ def impute_markers(scores: List, test_data: pd.DataFrame, all_predictions: Dict,
 
 
 def create_results_folder(spatial_radius: str) -> [Path, int]:
-    save_folder = Path(f"ae_imputation", patient_type)
+    save_folder = Path(f"src/ae/single_imputation", patient_type)
 
     save_folder = Path(save_folder, replace_value)
 
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--biopsy", type=str, required=True,
                         help="Provide the biopsy name in the following format: 9_2_1. No suffix etc")
     parser.add_argument("-m", "--mode", required=True, choices=["ip", "exp"], default="ip")
-    parser.add_argument("-sp", "--spatial", required=False, default="0", choices=["0", "23", "46", "92", "138", "184"],
+    parser.add_argument("-sp", "--spatial", required=False, default="0", choices=["0", "15", "30", "60", "90", "120"],
                         type=str)
     parser.add_argument("-o", "--override", action='store_true', default=False, help="Override existing hyperopt")
     parser.add_argument("-i", "--iterations", action="store", default=10, type=int)
@@ -238,7 +238,8 @@ if __name__ == '__main__':
         print(f"Test biopsy being loaded: {test_biopsy_name}")
         print(f"Train biopsy being loaded: {train_biopsy_name}")
 
-        base_path = "data/tumor_mesmer" if spatial == "0" else f"data/tumor_mesmer_sp_{spatial}"
+        base_path = Path("data", "bxs") if spatial == "0" else Path("data", f"bxs_{spatial}_µm")
+        print(f"Base path: {base_path}")
         # Load train data
         train_data = pd.read_csv(f'{base_path}/{train_biopsy_name}.csv')
         train_data = clean_column_names(train_data)
@@ -263,7 +264,8 @@ if __name__ == '__main__':
     elif patient_type == "exp":
         # Load noisy train data
         train_data = []
-        base_path = "data/tumor_mesmer" if spatial == "0" else f"data/tumor_mesmer_sp_{spatial}"
+        base_path = Path("data", "bxs") if spatial == "0" else Path("data", f"bxs_{spatial}_µm")
+        print(f"Base path: {base_path}")
         for file in os.listdir(base_path):
             file_name = Path(file).stem
             if file.endswith(".csv") and patient not in file_name:

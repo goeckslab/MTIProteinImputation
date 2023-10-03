@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
                     ])
 
 RESULTS_FOLDER = Path("ae", "multi_imputation")
-ROUNDS_FOLDER = Path("data", "cleaned_data", "rounds", "rounds.csv")
+ROUNDS_FOLDER = Path("data", "rounds", "rounds.csv")
 DATA_FOLDER: Path = Path("bxs")
 
 

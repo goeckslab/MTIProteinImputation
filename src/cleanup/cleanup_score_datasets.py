@@ -8,7 +8,7 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
                   'pERK', 'EGFR', 'ER']
 
 
-def load_lgbm_scores(load_path: str, mode: str, network: str) -> pd.DataFrame:
+def load_lgbm_scores(load_path: Path, mode: str, network: str) -> pd.DataFrame:
     try:
         scores = []
         for root, dirs, files in os.walk(load_path):
@@ -40,11 +40,11 @@ def prepare_lbgm_scores(save_path: Path):
             shutil.rmtree(lgbm_path)
         lgbm_path.mkdir(parents=True, exist_ok=True)
 
-        microns = [0, 23, 46, 92, 138, 184]
+        microns = [0, 15, 30, 60, 90, 120]
         scores = []
         for micron in tqdm(microns):
-            ip_path = f"data/scores/lgbm/ip/{micron}"
-            exp_path = f"data/scores/lgbm/exp/{micron}"
+            ip_path: Path = Path("results", "temp_scores", "ip", str(micron))
+            exp_path: Path = Path("results", "temp_scores", "exp", str(micron))
             scores.append(load_lgbm_scores(ip_path, "IP", "LGBM"))
             scores.append(load_lgbm_scores(exp_path, "EXP", "LGBM"))
 
