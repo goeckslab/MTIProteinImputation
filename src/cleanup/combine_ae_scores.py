@@ -53,9 +53,9 @@ if __name__ == '__main__':
     all_scores = pd.concat(all_scores)
 
     if model == 'ae':
-        save_path = Path("results/ae")
+        save_path = Path("..", "..", "results", "temp_scores", "single_imputation")
     elif model == 'ae_m':
-        save_path = Path("results/ae_m")
+        save_path = Path("..", "..", "results", "temp_scores", "multi_imputation")
     else:
         raise ValueError("Model not supported")
 

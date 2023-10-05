@@ -43,8 +43,8 @@ def prepare_lbgm_scores(save_path: Path):
         microns = [0, 15, 30, 60, 90, 120]
         scores = []
         for micron in tqdm(microns):
-            ip_path: Path = Path("results", "temp_scores", "ip", str(micron))
-            exp_path: Path = Path("results", "temp_scores", "exp", str(micron))
+            ip_path: Path = Path("..", "..", "results", "temp_scores", "lgbm", "ip", str(micron))
+            exp_path: Path = Path("..", "..", "results", "temp_scores", "lgbm", "exp", str(micron))
             scores.append(load_lgbm_scores(ip_path, "IP", "LGBM"))
             scores.append(load_lgbm_scores(exp_path, "EXP", "LGBM"))
 
@@ -80,11 +80,11 @@ def prepare_ae_scores(save_path: Path, single: bool):
     print(f"Preparing ae scores")
 
     if single:
-        scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
+        scores = pd.read_csv(Path("..", "..", "temp_scores", "ae", "single_imputation", "scores.csv"))
         network = "AE"
         ae_path = Path(save_path, "ae")
     else:
-        scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
+        scores = pd.read_csv(Path("..", "..", "temp_scores", "ae", "multi_imputation", "scores.csv"))
         network = "AE M"
         ae_path = Path(save_path, "ae_m")
 
@@ -113,7 +113,7 @@ def prepare_ae_scores(save_path: Path, single: bool):
     if "Load Path" in scores.columns:
         scores = scores.drop(columns=["Load Path"])
 
-    if imputation == "multi":
+    if not single:
         # remove round column:
         scores = scores.drop(columns=["Round"])
 
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # create new scores folder
-    save_path = Path("results/scores")
+    save_path = Path("..", "..", "results", "scores")
     if not save_path.exists():
         save_path.mkdir(parents=True, exist_ok=True)
 
@@ -145,13 +145,13 @@ if __name__ == '__main__':
 
     elif model == "ae":
         try:
-            prepare_ae_scores(save_path=save_path)
+            prepare_ae_scores(save_path=save_path, single=True)
         except:
             print("Could not prepare ae scores")
 
     elif model == "ae_m":
         try:
-            prepare_ae_scores(save_path=save_path, imputation="multi")
+            prepare_ae_scores(save_path=save_path, single=False)
         except:
             print("Could not prepare ae multi scores")
 
