@@ -13,8 +13,8 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
 def get_logger(
         LOG_FORMAT='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
         LOG_NAME='',
-        LOG_FILE_INFO='src/evaluation/lgbm_evaluation.log',
-        LOG_FILE_ERROR='src/evaluation/lgbm_evaluation.err'):
+        LOG_FILE_INFO='lgbm_evaluation.log',
+        LOG_FILE_ERROR='lgbm_evaluation.err'):
     log = logging.getLogger(LOG_NAME)
     log_formatter = logging.Formatter(LOG_FORMAT)
 
@@ -39,7 +39,7 @@ def get_logger(
 
 
 def create_scores_dir(mode: str, radius: int) -> Path:
-    scores_directory = Path("results/temp_scores/lgbm")
+    scores_directory = Path("..", "..", "results", "temp_scores", "lgbm")
     scores_directory = Path(scores_directory, mode)
     scores_directory = Path(scores_directory, f"{radius}")
 
@@ -121,16 +121,17 @@ if __name__ == '__main__':
         assert test_biopsy_name[-1] != biopsy[-1], "The bx should not be the same"
         if spatial_radius == 0:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", "bxs", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
+                Path("..", "..", "data", "bxs", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"),
+                sep='\t')
 
-            base_path = Path("src", "lgbm", "in_patient", biopsy)
+            base_path = Path("..", "lgbm", "in_patient", biopsy)
 
 
         else:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", f"bxs_{spatial_radius}_µm", "preprocessed",
+                Path("..", "..", "data", f"bxs_{spatial_radius}_µm", "preprocessed",
                      f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
-            base_path = Path("src", "lgbm", f"in_patient_{spatial_radius}_µm", biopsy)
+            base_path = Path("..", "lgbm", f"in_patient_{spatial_radius}_µm", biopsy)
 
     else:
         test_biopsy_name = biopsy
@@ -139,15 +140,16 @@ if __name__ == '__main__':
 
         if spatial_radius == 0:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", "bxs", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
+                Path("..", "..", "data", "bxs", "preprocessed", f"{test_biopsy_name}_preprocessed_dataset.tsv"),
+                sep='\t')
 
-            base_path: Path = Path("src", "lgbm", "exp_patient", biopsy)
+            base_path: Path = Path("..", "lgbm", "exp_patient", biopsy)
 
         else:
             test_dataset: pd.DataFrame = pd.read_csv(
-                Path("data", f"bxs_{spatial_radius}_µm", "preprocessed",
+                Path("..", "..", "data", f"bxs_{spatial_radius}_µm", "preprocessed",
                      f"{test_biopsy_name}_preprocessed_dataset.tsv"), sep='\t')
-            base_path: Path = Path("src", "lgbm", f"exp_patient_{spatial_radius}_µm", biopsy)
+            base_path: Path = Path("..", "lgbm", f"exp_patient_{spatial_radius}_µm", biopsy)
 
     logger.debug(f"Base path: {base_path}")
     scores: list = []
@@ -171,7 +173,7 @@ if __name__ == '__main__':
                             logger.error(ex)
                             continue
 
-                        for i in tqdm(range(1, subsets)):
+                        for i in tqdm(range(1, subsets + 1)):
                             random_seed = random.randint(0, 100000)
                             # sample new dataset from test_data
                             test_data_sample = test_dataset.sample(frac=0.7, random_state=random_seed,
@@ -189,6 +191,7 @@ if __name__ == '__main__':
                                     f"Model loaded using path: {str(Path(results_path, experiment, 'model'))}")
                                 logger.error(ex)
                                 logger.error("Continuing to next experiment")
+                                input()
                                 continue
 
                             scores.append(
@@ -226,3 +229,6 @@ if __name__ == '__main__':
         logger.debug("Saving scores....")
         if len(scores) > 0:
             save_scores(scores=scores, save_folder=save_path, file_name=score_file_name)
+
+    except Exception as ex:
+        raise ex

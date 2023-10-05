@@ -76,25 +76,17 @@ def prepare_lbgm_scores(save_path: Path):
         print(scores)
 
 
-def prepare_ae_scores(save_path: Path, imputation: str = None):
-    print(f"Preparing ae scores with imputation {imputation}")
+def prepare_ae_scores(save_path: Path, single: bool):
+    print(f"Preparing ae scores")
 
-    if imputation is None:
-        scores = pd.read_csv(Path("data", "scores", "ae", "scores.csv"))
+    if single:
+        scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
         network = "AE"
         ae_path = Path(save_path, "ae")
-    elif imputation == "multi":
-        scores = pd.read_csv(Path("data", "scores", "ae_m", "scores.csv"))
+    else:
+        scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
         network = "AE M"
         ae_path = Path(save_path, "ae_m")
-    elif imputation == "tma":
-        scores = pd.read_csv(Path("data", "scores", "ae_tma", "scores.csv"))
-        network = "AE TMA"
-        ae_path = Path(save_path, "ae_tma")
-    else:
-        scores = pd.read_csv(Path("data", "scores", "ae_all", "scores.csv"))
-        network = "AE ALL"
-        ae_path = Path(save_path, "ae_all")
 
     if ae_path.exists():
         shutil.rmtree(ae_path)

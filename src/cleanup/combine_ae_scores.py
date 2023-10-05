@@ -6,15 +6,15 @@ import pandas as pd
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', "-m", type=str, required=True, help="The model to evaluate",
+    parser.add_argument('--model', "-m", type=str, required=True, help="The ae model to evaluate",
                         choices=["ae", "ae_m"])
     args = parser.parse_args()
 
     model = args.model
     if model == "ae":
-        load_path = Path("ae", "single_imputation")
+        load_path = Path("src", "ae", "single_imputation")
     elif model == "ae_m":
-        load_path = Path("ae", "multi_imputation")
+        load_path = Path("src", "ae", "multi_imputation")
     else:
         raise ValueError("Model not supported")
 
