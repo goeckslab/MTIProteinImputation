@@ -133,4 +133,18 @@ echo "Creating in_patient_120_µm"
 ./evaluate_all_marker_in_patient.sh 9_15_1 9_15_2
 ./evaluate_all_marker_in_patient.sh 9_15_2 9_15_1
 
+# return to root dir
+cd ../../.. || exit
+echo "Evaluating all biopsies"
+./src/evaluation/evaluate_lgbm_all_exp_biopsies.sh
+./src/evaluation/evaluate_lgbm_all_in_biopsies.sh
+
+echon "Cleaning score directories"
+./src/cleanup/clean_score_datasets.sh lgbm
+
+
+echo "Done"
+
+
+
 
