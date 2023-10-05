@@ -25,13 +25,13 @@ SHARED_SPATIAL_FEATURES = ['pRB_mean', "CD45_mean", "CK19_mean", "Ki67_mean", "a
 logging.root.handlers = []
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
-                        logging.FileHandler("multi_imputation/debug.log"),
+                        logging.FileHandler(Path("src", "ae", "multi_imputation", "debug.log")),
                         logging.StreamHandler()
                     ])
 
-RESULTS_FOLDER = Path("ae", "multi_imputation")
+RESULTS_FOLDER = Path("src", "ae", "multi_imputation")
 ROUNDS_FOLDER = Path("data", "rounds", "rounds.csv")
-DATA_FOLDER: Path = Path("bxs")
+DATA_FOLDER: Path = Path("data", "bxs")
 
 
 def setup_log_file(save_path: Path):
