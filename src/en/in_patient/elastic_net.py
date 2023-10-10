@@ -29,6 +29,7 @@ if __name__ == '__main__':
         save_path = Path(str(base_path) + "_" + str(experiment_id))
 
     save_path.mkdir(parents=True, exist_ok=True)
+    print(f"Save path: {save_path}")
 
     train_df = pd.read_csv(args.train, sep="\t", header=0)
     test_df = pd.read_csv(args.test, sep="\t", header=0)
@@ -63,5 +64,6 @@ if __name__ == '__main__':
         # "rmspe": np.sqrt(np.mean(np.square(((y_test - y_hat_df[args.marker]) / y_test)), axis=0))
     }
 
+    print("Saving results...")
     with open(Path(save_path, "evaluation.json"), 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
