@@ -8,12 +8,15 @@ from typing import List
 from statannotations.Annotator import Annotator
 import logging
 
+logging_path = Path("src", "figures", "fig5.log")
 logging.root.handlers = []
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
-                        logging.FileHandler("plots/figures/fig5.log"),
+                        logging.FileHandler(logging_path),
                         logging.StreamHandler()
                     ])
+
+image_folder = Path("images", "fig5")
 
 
 def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
@@ -114,17 +117,18 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
 
 
 if __name__ == '__main__':
-    save_path = Path("images", "fig5")
+    if not image_folder.exists():
+        image_folder.mkdir(parents=True, exist_ok=True)
 
-    if not save_path.exists():
-        save_path.mkdir(parents=True, exist_ok=True)
+    if logging_path.exists():
+        os.remove(logging_path)
 
     # load ae scores
-    ae_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "ae", "scores.csv"))
+    ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
 
     # sort by markers
-    # select only the scores for the 0 µm, 23 µm, 92 µm, 184 µm
-    ae_scores = ae_scores[ae_scores["FE"].isin([0, 23, 92, 184])]
+    # select only the scores for the 0 µm, 15 µm, 6ß µm, 120 µm
+    ae_scores = ae_scores[ae_scores["FE"].isin([0, 15, 60, 120])]
 
     # select only EXP mode, mean replace value, no noise and no hp in a one line statement
     ae_scores = ae_scores[
@@ -133,7 +137,7 @@ if __name__ == '__main__':
 
     # Add µm to the FE column
     ae_scores["FE"] = ae_scores["FE"].astype(str) + " µm"
-    ae_scores["FE"] = pd.Categorical(ae_scores['FE'], ["0 µm", "23 µm", "92 µm", "184 µm"])
+    ae_scores["FE"] = pd.Categorical(ae_scores['FE'], ["0 µm", "15 µm", "60 µm", "120 µm"])
 
     # rename 23 to 15, 92 to 60 and 184 to 120
     ae_scores["FE"] = ae_scores["FE"].cat.rename_categories(["0 µm", "15 µm", "60 µm", "120 µm"])
@@ -141,11 +145,11 @@ if __name__ == '__main__':
     ae_scores.sort_values(by=["Marker", "FE"], inplace=True)
 
     # load ae multi scores
-    ae_m_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "ae_m", "scores.csv"))
+    ae_m_scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
 
     # sort by markers
-    # select only the scores for the 0 µm, 23 µm, 92 µm, 184 µm
-    ae_m_scores = ae_m_scores[ae_m_scores["FE"].isin([0, 23, 92, 184])]
+    # select only the scores for the 0 µm, 15 µm, 60 µm, 120 µm
+    ae_m_scores = ae_m_scores[ae_m_scores["FE"].isin([0, 15, 60, 120])]
 
     # select only EXP mode, mean replace value, no noise and no hp in a one line statement
     ae_m_scores = ae_m_scores[
@@ -154,7 +158,7 @@ if __name__ == '__main__':
 
     # Add µm to the FE column
     ae_m_scores["FE"] = ae_m_scores["FE"].astype(str) + " µm"
-    ae_m_scores["FE"] = pd.Categorical(ae_m_scores['FE'], ["0 µm", "23 µm", "92 µm", "184 µm"])
+    ae_m_scores["FE"] = pd.Categorical(ae_m_scores['FE'], ["0 µm", "15 µm", "60 µm", "120 µm"])
     # rename 23 to 15, 92 to 60 and 184 to 120
     ae_m_scores["FE"] = ae_m_scores["FE"].cat.rename_categories(["0 µm", "15 µm", "60 µm", "120 µm"])
     # sort by marker and FE
@@ -165,9 +169,9 @@ if __name__ == '__main__':
     ae_m_scores = ae_m_scores[
         np.abs(ae_m_scores["RMSE"] - ae_m_scores["RMSE"].mean()) <= (3 * ae_m_scores["RMSE"].std())]
 
-    lgbm_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "lgbm", "scores.csv"))
-    # select only the scores for the 0 µm, 23 µm, 92 µm, 184 µm
-    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin([0, 23, 92, 184])]
+    lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
+    # select only the scores for the 0 µm, 15 µm, 60 µm, 120 µm
+    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin([0, 15, 60, 120])]
     # select exp scores
     lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
     # only select non hp scores
@@ -175,7 +179,7 @@ if __name__ == '__main__':
 
     # Add µm to the FE column
     lgbm_scores["FE"] = lgbm_scores["FE"].astype(str) + " µm"
-    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], ["0 µm", "23 µm", "92 µm", "184 µm"])
+    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], ["0 µm", "15 µm", "60 µm", "120 µm"])
 
     # rename 23 to 15, 92 to 60 and 184 to 120
     lgbm_scores["FE"] = lgbm_scores["FE"].cat.rename_categories(["0 µm", "15 µm", "60 µm", "120 µm"])
@@ -225,11 +229,5 @@ if __name__ == '__main__':
     ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
 
     plt.tight_layout()
-    plt.savefig(Path(save_path, "fig5.png"), dpi=300, bbox_inches='tight')
-    plt.savefig(Path(save_path, "fig5.eps"), dpi=300, bbox_inches='tight', format='eps')
-
-    print("Mean and std of MAE scores per network")
-
-    print(all_scores.groupby(["Network", "FE"])["MAE"].agg(["mean", "std"]))
-    # print count of scores per network and fe
-    print(all_scores.groupby(["Network", "FE"])["MAE"].count())
+    plt.savefig(Path(image_folder, "fig5.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(Path(image_folder, "fig5.eps"), dpi=300, bbox_inches='tight', format='eps')

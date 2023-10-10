@@ -2,17 +2,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
-import os, sys, logging
+import os, logging
 from typing import List
 from statannotations.Annotator import Annotator
 
-logging_path = Path("plots", "figures", "fig4.log")
+logging_path = Path("src", "figures", "fig4.log")
 logging.root.handlers = []
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
                         logging.FileHandler(logging_path),
                         logging.StreamHandler()
                     ])
+
+image_folder = Path("images", "fig4")
 
 
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List):
@@ -46,6 +48,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
         order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21',
                  'Vimentin',
                  'pERK', 'EGFR', 'ER']
+
         annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                               hide_non_significant=True)
         annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
@@ -61,22 +64,26 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
 
 
 if __name__ == '__main__':
+    if not image_folder.exists():
+        image_folder.mkdir(parents=True, exist_ok=True)
+
     if logging_path.exists():
         os.remove(logging_path)
-    save_path = Path("images", "fig4")
 
-    lgbm_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "lgbm", "scores.csv"))
+    lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
 
-    # select only the scores for the 0 µm, 23 µm, 92 µm, 184 µm
-    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin([0, 23, 92, 184])]
+    # select only the scores for the 0 µm, 15 µm, 60 µm, 120 µm
+    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin([0, 15, 60, 120])]
+
     # select exp scores
     lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
+
     # only select non hp scores
     lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
 
     # Add µm to the FE column
     lgbm_scores["FE"] = lgbm_scores["FE"].astype(str) + " µm"
-    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], ["0 µm", "23 µm", "92 µm", "184 µm"])
+    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], ["0 µm", "15 µm", "60 µm", "120 µm"])
 
     # update 23 to 15, 92 to 60 and 184 to 120
     lgbm_scores["FE"] = lgbm_scores["FE"].cat.rename_categories(["0 µm", "15 µm", "60 µm", "120 µm"])
@@ -85,7 +92,7 @@ if __name__ == '__main__':
     lgbm_scores.sort_values(by=["Marker", "FE"], inplace=True)
 
     # load image from images fig3 folder
-    spatial_information_image = plt.imread(Path("images", "fig4", "panel_a.png"))
+    spatial_information_image = plt.imread(Path(image_folder, "panel_a.png"))
 
     dpi = 300
     cm = 1 / 2.54  # centimeters in inches
@@ -114,5 +121,5 @@ if __name__ == '__main__':
                             microns=["0 µm", "15 µm", "60 µm", "120 µm"])
 
     plt.tight_layout()
-    plt.savefig(Path(save_path, "fig4.png"), dpi=300, bbox_inches='tight')
-    plt.savefig(Path(save_path, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')
+    plt.savefig(Path(image_folder, "fig4.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(Path(image_folder, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')

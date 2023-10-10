@@ -52,10 +52,19 @@ if __name__ == '__main__':
 
     all_scores = pd.concat(all_scores)
 
+    assert ([60, 0, 120, 30, 90, 15] in
+            all_scores[all_scores["Mode"] == "exp"]["FE"].unique()), "FE column is not correct"
+    assert ([60, 0, 120, 30, 90, 15] in
+            all_scores[all_scores["Mode"] == "ip"]["FE"].unique()), "FE column is not correct"
+
+    # print all unique FE for scores which are EXP
+    print(all_scores[all_scores["Mode"] == "exp"]["FE"].unique())
+    print(all_scores[all_scores["Mode"] == "ip"]["FE"].unique())
+
     if model == 'ae':
-        save_path = Path("results", "temp_scores","ae", "single_imputation")
+        save_path = Path("results", "temp_scores", "ae", "single_imputation")
     elif model == 'ae_m':
-        save_path = Path("results", "temp_scores","ae", "multi_imputation")
+        save_path = Path("results", "temp_scores", "ae", "multi_imputation")
     else:
         raise ValueError("Model not supported")
 

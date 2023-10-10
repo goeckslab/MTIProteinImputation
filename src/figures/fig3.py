@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
 import os, sys
 from typing import List
 from statannotations.Annotator import Annotator
+
+image_folder = Path("images", "fig3")
 
 
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
@@ -103,20 +104,23 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) 
 
 
 if __name__ == '__main__':
-    lgbm_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "lgbm", "scores.csv"))
+    if not image_folder.exists():
+        image_folder.mkdir(parents=True, exist_ok=True)
+
+    lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
     lgbm_scores = lgbm_scores[lgbm_scores["FE"] == 0]
     # select only non hp scores
     lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
     # replace EXP WITH AP
     lgbm_scores["Mode"] = lgbm_scores["Mode"].replace({"EXP": "AP"})
 
-    en_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "en", "scores.csv"))
+    en_scores = pd.read_csv(Path("results", "scores", "en", "scores.csv"))
     en_scores = en_scores[en_scores["FE"] == 0]
     # replace EXP WITH AP
     en_scores["Mode"] = en_scores["Mode"].replace({"EXP": "AP"})
 
-    ae_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "ae", "scores.csv"))
-    ae_m_scores = pd.read_csv(Path("data", "cleaned_data", "scores", "ae_m", "scores.csv"))
+    ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
+    ae_m_scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
     # replace EXP WITH AP
     ae_scores["Mode"] = ae_scores["Mode"].replace({"EXP": "AP"})
 
@@ -143,8 +147,6 @@ if __name__ == '__main__':
 
     # merge all scores together
     all_scores = pd.concat([lgbm_scores, en_scores, ae_scores, ae_m_scores], axis=0)
-
-
 
     # remove column hyper, experiment, Noise, Replace Value
     all_scores.drop(columns=["HP", "Experiment", "Noise", "Replace Value", "Hyper"], inplace=True)
@@ -178,15 +180,10 @@ if __name__ == '__main__':
     ax3.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
     ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
 
-
     plt.tight_layout()
-
-    # plt.show()
 
     # save figure
     fig.savefig(Path("images", "fig3", "fig3.png"), dpi=300, bbox_inches='tight')
     fig.savefig(Path("images", "fig3", "fig3.eps"), dpi=300, bbox_inches='tight', format='eps')
-    # print mean and std of all scores per network of MAE scores
-    print("Mean and std of MAE scores per network")
-    print(all_scores.groupby(["Network"])["MAE"].agg(["mean", "std"]))
+
     sys.exit()

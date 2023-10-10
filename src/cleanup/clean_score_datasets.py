@@ -77,14 +77,17 @@ def prepare_lbgm_scores(save_path: Path):
 
 
 def prepare_ae_scores(save_path: Path, single: bool):
-    print(f"Preparing ae scores")
+    if single:
+        print(f"Preparing ae scores")
+    else:
+        print(f"Preparing ae multi scores")
 
     if single:
         scores = pd.read_csv(Path("..", "..", "results", "temp_scores", "ae", "single_imputation", "scores.csv"))
         network = "AE"
         ae_path = Path(save_path, "ae")
     else:
-        scores = pd.read_csv(Path("..", "..","results", "temp_scores", "ae", "multi_imputation", "scores.csv"))
+        scores = pd.read_csv(Path("..", "..", "results", "temp_scores", "ae", "multi_imputation", "scores.csv"))
         network = "AE M"
         ae_path = Path(save_path, "ae_m")
 
@@ -121,6 +124,12 @@ def prepare_ae_scores(save_path: Path, single: bool):
     scores = scores.drop(columns=["Imputation", "Iteration"])
     if "Network" not in scores.columns:
         scores["Network"] = network
+
+    assert ([60, 0, 120, 30, 90, 15] in
+            scores[scores["Mode"] == "EXP"]["FE"].unique()), "FE column is not correct"
+    assert ([60, 0, 120, 30, 90, 15] in
+            scores[scores["Mode"] == "IP"]["FE"].unique()), "FE column is not correct"
+
     scores.to_csv(Path(ae_path, "scores.csv"), index=False)
 
 
