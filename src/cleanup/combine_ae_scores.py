@@ -53,9 +53,9 @@ if __name__ == '__main__':
     all_scores = pd.concat(all_scores)
 
     if model == 'ae':
-        save_path = Path("..", "..", "results", "temp_scores", "single_imputation")
+        save_path = Path("results", "temp_scores","ae", "single_imputation")
     elif model == 'ae_m':
-        save_path = Path("..", "..", "results", "temp_scores", "multi_imputation")
+        save_path = Path("results", "temp_scores","ae", "multi_imputation")
     else:
         raise ValueError("Model not supported")
 
@@ -66,3 +66,4 @@ if __name__ == '__main__':
 
     all_scores.to_csv(Path(save_path, "scores.csv"), index=False)
     print(f"Loaded {loaded_files} files.")
+    print(f"Saved scores to {save_path}")

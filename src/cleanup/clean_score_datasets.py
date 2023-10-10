@@ -80,11 +80,11 @@ def prepare_ae_scores(save_path: Path, single: bool):
     print(f"Preparing ae scores")
 
     if single:
-        scores = pd.read_csv(Path("..", "..", "temp_scores", "ae", "single_imputation", "scores.csv"))
+        scores = pd.read_csv(Path("..", "..", "results", "temp_scores", "ae", "single_imputation", "scores.csv"))
         network = "AE"
         ae_path = Path(save_path, "ae")
     else:
-        scores = pd.read_csv(Path("..", "..", "temp_scores", "ae", "multi_imputation", "scores.csv"))
+        scores = pd.read_csv(Path("..", "..","results", "temp_scores", "ae", "multi_imputation", "scores.csv"))
         network = "AE M"
         ae_path = Path(save_path, "ae_m")
 
@@ -146,7 +146,8 @@ if __name__ == '__main__':
     elif model == "ae":
         try:
             prepare_ae_scores(save_path=save_path, single=True)
-        except:
+        except Exception as ex:
+            print(ex)
             print("Could not prepare ae scores")
 
     elif model == "ae_m":
