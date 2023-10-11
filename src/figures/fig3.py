@@ -154,31 +154,42 @@ if __name__ == '__main__':
     all_scores["Mode"] = all_scores["Mode"].replace({"EXP": "AP"})
 
     # load image from images fig2 folder
-    # image = plt.imread(Path("images", "fig3", "ae_workflow_2.png"))
+    ae_workflow = plt.imread(Path("images", "fig3", "ae_workflow.png"))
 
-    fig = plt.figure(figsize=(10, 8), dpi=300)
-    gspec = fig.add_gridspec(6, 3)
+    fig = plt.figure(figsize=(10, 10), dpi=300)
+    gspec = fig.add_gridspec(8, 3)
 
-    ax1 = fig.add_subplot(gspec[:2, :])
-    ax1.text(-0.05, 1.15, "a", transform=ax1.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
+    ax1 = fig.add_subplot(gspec[:2, :2])
+    # remove box from ax1
     plt.box(False)
-    ax1.set_title("AE (Single Protein)", rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax1 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0.0, 0.8])
+    # remove ticks from ax1
+    ax1.set_xticks([])
+    ax1.set_yticks([])
+    ax1.text(-0.05, 1.1, "a", transform=ax1.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    # show spatial information image
+    ax1.imshow(ae_workflow, aspect='auto')
 
     ax2 = fig.add_subplot(gspec[2:4, :])
-    ax2.text(-0.05, 1.1, "b", transform=ax2.transAxes,
+    ax2.text(-0.05, 1.25, "b", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax2.set_title('AE (Multi Protein)', rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax2 = create_boxen_plot(data=ae_m_scores, metric="MAE", ylim=[0.0, 0.8], show_legend=True)
+    ax2.set_title("AE (Single Protein)", rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax2 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0.0, 0.8])
 
-    ax3 = fig.add_subplot(gspec[4:6, :2])
-    ax3.text(-0.08, 1.1, "c", transform=ax3.transAxes,
+    ax3 = fig.add_subplot(gspec[4:6, :])
+    ax3.text(-0.05, 1.2, "c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax3.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
-    ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
+    ax3.set_title('AE (Multi Protein)', rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax3 = create_boxen_plot(data=ae_m_scores, metric="MAE", ylim=[0.0, 0.8], show_legend=True)
+
+    ax4 = fig.add_subplot(gspec[6:8, :2])
+    ax4.text(-0.08, 1.2, "d", transform=ax4.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    plt.box(False)
+    ax4.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
+    ax4 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
 
     plt.tight_layout()
 

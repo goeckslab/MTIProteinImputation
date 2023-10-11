@@ -4,7 +4,7 @@ src/ae/single_imputation/ip/*
 src/ae/single_imputation/exp/*
 src/ae/multi_imputation/ip/*
 src/ae/multi_imputation/exp/*
-
+images/supplements/*
 .idea
 data/**/combined/*
 data/**/preprocessed/*

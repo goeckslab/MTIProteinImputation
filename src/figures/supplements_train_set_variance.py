@@ -1,20 +1,15 @@
-import sys
-import numpy as np
 import pandas as pd
 from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
-from argparse import ArgumentParser
 import logging
-from scipy.stats import ks_2samp
-from sklearn.metrics import explained_variance_score
 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 logging.root.handlers = []
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
-                        logging.FileHandler("ae_imputation_m/debug.log"),
+                        logging.FileHandler("train_set_variance.log"),
                         logging.StreamHandler()
                     ])
 
@@ -37,7 +32,7 @@ def setup_log_file(save_path: Path):
 
 
 if __name__ == '__main__':
-    base_path: Path = Path("plots", "figures", "supplements", "training_distribution")
+    base_path: Path = Path("images", "supplements", "training_distribution")
 
     if not base_path.exists():
         base_path.mkdir(parents=True)
@@ -50,7 +45,7 @@ if __name__ == '__main__':
             save_path.mkdir(parents=True)
 
         ground_truth: pd.DataFrame = pd.read_csv(
-            Path("data", "tumor_mesmer", "combined", "preprocessed", f"{patient}_excluded_dataset.tsv"), sep="\t")
+            Path("data", "bxs", "combined", "preprocessed", f"{patient}_excluded_dataset.tsv"), sep="\t")
 
         # remove all rows that contain only 0s
         ground_truth = ground_truth.loc[(ground_truth != 0.0).any(axis=1)]
