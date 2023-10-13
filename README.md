@@ -1,5 +1,9 @@
 # MTIProteinImputation
 
+###
+This research was performed and tested on an Intel platform and a Redhat platform.
+We cannot guarantee that this research will work on other platforms, especially M1/M2 Macs.
+
 # Installation
 
 1. ```Create a virtual environment using python 3.9```
