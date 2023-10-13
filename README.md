@@ -14,7 +14,7 @@ Additionally, experiments for the Elastic Net, LGBM and Auto Encoder have to be 
 weeks plus.
 
 Run this scripts from the root dir:  
-```./run_all.sh```
+```./run_research.sh```
 
 This script will run all experiments and scripts in order as well as generating the figures.  
 **Warning** This script will take a long time to execute.
@@ -44,6 +44,10 @@ This will run the experiments 30 times.
 
 To run the LGBM experiments, run the following script from the root dir:
 ```./src/lgbm/run_experiments.sh```
+
+E.g.  
+```./src/lgbm/run_experiments.sh 30 ```
+This will run the experiments 30 times.
 
 ### Auto Encoder
 

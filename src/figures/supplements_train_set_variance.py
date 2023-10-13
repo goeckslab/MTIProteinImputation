@@ -47,21 +47,14 @@ if __name__ == '__main__':
         ground_truth: pd.DataFrame = pd.read_csv(
             Path("data", "bxs", "combined", "preprocessed", f"{patient}_excluded_dataset.tsv"), sep="\t")
 
-        # remove all rows that contain only 0s
         ground_truth = ground_truth.loc[(ground_truth != 0.0).any(axis=1)]
 
         variance_scores = []
         for protein in ground_truth.columns:
             gt = ground_truth[protein]
-            # train = train_data[protein]
-
             sns.histplot(gt, color="blue", label="Expression", kde=True)
-            # sns.histplot(train, color="green", label="TRAIN", kde=True)
-
-            # change y axis label to cell count
             plt.ylabel("Cell Count")
             plt.xlabel(f"{protein} Expression")
-            # plt.legend()
             plt.savefig(Path(save_path, f"{protein}.png"), dpi=300)
             # close figure
             plt.close()
