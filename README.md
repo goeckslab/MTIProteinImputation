@@ -1,4 +1,4 @@
-# MTIProteinImputation
+# MTI Protein Imputation
 
 ###
 This research was performed and tested on an Intel platform and a Redhat platform.
