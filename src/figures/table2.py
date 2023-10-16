@@ -15,8 +15,8 @@ if __name__ == '__main__':
     # replace EXP WITH AP
     en_scores["Mode"] = en_scores["Mode"].replace({"EXP": "AP"})
 
-    ae_scores = pd.read_csv(Path("results",  "scores", "ae", "scores.csv"))
-    ae_m_scores = pd.read_csv(Path("results",  "scores", "ae_m", "scores.csv"))
+    ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
+
     # replace EXP WITH AP
     ae_scores["Mode"] = ae_scores["Mode"].replace({"EXP": "AP"})
 
@@ -25,14 +25,20 @@ if __name__ == '__main__':
         (ae_scores["FE"] == 0) & (ae_scores["Replace Value"] == "mean") & (ae_scores["Noise"] == 0)]
     # select only non hp scores
     ae_scores = ae_scores[ae_scores["HP"] == 0]
+    # Remove outliers for MAE and RMSE by only keeping the values that are within +3 to -3 standard deviations
+    # ae_scores = ae_scores[np.abs(ae_scores["MAE"] - ae_scores["MAE"].mean()) <= (3 * ae_scores["MAE"].std())]
     ae_scores.sort_values(by=["Marker"], inplace=True)
 
+    ae_m_scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
     # Select ae scores where fe  == 0, replace value == mean and noise  == 0
     ae_m_scores = ae_m_scores[
         (ae_m_scores["FE"] == 0) & (ae_m_scores["Replace Value"] == "mean") & (ae_m_scores["Noise"] == 0)]
     # select only non hp scores
     ae_m_scores = ae_m_scores[ae_m_scores["HP"] == 0]
     ae_m_scores.sort_values(by=["Marker"], inplace=True)
+    # Remove outliers for MAE and RMSE by only keeping the values that are within +3 to -3 standard deviations
+    # ae_m_scores = ae_m_scores[np.abs(ae_m_scores["MAE"] - ae_m_scores["MAE"].mean()) <= (3 * ae_m_scores["MAE"].std())]
+
     # replace EXP WITH AP
     ae_m_scores["Mode"] = ae_m_scores["Mode"].replace({"EXP": "AP"})
 
@@ -42,7 +48,15 @@ if __name__ == '__main__':
     print("Mean and std of MAE scores per network")
     exp_scores = all_scores[all_scores["Mode"] == "AP"]
     ip_scores = all_scores[all_scores["Mode"] == "IP"]
-    print("EXP scores")
+
+    assert len(exp_scores["FE"].unique()) == 1
+    assert len(ip_scores["FE"].unique()) == 1
+
+    # assert that FE is only 0
+    assert exp_scores["FE"].unique()[0] == 0
+    assert ip_scores["FE"].unique()[0] == 0
+
+    print("AP scores")
     print(exp_scores.groupby(["Network"])["MAE"].agg(["mean", "std"]))
 
     print("IP scores")
