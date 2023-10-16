@@ -25,8 +25,7 @@ if __name__ == '__main__':
         (ae_scores["FE"] == 0) & (ae_scores["Replace Value"] == "mean") & (ae_scores["Noise"] == 0)]
     # select only non hp scores
     ae_scores = ae_scores[ae_scores["HP"] == 0]
-    # Remove outliers for MAE and RMSE by only keeping the values that are within +3 to -3 standard deviations
-    # ae_scores = ae_scores[np.abs(ae_scores["MAE"] - ae_scores["MAE"].mean()) <= (3 * ae_scores["MAE"].std())]
+
     ae_scores.sort_values(by=["Marker"], inplace=True)
 
     ae_m_scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
@@ -36,8 +35,6 @@ if __name__ == '__main__':
     # select only non hp scores
     ae_m_scores = ae_m_scores[ae_m_scores["HP"] == 0]
     ae_m_scores.sort_values(by=["Marker"], inplace=True)
-    # Remove outliers for MAE and RMSE by only keeping the values that are within +3 to -3 standard deviations
-    # ae_m_scores = ae_m_scores[np.abs(ae_m_scores["MAE"] - ae_m_scores["MAE"].mean()) <= (3 * ae_m_scores["MAE"].std())]
 
     # replace EXP WITH AP
     ae_m_scores["Mode"] = ae_m_scores["Mode"].replace({"EXP": "AP"})

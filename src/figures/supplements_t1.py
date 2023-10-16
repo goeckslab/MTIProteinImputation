@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 
 
-def load_ae_scores(single_imputation: bool) -> pd.DataFrame:
+def load_ae_scores(single_imputation: bool, in_patient: bool) -> pd.DataFrame:
     if single_imputation:
         ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
     else:
@@ -15,8 +15,13 @@ def load_ae_scores(single_imputation: bool) -> pd.DataFrame:
 
     # select only EXP mode, mean replace value, no noise and no hp in a one line statement
     ae_scores = ae_scores[
-        (ae_scores["Mode"] == "EXP") & (ae_scores["Replace Value"] == "mean") & (ae_scores["Noise"] == 0) & (
+        (ae_scores["Replace Value"] == "mean") & (ae_scores["Noise"] == 0) & (
                 ae_scores["HP"] == 0)]
+
+    if in_patient:
+        ae_scores = ae_scores[ae_scores["Mode"] == "IP"]
+    else:
+        ae_scores = ae_scores[ae_scores["Mode"] == "EXP"]
 
     # Add µm to the FE column
     ae_scores["FE"] = ae_scores["FE"].astype(str) + " µm"
@@ -30,13 +35,16 @@ def load_ae_scores(single_imputation: bool) -> pd.DataFrame:
     return ae_scores
 
 
-def load_lgbm_scores() -> pd.DataFrame:
+def load_lgbm_scores(in_patient: bool) -> pd.DataFrame:
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
 
     # select only the scores for the 0 µm, 15 µm, 60 µm, 120 µm
     lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin(microns)]
     # select exp scores
-    lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
+    if in_patient:
+        lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "IP"]
+    else:
+        lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
     # only select non hp scores
     lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
 
@@ -54,12 +62,14 @@ def load_lgbm_scores() -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    microns = [0, 15, 60, 120]
-    categories = ["0 µm", "15 µm", "60 µm", "120 µm"]
+    # load ae scores
 
-    ae_scores = load_ae_scores(True)
-    ae_m_scores = load_ae_scores(False)
-    lgbm_scores = load_lgbm_scores()
+    microns = [0, 15, 30, 60, 90, 120]
+    categories = ["0 µm", "15 µm", "30 µm", "60 µm", "90 µm", "120 µm"]
+
+    ae_scores = load_ae_scores(True, False)
+    ae_m_scores = load_ae_scores(False, False)
+    lgbm_scores = load_lgbm_scores(False)
 
     # merge all scores together
     all_scores = pd.concat([lgbm_scores, ae_scores, ae_m_scores], axis=0)
@@ -71,7 +81,24 @@ if __name__ == '__main__':
 
     # get all ap scores
     ap_scores = all_scores[all_scores["Mode"] == "AP"]
-
-    print(len(ap_scores))
-
+    # assert only AP mode in ap scores
+    assert len(ap_scores["Mode"].unique()) == 1
+    print("AP Mean & Std")
     print(ap_scores.groupby(["Network", "FE"])["MAE"].agg(["mean", "std"]))
+
+    ae_scores = load_ae_scores(True, True)
+    ae_m_scores = load_ae_scores(False, True)
+    lgbm_scores = load_lgbm_scores(True)
+
+    # merge all scores together
+    all_scores = pd.concat([lgbm_scores, ae_scores, ae_m_scores], axis=0)
+
+    # remove column hyper, experiment, Noise, Replace Value
+    all_scores.drop(columns=["HP", "Experiment", "Noise", "Replace Value"], inplace=True)
+
+    # get all ap scores
+    ip_scores = all_scores[all_scores["Mode"] == "IP"]
+    # assert only AP mode in ap scores
+    assert len(ip_scores["Mode"].unique()) == 1
+    print("IP Mean & Std")
+    print(ip_scores.groupby(["Network", "FE"])["MAE"].agg(["mean", "std"]))
