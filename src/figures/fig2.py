@@ -250,9 +250,9 @@ if __name__ == '__main__':
     sns.histplot(bx_data["9_14"]["pRB"], color="yellow", ax=ax13, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["pRB"], color="red", ax=ax13, kde=True, stat="count")
     ax13.set_xlabel("pRB")
-
-    # rotate x ticks of ax14
+    # rotate x ticks of ax13
     ax13.set_xticklabels(ax13.get_xticklabels(), rotation=90)
+
 
     ax14 = fig.add_subplot(gspec[:2, 3:4])
     # remove box from ax1
@@ -268,6 +268,10 @@ if __name__ == '__main__':
     sns.histplot(bx_data["9_14"]["CK17"], color="yellow", ax=ax14, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["CK17"], color="red", ax=ax14, kde=True, stat="count")
     ax14.set_xlabel("Ck17")
+    plt.legend(labels=["9 2", "9 3", "9 14", "9 15"], loc='upper left', ncol=1, bbox_to_anchor=(0.4, 1.05))
+    # create legend with custom labels
+
+
     # rotate x ticks of ax13
     ax14.set_xticklabels(ax13.get_xticklabels(), rotation=90)
     # Set the x-axis to log scale
