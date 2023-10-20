@@ -1,3 +1,7 @@
+figures/*.png
+figures/*.eps
+figures/supplements/
+
 .DS_Store
 src/en/exp_patient/9_*
 src/en/in_patient/9_*

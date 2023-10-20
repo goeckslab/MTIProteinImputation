@@ -6,7 +6,7 @@ import os, sys
 from typing import List
 from statannotations.Annotator import Annotator
 
-image_folder = Path("images", "fig3")
+image_folder = Path("figures", "fig3")
 
 
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:

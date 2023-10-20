@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-image_folder = Path("images", "fig4")
+image_folder = Path("figures", "fig4")
 
 if __name__ == '__main__':
     if not image_folder.exists():
@@ -25,5 +25,5 @@ if __name__ == '__main__':
     plt.tight_layout()
 
     # save figure
-    fig.savefig(Path(image_folder, "fig3a.png"), dpi=300, bbox_inches='tight')
-    fig.savefig(Path(image_folder, "fig3a.eps"), dpi=300, bbox_inches='tight', format='eps')
+    fig.savefig(Path(image_folder, "fig4.png"), dpi=300, bbox_inches='tight')
+    fig.savefig(Path(image_folder, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')

@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
                         logging.StreamHandler()
                     ])
 
-image_folder = Path("images", "fig6")
+image_folder = Path("figures", "fig6")
 
 
 def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
@@ -229,5 +229,5 @@ if __name__ == '__main__':
     ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
 
     plt.tight_layout()
-    plt.savefig(Path(image_folder, "fig5.png"), dpi=300, bbox_inches='tight')
-    plt.savefig(Path(image_folder, "fig5.eps"), dpi=300, bbox_inches='tight', format='eps')
+    plt.savefig(Path(image_folder, "fig6.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(Path(image_folder, "fig6.eps"), dpi=300, bbox_inches='tight', format='eps')

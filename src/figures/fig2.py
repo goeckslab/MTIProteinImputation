@@ -7,7 +7,10 @@ import sys
 from typing import List
 from statannotations.Annotator import Annotator
 
-image_folder = Path("images", "fig2")
+image_folder = Path("figures", "fig2")
+SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
+                   'pERK', 'EGFR', 'ER']
+PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 
 def create_boxen_plot_ip_vs_exp_quartile(data: pd.DataFrame, metric: str) -> plt.Figure:
@@ -124,9 +127,9 @@ if __name__ == '__main__':
     lgbm_scores.sort_values(by=["Marker"], inplace=True)
 
     # calculate mean performance for each marker and mode
-    mean = lgbm_scores.groupby(["Marker", "Mode", "Biopsy"]).mean().reset_index()
+    mean = lgbm_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     # calculate the mean of the mean for each mode
-    mean = mean.groupby(["Mode", "Biopsy"]).mean().reset_index()
+    mean = mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     mean["Marker"] = "Mean"
     mean["FE"] = 0
     mean["HP"] = 1
@@ -143,9 +146,9 @@ if __name__ == '__main__':
     en_scores.sort_values(by=["Marker"], inplace=True)
 
     # calculate mean performance for each marker and mode
-    mean = en_scores.groupby(["Marker", "Mode", "Biopsy"]).mean().reset_index()
+    mean = en_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     # calculate the mean of the mean for each mode
-    mean = mean.groupby(["Mode", "Biopsy"]).mean().reset_index()
+    mean = mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     mean["Marker"] = "Mean"
     mean["FE"] = 0
     mean["HP"] = 1
@@ -162,6 +165,13 @@ if __name__ == '__main__':
     ae_scores = ae_scores[np.abs(ae_scores["MAE"] - ae_scores["MAE"].mean()) <= (3 * ae_scores["MAE"].std())]
 
     ae_scores["Mode"] = ae_scores["Mode"].replace({"EXP": "AP"})
+    bx_data = {}
+    for patient in PATIENTS:
+        patient_scores: pd.DataFrame = pd.read_csv(
+            Path("data", "bxs", "combined", "preprocessed", f"{patient}_excluded_dataset.tsv"), sep="\t")
+
+        patient_scores = patient_scores.loc[(patient_scores != 0.0).any(axis=1)]
+        bx_data[patient] = patient_scores
 
     biopsies = {}
     for data in Path("data", "bxs").iterdir():
@@ -174,17 +184,18 @@ if __name__ == '__main__':
             continue
 
         loaded_data = pd.read_csv(Path(data))
+        loaded_data = loaded_data.loc[(loaded_data != 0.0).any(axis=1)]
         loaded_data["Biopsy"] = bx
         loaded_data["Patient"] = " ".join(bx.split('_')[0:2])
         biopsies[bx] = loaded_data
 
-    # assert that 8 unique biopsies are loaded
-    assert len(biopsies.keys()) == 8
-
-    # combine all biopsies into one dataframe
-    bx_data = pd.DataFrame()
-    for bx in biopsies:
-        bx_data = pd.concat([bx_data, biopsies[bx]])
+    # combine biopsies based on Patient
+    for patient in PATIENTS:
+        patient_data = []
+        for bx in biopsies.keys():
+            if patient in bx:
+                patient_data.append(biopsies[bx])
+        biopsies[patient] = pd.concat(patient_data)
 
     fig = plt.figure(figsize=(10, 8), dpi=300)
     gspec = fig.add_gridspec(6, 4)
@@ -195,51 +206,71 @@ if __name__ == '__main__':
     # remove ticks from ax1
     ax11.set_xticks([])
     # set y ticks range
-    ax11.set_ylim([-0.2, 4.5])
+    # ax11.set_ylim([-0.2, 4.5])
     ax11.text(-0.2, 1, "a", transform=ax11.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax11 = sns.violinplot(data=bx_data, x="Patient", y="CK19")
-    # rotate x ticks of ax11
-    ax11.set_xticklabels(ax11.get_xticklabels(), rotation=90)
+
+    # sns.histplot(gt, color="blue", label="Expression", kde=True)
+    hist = sns.histplot(bx_data["9_2"]["CK19"], color="blue", ax=ax11, kde=True, stat="count")
+    hist.set(ylabel="CK19")
+    sns.histplot(bx_data["9_3"]["CK19"], color="green", ax=ax11, kde=True, stat="count")
+    sns.histplot(bx_data["9_14"]["CK19"], color="yellow", ax=ax11, kde=True, stat="count")
+    sns.histplot(bx_data["9_15"]["CK19"], color="red", ax=ax11, kde=True, stat="count")
+    # change x axis label
+    ax11.set_xlabel("CK19")
 
     ax12 = fig.add_subplot(gspec[:2, 1:2])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax12.set_xticks([])
-    ax12.set_ylim([-0.2, 4.5])
-    ax12.text(-0.2, 1, "b", transform=ax12.transAxes,
+    ax12.text(-0.3, 1, "b", transform=ax12.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
-    ax12 = sns.violinplot(data=bx_data, x="Patient", y="ER")
-    # rotate x ticks of ax11
+    hist = sns.histplot(bx_data["9_2"]["ER"], color="blue", ax=ax12, kde=True, stat="count")
+    hist.set(ylabel="ER")
+    sns.histplot(bx_data["9_3"]["ER"], color="green", ax=ax12, kde=True, stat="count")
+    sns.histplot(bx_data["9_14"]["ER"], color="yellow", ax=ax12, kde=True, stat="count")
+    sns.histplot(bx_data["9_15"]["ER"], color="red", ax=ax12, kde=True, stat="count")
+    # rotate x ticks of ax12
     ax12.set_xticklabels(ax12.get_xticklabels(), rotation=90)
+    ax12.set_xlabel("ER")
 
     ax13 = fig.add_subplot(gspec[:2, 2:3])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax13.set_xticks([])
-    ax13.set_ylim([-0.2, 4.5])
-    ax13.text(-0.2, 1, "c", transform=ax13.transAxes,
+    ax13.text(-0.3, 1, "c", transform=ax13.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
-    ax14 = sns.violinplot(data=bx_data, x="Patient", y="pRB")
-    # rotate x ticks of ax11
-    ax14.set_xticklabels(ax13.get_xticklabels(), rotation=90)
+    hist = sns.histplot(bx_data["9_2"]["pRB"], color="blue", ax=ax13, kde=True, stat="count")
+    hist.set(ylabel="pRB")
+    sns.histplot(bx_data["9_3"]["pRB"], color="green", ax=ax13, kde=True, stat="count")
+    sns.histplot(bx_data["9_14"]["pRB"], color="yellow", ax=ax13, kde=True, stat="count")
+    sns.histplot(bx_data["9_15"]["pRB"], color="red", ax=ax13, kde=True, stat="count")
+    ax13.set_xlabel("pRB")
+
+    # rotate x ticks of ax14
+    ax13.set_xticklabels(ax13.get_xticklabels(), rotation=90)
 
     ax14 = fig.add_subplot(gspec[:2, 3:4])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax14.set_xticks([])
-    ax14.set_ylim([-0.2, 4.5])
     ax14.text(-0.2, 1, "d", transform=ax14.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
-    ax14 = sns.violinplot(data=bx_data, x="Patient", y="CK17")
-    # rotate x ticks of ax11
-    ax14.set_xticklabels(ax14.get_xticklabels(), rotation=90)
+    hist = sns.histplot(bx_data["9_2"]["CK17"], color="blue", ax=ax14, kde=True, stat="count")
+    hist.set(ylabel="CK17")
+    sns.histplot(bx_data["9_3"]["CK17"], color="green", ax=ax14, kde=True, stat="count")
+    sns.histplot(bx_data["9_14"]["CK17"], color="yellow", ax=ax14, kde=True, stat="count")
+    sns.histplot(bx_data["9_15"]["CK17"], color="red", ax=ax14, kde=True, stat="count")
+    ax14.set_xlabel("Ck17")
+    # rotate x ticks of ax13
+    ax14.set_xticklabels(ax13.get_xticklabels(), rotation=90)
+    # Set the x-axis to log scale
 
     ax1 = fig.add_subplot(gspec[2:4, :])
     ax1.text(-0.1, 1.15, "e", transform=ax1.transAxes,
@@ -257,6 +288,6 @@ if __name__ == '__main__':
 
     plt.tight_layout()
 
-    plt.savefig(Path("images", "fig2", "fig2.png"), dpi=300, bbox_inches='tight')
-    plt.savefig(Path("images", "fig2", "fig2.eps"), dpi=300, bbox_inches='tight', format='eps')
+    plt.savefig(Path(image_folder, "fig2.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(Path(image_folder, "fig2.eps"), dpi=300, bbox_inches='tight', format='eps')
     sys.exit()

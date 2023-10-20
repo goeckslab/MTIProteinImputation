@@ -2,6 +2,7 @@ import pandas as pd
 from pathlib import Path
 import numpy as np
 
+save_path = Path("results", "supplements", "mean_performance")
 
 def load_ae_scores(single_imputation: bool, in_patient: bool) -> pd.DataFrame:
     if single_imputation:
@@ -62,7 +63,9 @@ def load_lgbm_scores(in_patient: bool) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    # load ae scores
+    if not save_path.exists():
+        save_path.mkdir(parents=True)
+
 
     microns = [0, 15, 30, 60, 90, 120]
     categories = ["0 µm", "15 µm", "30 µm", "60 µm", "90 µm", "120 µm"]
@@ -85,6 +88,9 @@ if __name__ == '__main__':
     assert len(ap_scores["Mode"].unique()) == 1
     print("AP Mean & Std")
     print(ap_scores.groupby(["Network", "FE"])["MAE"].agg(["mean", "std"]))
+    # save ap scores
+    ap_scores.to_csv(Path(save_path, "T2.csv"), index=False)
+
 
     ae_scores = load_ae_scores(True, True)
     ae_m_scores = load_ae_scores(False, True)
@@ -102,3 +108,7 @@ if __name__ == '__main__':
     assert len(ip_scores["Mode"].unique()) == 1
     print("IP Mean & Std")
     print(ip_scores.groupby(["Network", "FE"])["MAE"].agg(["mean", "std"]))
+
+    # save ip scores
+    ip_scores.to_csv(Path(save_path, "T1.csv"), index=False)
+

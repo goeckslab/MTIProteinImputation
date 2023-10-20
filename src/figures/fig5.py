@@ -6,7 +6,7 @@ import os, logging
 from typing import List
 from statannotations.Annotator import Annotator
 
-logging_path = Path("src", "figures", "fig4.log")
+logging_path = Path("src", "figures", "fig5.log")
 logging.root.handlers = []
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
                         logging.StreamHandler()
                     ])
 
-image_folder = Path("images", "fig5")
+image_folder = Path("figures", "fig5")
 
 
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List):
@@ -121,5 +121,5 @@ if __name__ == '__main__':
                             microns=["0 µm", "15 µm", "60 µm", "120 µm"])
 
     plt.tight_layout()
-    plt.savefig(Path(image_folder, "fig4.png"), dpi=300, bbox_inches='tight')
-    plt.savefig(Path(image_folder, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')
+    plt.savefig(Path(image_folder, "fig5.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(Path(image_folder, "fig5.eps"), dpi=300, bbox_inches='tight', format='eps')
