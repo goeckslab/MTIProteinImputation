@@ -200,14 +200,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(10, 8), dpi=300)
     gspec = fig.add_gridspec(6, 4)
 
-    ax11 = fig.add_subplot(gspec[:2, :1])
+    ax11 = fig.add_subplot(gspec[2:4, :1])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax11.set_xticks([])
     # set y ticks range
     # ax11.set_ylim([-0.2, 4.5])
-    ax11.text(-0.2, 1, "a", transform=ax11.transAxes,
+    ax11.text(-0.2, 1, "b", transform=ax11.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
     # sns.histplot(gt, color="blue", label="Expression", kde=True)
@@ -219,12 +219,12 @@ if __name__ == '__main__':
     # change x axis label
     ax11.set_xlabel("CK19")
 
-    ax12 = fig.add_subplot(gspec[:2, 1:2])
+    ax12 = fig.add_subplot(gspec[2:4, 1:2])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax12.set_xticks([])
-    ax12.text(-0.3, 1, "b", transform=ax12.transAxes,
+    ax12.text(-0.3, 1, "c", transform=ax12.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["ER"], color="blue", ax=ax12, kde=True, stat="count")
@@ -236,12 +236,12 @@ if __name__ == '__main__':
     ax12.set_xticklabels(ax12.get_xticklabels(), rotation=90)
     ax12.set_xlabel("ER")
 
-    ax13 = fig.add_subplot(gspec[:2, 2:3])
+    ax13 = fig.add_subplot(gspec[2:4, 2:3])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax13.set_xticks([])
-    ax13.text(-0.3, 1, "c", transform=ax13.transAxes,
+    ax13.text(-0.3, 1, "d", transform=ax13.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["pRB"], color="blue", ax=ax13, kde=True, stat="count")
@@ -254,12 +254,12 @@ if __name__ == '__main__':
     ax13.set_xticklabels(ax13.get_xticklabels(), rotation=90)
 
 
-    ax14 = fig.add_subplot(gspec[:2, 3:4])
+    ax14 = fig.add_subplot(gspec[2:4, 3:4])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax14.set_xticks([])
-    ax14.text(-0.2, 1, "d", transform=ax14.transAxes,
+    ax14.text(-0.2, 1, "e", transform=ax14.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["CK17"], color="blue", ax=ax14, kde=True, stat="count")
@@ -276,8 +276,8 @@ if __name__ == '__main__':
     ax14.set_xticklabels(ax13.get_xticklabels(), rotation=90)
     # Set the x-axis to log scale
 
-    ax1 = fig.add_subplot(gspec[2:4, :])
-    ax1.text(-0.1, 1.15, "e", transform=ax1.transAxes,
+    ax1 = fig.add_subplot(gspec[0:2, :])
+    ax1.text(-0.1, 1.15, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax1.set_title('Elastic Net', rotation='vertical', x=-0.1, y=0, fontsize=12)
