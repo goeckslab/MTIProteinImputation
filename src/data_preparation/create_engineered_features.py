@@ -1,3 +1,6 @@
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 from sklearn.neighbors import KDTree
 import argparse
 from pathlib import Path
@@ -65,8 +68,6 @@ if __name__ == '__main__':
 
     biopsy: pd.DataFrame = pd.read_csv(args.file, delimiter=",", header=0)
     biopsy = clean_column_names(biopsy)
-    print(f"Processing file: {file_name}")
-    print(f"Spatial radius is: {radius}")
 
     for column in TO_REMOVE:
         if column in biopsy.columns:
