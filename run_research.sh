@@ -6,19 +6,19 @@ echo "Preparing data..."
 echo "Data preparation complete."
 echo "Running experiments..."
 echo "Running EN experiments..."
-./src/en/run_experiments.sh 60
+./src/en/run_experiments.sh 30
 echo "EN experiments done."
 
 echo "Running LGBM experiments..."
-./src/lgbm/run_experiments.sh
+./src/lgbm/run_experiments.sh 30
 echo "LGBM experiments done."
 
 echo "Running AE Single experiments..."
-./src/ae/run_experiments.sh
+./src/ae/run_experiments.sh 30
 echo "AE Single experiments done."
 
 echo "Running AE Multi experiments..."
-./src/ae_m/run_experiments.sh
+./src/ae_m/run_experiments.sh 30
 echo "AE Multi experiments done."
 
 echo "Creating figures, tables and supplementary material..."
