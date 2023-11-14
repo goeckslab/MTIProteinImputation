@@ -1,6 +1,7 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import logging, sys, os, shutil
 from pathlib import Path
-from ludwig.api import LudwigModel
 
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']

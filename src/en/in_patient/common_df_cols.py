@@ -5,7 +5,8 @@ This script uses the os module to list all files in the given directory that end
 reads each of these files into a pandas dataframe, and then uses a set intersection to find 
 the common columns among all dataframes. The final result is a list of the common columns.
 '''
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import os
 import pandas as pd
 

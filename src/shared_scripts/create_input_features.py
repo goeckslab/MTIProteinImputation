@@ -1,7 +1,8 @@
 '''
 Create input features YAML for Ludwig configuration.
 '''
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import yaml
 import argparse
 import pandas as pd

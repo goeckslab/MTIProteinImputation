@@ -1,3 +1,5 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import random
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model, Sequential

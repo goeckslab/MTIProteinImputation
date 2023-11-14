@@ -1,3 +1,5 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 from pathlib import Path
 from ludwig.api import LudwigModel
 import pandas as pd

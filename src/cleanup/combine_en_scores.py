@@ -1,7 +1,8 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 import os, sys, json, shutil
 from pathlib import Path
-from tqdm import tqdm
 from typing import List
 
 EN_PATHS = [

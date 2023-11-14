@@ -1,7 +1,8 @@
 '''
 Prepare data for use in Ludwig.
 '''
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 import numpy as np
 import argparse

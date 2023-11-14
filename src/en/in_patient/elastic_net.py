@@ -1,8 +1,6 @@
-import os
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import random
-import shutil
-
-import numpy as np
 from sklearn.linear_model import ElasticNetCV
 import argparse
 from pathlib import Path
