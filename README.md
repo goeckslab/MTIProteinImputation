@@ -3,6 +3,7 @@
 # Step 1: Create virtual environment and install software libraries
 
 - Use ```venv``` or ```conda``` to create a virtual environment that includes python 3.9 
+- E.g. ```python3 -m venv venv``` or ```conda create -n mti python=3.9```
 - Activate the virtual environment
 - Install needed software libraries: ```pip install -r requirements.txt```
 
