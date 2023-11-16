@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     for file_name, url in files.items():
         print(f"Downloading biopsy {file_name}...")
-        # download data from using the request library
+        # download data by using the request library
         try:
             r = requests.get(url)
             with open(Path(save_path, f"{file_name}.tsv"), "wb") as f:
