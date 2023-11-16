@@ -8,7 +8,9 @@
 - Install needed software libraries: ```pip install -r requirements.txt```
 
 ### Hardware Note:
-This research was performed and tested on an Intel platform and a Redhat platform. Software library installation may require manual intervention on other hardware platforms, especially M1/M2 Macs.
+This research was performed and tested on an Intel platform and a Redhat platform. 
+Software library installation may require manual intervention on other hardware platforms,
+especially M1/M2/M3 Macs.
 
 # Step 2: Run Analyses (IMPORTANT NOTE: this will take a very long time)
 
@@ -27,6 +29,7 @@ If you want to execute only parts of the research use the scripts below.
 ## Step 2a: Data Preparation
 
 To create all spatial features, run the following script from the root dir:
+```./src/data_preparation/download_data.sh```  
 ```./src/data_preparation/prepare_spatial_data.sh```
 
 ## Step 2b: Run Analyses

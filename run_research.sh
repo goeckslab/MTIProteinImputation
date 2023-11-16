@@ -1,6 +1,7 @@
 
 
 echo "Preparing data..."
+./src/data_preparation/download_data.sh
 ./src/data_preparation/prepare_spatial_data.sh
 
 echo "Data preparation complete."
