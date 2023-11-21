@@ -7,4 +7,4 @@ python3 src/figures/fig3.py
 python3 src/figures/fig4.py
 python3 src/figures/fig5.py
 python3 src/figures/fig6.py
-python3 src/figures/train_set_variance.py
+python3 src/figures/supplements_train_set_variance.py

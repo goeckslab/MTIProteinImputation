@@ -1,3 +1,5 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -207,7 +209,7 @@ if __name__ == '__main__':
     ax11.set_xticks([])
     # set y ticks range
     # ax11.set_ylim([-0.2, 4.5])
-    ax11.text(-0.2, 1, "b", transform=ax11.transAxes,
+    ax11.text(-0.5, 1.15, "b", transform=ax11.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
     # sns.histplot(gt, color="blue", label="Expression", kde=True)
@@ -224,8 +226,8 @@ if __name__ == '__main__':
     plt.box(False)
     # remove ticks from ax1
     ax12.set_xticks([])
-    ax12.text(-0.3, 1, "c", transform=ax12.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
+    #ax12.text(-0.3, 1, "c", transform=ax12.transAxes,
+    #           fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["ER"], color="blue", ax=ax12, kde=True, stat="count")
     hist.set(ylabel="ER")
@@ -241,8 +243,8 @@ if __name__ == '__main__':
     plt.box(False)
     # remove ticks from ax1
     ax13.set_xticks([])
-    ax13.text(-0.3, 1, "d", transform=ax13.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
+    #ax13.text(-0.3, 1, "d", transform=ax13.transAxes,
+    #          fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["pRB"], color="blue", ax=ax13, kde=True, stat="count")
     hist.set(ylabel="pRB")
@@ -259,8 +261,8 @@ if __name__ == '__main__':
     plt.box(False)
     # remove ticks from ax1
     ax14.set_xticks([])
-    ax14.text(-0.2, 1, "e", transform=ax14.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
+    #ax14.text(-0.2, 1, "e", transform=ax14.transAxes,
+    #          fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["CK17"], color="blue", ax=ax14, kde=True, stat="count")
     hist.set(ylabel="CK17")
@@ -280,14 +282,14 @@ if __name__ == '__main__':
     ax1.text(-0.1, 1.15, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax1.set_title('Elastic Net', rotation='vertical', x=-0.1, y=0, fontsize=12)
+    ax1.set_title('Elastic Net MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
     ax1 = create_boxen_plot(data=en_scores, metric="MAE", ylim=[0.0, 0.4])
 
     ax2 = fig.add_subplot(gspec[4:6, :])
-    ax2.text(-0.1, 1.15, "f", transform=ax2.transAxes,
+    ax2.text(-0.1, 1.15, "c", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax2.set_title('LBGM', rotation='vertical', x=-0.1, y=0, fontsize=12)
+    ax2.set_title('LBGM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
     ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
 
     plt.tight_layout()

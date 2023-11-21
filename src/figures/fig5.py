@@ -1,3 +1,5 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -91,7 +93,7 @@ if __name__ == '__main__':
     # sort by marker and FE
     lgbm_scores.sort_values(by=["Marker", "FE"], inplace=True)
 
-    # load image from images fig4 folder
+    # load image from image folder
     spatial_information_image = plt.imread(Path(image_folder, "panel_a.png"))
 
     dpi = 300
