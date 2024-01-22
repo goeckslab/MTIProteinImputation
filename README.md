@@ -2,10 +2,10 @@
 
 ## Contents
 
-- [Overview](##introduction)
+- [Overview](#overview)
 - [Repo Contents](#repo-contents)
 - [System Requirements](#system-requirements)
-- [Installation & Usage](#installation-guide)
+- [Installation & Usage](#installation-&-usage)
 - [Results](#results)
 - [License](#license)
 
