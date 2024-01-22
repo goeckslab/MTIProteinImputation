@@ -5,9 +5,9 @@
 - [Overview](#overview)
 - [Repo Contents](#repo-contents)
 - [System Requirements](#system-requirements)
-- [Installation & Usage](#installation-&-usage)
+- [Installation & Usage](#installation--usage)
 - [Results](#results)
-- [License](#license)
+- [License](https://github.com/goeckslab/MTIProteinImputation/blob/main/LICENSE)
 
 ## Overview
 
