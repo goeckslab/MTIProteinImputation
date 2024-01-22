@@ -107,5 +107,5 @@ We recommend to execute every experiment at least 30x to achieve statistical sig
 In this [preprint](https://www.biorxiv.org/content/10.1101/2023.12.05.570058v2) we show that it is possible to impute
 protein abundance levels in multiplex tissue imaging data using machine learning. We also show that including spatial
 information can improve imputation performance. We compare three different machine learning methods: Elastic Net,
-Gradient Boosted Regression Trees, and Autoencoders. While all three methods perform well, Autoencoders offer the
+Light Gradient Boosting Machines, and Autoencoders. While all three methods perform well, Autoencoders offer the
 ability to impute multiple proteins at once, providing a distinct advantage over the other two methods.
