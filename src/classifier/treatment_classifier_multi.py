@@ -10,7 +10,7 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
                   'pERK', 'EGFR', 'ER']
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
-save_path: Path = Path("results", "classifier")
+save_path: Path = Path("results", "classifier_multi")
 
 
 def clean_column_names(df: pd.DataFrame):
@@ -123,9 +123,24 @@ if __name__ == '__main__':
     # check that train_imputed data shape and train_data_protein shape is similar
     assert train_imputed_data.shape == train_data_proteins.shape, "Train imputed data shape is not correct"
 
+    # load rounds
+    rounds = pd.read_csv(Path("data", "rounds", "rounds.csv"))
+    # select rounds for the given patient
+    rounds = rounds[rounds["Patient"] == patient.replace("_", " ")]
+
     scores = []
-    for target_protein in test_data_proteins.columns:
-        print(f"Working on protein {target_protein}...")
+    for round in rounds["Round"].unique():
+        print(f"Working on round {round}...")
+        target_proteins = rounds[rounds["Round"] == round]["Marker"].to_list()
+
+        # adjust the target proteins to leave only the shared markers in the list
+        target_proteins = [protein for protein in target_proteins if protein in SHARED_MARKERS]
+        if len(target_proteins) == 0:
+            print(f"No shared markers found for round {round}. Skipping...")
+            continue
+
+        print("Found proteins: ", target_proteins)
+
         # scale the data
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(train_data_proteins)
@@ -134,32 +149,38 @@ if __name__ == '__main__':
         # Generating and training on bootstrap samples
         for i in range(30):
             original_score = classifier(X_train, train_data_treatment, X_test, test_data_treatment)
-            print(f"Score for protein {target_protein} using bootstrap sample {i}: {original_score}")
+            print(f"Score for proteins {target_proteins} using bootstrap sample {i}: {original_score}")
 
             # replace target protein with imputed data using loc
-            train_data_proteins.loc[:, target_protein] = train_imputed_data[target_protein].values
+            train_data_proteins.loc[:, target_proteins] = train_imputed_data[target_proteins].values
+
+            # assert that values of target proteins are different to original dataset
+            assert not train_data_proteins.equals(train_imputed_data), "Train data proteins are the same as imputed data"
+
             X_train = scaler.fit_transform(train_data_proteins)
             imputed_score = classifier(X_train, train_data_treatment, X_test, test_data_treatment)
 
-            print(f"Score for protein {target_protein} using imputed data and bootstrap sample {i}: {imputed_score}")
+            print(f"Score for proteins {target_proteins} using imputed data and bootstrap sample {i}: {imputed_score}")
 
             # remove target protein from proteins
-            X_train_removed = train_data_proteins.drop(columns=[target_protein])
-            X_test_removed = test_data_proteins.drop(columns=[target_protein])
+            X_train_removed = train_data_proteins.drop(columns=target_proteins)
+            X_test_removed = test_data_proteins.drop(columns=target_proteins)
 
             assert X_train_removed.shape[1] == X_test_removed.shape[1], "Train and test data shape is not similar"
             assert X_train_removed.shape[1] == train_data_proteins.shape[
-                1] - 1, "Removed data and train data shape is not different-"
+                1] - len(target_proteins), "Removed data and train data shape is not different-"
 
             removed_score = classifier(X_train_removed, train_data_treatment, X_test_removed, test_data_treatment)
 
             print(
-                f"Score for protein {target_protein} using data with removed protein and bootstrap sample {i}: {removed_score}")
+                f"Score for protein {target_proteins} using data with removed protein and bootstrap sample {i}: {removed_score}")
 
-            scores.append({"Protein": target_protein, "Imputed Score": imputed_score, "Original Score": original_score,
+            # add each protein to the scores list in a single column
+
+            scores.append({"Round": round, "Imputed Score": imputed_score, "Original Score": original_score,
                            "Removed Score": removed_score})
             # print current mean of scores for protein
-            print(f"Mean scores for protein {target_protein}: {pd.DataFrame(scores).groupby('Protein').mean()}")
+            print(f"Mean scores for protein {target_proteins}: {pd.DataFrame(scores).groupby('Round').mean()}")
 
     scores = pd.DataFrame(scores)
     # calculate mean of proteins
