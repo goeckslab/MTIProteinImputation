@@ -178,12 +178,12 @@ if __name__ == '__main__':
             # add each protein to the scores list in a single column
 
             scores.append({"Round": round, "Imputed Score": imputed_score, "Original Score": original_score,
-                           "Removed Score": removed_score})
+                           "Removed Score": removed_score, "Iteration": i})
             # print current mean of scores for protein
-            print(f"Mean scores for protein {target_proteins}: {pd.DataFrame(scores).groupby('Round').mean()}")
+            print(f"Mean scores for protein {target_proteins} in round {round}: {pd.DataFrame(scores).groupby('Round').mean()}")
 
     scores = pd.DataFrame(scores)
     # calculate mean of proteins
-    mean_scores = scores.groupby("Protein").mean().reset_index()
+    mean_scores = scores.groupby("Round").mean().reset_index()
     mean_scores.to_csv(Path(save_path, "mean_classifier_scores.csv"), index=False)
     scores.to_csv(Path(save_path, "classifier_scores.csv"), index=False)
