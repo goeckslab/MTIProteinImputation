@@ -1,142 +1,81 @@
 import pandas as pd
-from ludwig.api import LudwigModel
 from pathlib import Path
-from tqdm import tqdm
-import argparse, logging
+import argparse
+import os
 
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
 
-logging.root.handlers = []
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[
-                        logging.StreamHandler()
-                    ])
+
+def clean_column_names(df: pd.DataFrame):
+    if "ERK-1" in df.columns:
+        # Rename ERK to pERK
+        df = df.rename(columns={"ERK-1": "pERK"})
+
+    if "E-cadherin" in df.columns:
+        df = df.rename(columns={"E-cadherin": "Ecad"})
+
+    if "Rb" in df.columns:
+        df = df.rename(columns={"Rb": "pRB"})
+
+    return df
 
 
-def setup_log_file(save_path: Path):
-    save_file = Path(save_path, "random_draw_all_predictions_debug.log")
+def load_train_data(base_path: Path, patient: str):
+    train_data = []
+    for file in os.listdir(base_path):
+        file_name = Path(file).stem
+        if file.endswith(".csv") and patient not in file_name:
+            print("Loading train file: " + file)
+            data = pd.read_csv(Path(base_path, file))
+            data = clean_column_names(data)
+            train_data.append(data)
 
-    if save_file.exists():
-        save_file.unlink()
-
-    file_logger = logging.FileHandler(save_file, 'a')
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_logger.setFormatter(formatter)
-
-    log = logging.getLogger()  # root logger
-    for handler in log.handlers[:]:  # remove all old handlers
-        log.removeHandler(handler)
-    log.addHandler(file_logger)
-    log.addHandler(logging.StreamHandler())
-
-
-def evaluate_samples(marker: str, train_set: pd.DataFrame, test_set: pd.DataFrame, biopsy: str, train_set_used: bool):
-    try:
-
-        # draw random samples from train set for each test set sample
-        y_hat = train_set.sample(n=len(test_set), replace=True)[marker]
-
-        temp_df = pd.DataFrame()
-        temp_df["y_hat"] = y_hat.values
-        temp_df["y_truth"] = test_set[marker].values
-        temp_df["Null Model"] = 1
-        temp_df["Marker"] = marker
-        temp_df["Train"] = int(train_set_used)
-        temp_df["Biopsy"] = biopsy
-
-        biopsy_predictions.append(temp_df)
-
-        model_path: Path = Path("mesmer", "tumor_exp_patient", biopsy, marker, "results", "experiment_run",
-                                "model")
-
-        if f"{biopsy}_{marker}" not in lgbm_loaded_models:
-            lgbm_loaded_models[f"{biopsy}_{marker}"] = LudwigModel.load(str(model_path))
-
-        # load model for marker and biopsy
-        model = lgbm_loaded_models[f"{biopsy}_{marker}"]
-        predict = model.predict(test_set)
-
-        temp_df = pd.DataFrame()
-        temp_df["y_hat"] = predict[0][f"{marker}_predictions"]
-        temp_df["y_truth"] = test_set[marker].values
-        temp_df["Null Model"] = 0
-        temp_df["Marker"] = marker
-        temp_df["Train"] = int(train_set_used)
-        temp_df["Biopsy"] = biopsy
-
-        biopsy_predictions.append(temp_df)
-
-
-
-
-    except BaseException as ex:
-        logging.error(f"Error evaluating {marker} for {biopsy}.")
-        logging.error(ex)
-        raise
+    assert len(train_data) == 6, f"There should be 6 train datasets, loaded {len(train_data)}"
+    return pd.concat(train_data)
 
 
 if __name__ == '__main__':
-    setup_log_file(save_path=Path("null_model"))
 
     parser = argparse.ArgumentParser(description='Run null model')
-    parser.add_argument('--experiments', "-ex", type=int, default=1, help='The amount of experiments to run')
     args = parser.parse_args()
-    experiments: int = args.experiments
+    scores = []
+    for biopsy in BIOPSIES:
+        print("Working on biopsy: ", biopsy)
+        patient = "_".join(biopsy.split("_")[:-1])
+        # load biopsy data
+        test_data = pd.read_csv(Path("data", "bxs", f"{biopsy}.csv"))
+        train_data = load_train_data(Path("data", "bxs"), patient=patient)
+        for protein in SHARED_MARKERS:
+            for i in range(30):
+                # draw random samples from train set for each test set sample
+                y_hat = train_data.sample(n=len(test_data), replace=True)[protein]
 
-    biopsy_predictions = []
-    lgbm_loaded_models = {}
-    train_data_sets = {}
-    test_data_sets = {}
+                # calculate mae, rmse
+                mae = (y_hat - test_data[protein]).abs().mean()
+                rmse = ((y_hat - test_data[protein]) ** 2).mean() ** .5
 
-    try:
-        for i in range(experiments):
-            logging.info(f"Started {i} experiment...")
-            for biopsy in BIOPSIES:
-
-                patient: str = '_'.join(biopsy.split('_')[:2])
-                logging.debug(f"Processing biopsy: {biopsy} and patient {patient}")
-                # load ground truth
-
-                if biopsy not in test_data_sets:
-                    test_data_sets[biopsy] = pd.read_csv(
-                        Path("data", "tumor_mesmer", "preprocessed", f"{biopsy}_preprocessed_dataset.tsv"),
-                        sep="\t")
-
-                # load train data
-                if patient not in train_data_sets:
-                    train_data_sets[patient] = pd.read_csv(
-                        Path("data", "tumor_mesmer", "combined", "preprocessed", f"{patient}_excluded_dataset.tsv"),
-                        sep="\t")
-
-                # load train data from dict
-                train_data: pd.DataFrame = train_data_sets[patient]
-                test_data: pd.DataFrame = test_data_sets[biopsy]
-
-                # assert ground truth is not empty
-                assert train_data.shape[0] > 0, "Ground truth is empty"
-
-                for marker in tqdm(train_data.columns):
-                    evaluate_samples(marker=marker, train_set=train_data, test_set=train_data, biopsy=biopsy,
-                                     train_set_used=True)
-                    evaluate_samples(marker=marker, train_set=train_data, test_set=test_data, biopsy=biopsy,
-                                     train_set_used=False)
+                # print(f"Biopsy {biopsy}, Protein {protein}, MAE: {mae}, RMSE: {rmse}")
+                scores.append({"Biopsy": biopsy, "Protein": protein, "MAE": mae, "RMSE": rmse, "Iteration": i})
 
 
-    except BaseException as ex:
-        logging.error(ex)
-        print("Saving current results...")
 
-    try:
-        biopsy_predictions = pd.concat(biopsy_predictions)
+    scores = pd.DataFrame(scores)
 
-        save_path: Path = Path("data", "cleaned_data", "null_model", "random_draw_all_predictions.csv")
-        if not save_path.parent.exists():
-            save_path.parent.mkdir(parents=True)
+    # sort scores by protein
+    scores = scores.sort_values(by=["Protein", "Biopsy"])
+    scores.to_csv(Path("results", "null_model.csv"), index=False)
 
-        biopsy_predictions.to_csv(save_path, index=False)
-    except BaseException as ex:
-        logging.error(ex)
-        biopsy_predictions = pd.concat(biopsy_predictions)
-        biopsy_predictions.to_csv(Path("null_model_random_draw_all_predictions.csv"), index=False)
+
+
+    # plot results
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    sns.set_theme(style="whitegrid")
+    sns.set_context("paper")
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    sns.boxplot(data=scores, x="Protein", y="MAE", ax=ax[0])
+    sns.boxplot(data=scores, x="Protein", y="RMSE", ax=ax[1])
+    plt.show()
+
