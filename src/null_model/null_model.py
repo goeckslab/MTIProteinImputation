@@ -6,6 +6,7 @@ import os
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
+save_path = Path("results", "scores", "null_model")
 
 
 def clean_column_names(df: pd.DataFrame):
@@ -38,6 +39,9 @@ def load_train_data(base_path: Path, patient: str):
 
 if __name__ == '__main__':
 
+    if not save_path.exists():
+        save_path.mkdir(parents=True)
+
     parser = argparse.ArgumentParser(description='Run null model')
     args = parser.parse_args()
     scores = []
@@ -59,23 +63,19 @@ if __name__ == '__main__':
                 # print(f"Biopsy {biopsy}, Protein {protein}, MAE: {mae}, RMSE: {rmse}")
                 scores.append({"Biopsy": biopsy, "Protein": protein, "MAE": mae, "RMSE": rmse, "Iteration": i})
 
-
-
     scores = pd.DataFrame(scores)
 
     # sort scores by protein
     scores = scores.sort_values(by=["Protein", "Biopsy"])
-    scores.to_csv(Path("results", "null_model.csv"), index=False)
-
-
+    scores.to_csv(Path(save_path, "scores.csv"), index=False)
 
     # plot results
     import seaborn as sns
     import matplotlib.pyplot as plt
+
     sns.set_theme(style="whitegrid")
     sns.set_context("paper")
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     sns.boxplot(data=scores, x="Protein", y="MAE", ax=ax[0])
     sns.boxplot(data=scores, x="Protein", y="RMSE", ax=ax[1])
     plt.show()
-
