@@ -128,24 +128,50 @@ if __name__ == '__main__':
         print(f"Working on protein {target_protein}...")
         # scale the data
         scaler = MinMaxScaler()
-        X_train = scaler.fit_transform(train_data_proteins)
-        X_test = scaler.transform(test_data_proteins)
+        X_train = pd.DataFrame(scaler.fit_transform(train_data_proteins), columns=SHARED_MARKERS)
+        X_test = pd.DataFrame(scaler.transform(test_data_proteins), columns=SHARED_MARKERS)
 
         # Generating and training on bootstrap samples
         for i in range(30):
+            # scale the data
             original_score = classifier(X_train, train_data_treatment, X_test, test_data_treatment)
             print(f"Score for protein {target_protein} using bootstrap sample {i}: {original_score}")
 
+            X_train_imp: pd.DataFrame = pd.DataFrame(X_train.copy(), columns=SHARED_MARKERS)
             # replace target protein with imputed data using loc
-            train_data_proteins.loc[:, target_protein] = train_imputed_data[target_protein].values
-            X_train = scaler.fit_transform(train_data_proteins)
-            imputed_score = classifier(X_train, train_data_treatment, X_test, test_data_treatment)
+            X_train_imp.loc[:, target_protein] = train_imputed_data[target_protein].values
+
+            X_test_imp: pd.DataFrame = pd.DataFrame(X_test.copy(), columns=SHARED_MARKERS)
+            # replace target protein with imputed data using loc
+            X_test_imp.loc[:, target_protein] = test_imputed_data[target_protein].values
+
+            # check that remaining columns values are equal to original values
+            assert X_train_imp.loc[:, X_train.columns != target_protein].equals(
+                X_train.loc[:, X_train.columns != target_protein]), "Train data is not equal"
+
+            assert X_test_imp.loc[:, X_test.columns != target_protein].equals(
+                X_test.loc[:, X_test.columns != target_protein]), "Test data is not equal"
+
+            X_train_imp = pd.DataFrame(scaler.fit_transform(X_train_imp), columns=SHARED_MARKERS)
+            X_test_imp = pd.DataFrame(scaler.transform(X_test_imp), columns=SHARED_MARKERS)
+
+            imputed_score = classifier(X_train_imp, train_data_treatment, X_test_imp, test_data_treatment)
 
             print(f"Score for protein {target_protein} using imputed data and bootstrap sample {i}: {imputed_score}")
 
             # remove target protein from proteins
             X_train_removed = train_data_proteins.drop(columns=[target_protein])
             X_test_removed = test_data_proteins.drop(columns=[target_protein])
+
+            remaining_markers = [marker for marker in SHARED_MARKERS if marker != target_protein]
+
+            # scale the data
+            X_train_removed = pd.DataFrame(scaler.fit_transform(X_train_removed), columns=remaining_markers)
+            X_test_removed = pd.DataFrame(scaler.transform(X_test_removed), columns=remaining_markers)
+
+            # check that x_train removed does not include the target proteins
+            assert target_protein not in X_train_removed.columns, "Target protein is still in the data"
+            assert target_protein not in X_test_removed.columns, "Target protein is still in the data"
 
             assert X_train_removed.shape[1] == X_test_removed.shape[1], "Train and test data shape is not similar"
             assert X_train_removed.shape[1] == train_data_proteins.shape[
