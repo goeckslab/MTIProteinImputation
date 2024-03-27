@@ -2,6 +2,8 @@ import pandas as pd
 from pathlib import Path
 import argparse
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
@@ -70,12 +72,8 @@ if __name__ == '__main__':
     scores.to_csv(Path(save_path, "scores.csv"), index=False)
 
     # plot results
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-
-    sns.set_theme(style="whitegrid")
-    sns.set_context("paper")
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    sns.boxplot(data=scores, x="Protein", y="MAE", ax=ax[0])
-    sns.boxplot(data=scores, x="Protein", y="RMSE", ax=ax[1])
-    plt.show()
+    # sns.set_theme(style="whitegrid")
+    # sns.set_context("paper")
+    # fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    # sns.boxplot(data=scores, x="Protein", y="MAE", ax=ax[0])
+    # sns.boxplot(data=scores, x="Protein", y="RMSE", ax=ax[1])
