@@ -5,6 +5,7 @@ from sklearn.utils import resample
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
@@ -70,9 +71,44 @@ def classifier(X_train, y_train, X_test, y_test):
     X_train_boot, y_train_boot = resample(X_train, y_train)
 
     # Train classifier on the bootstrap sample
-    model = DecisionTreeClassifier()
+    model = RandomForestClassifier()
     model.fit(X_train_boot, y_train_boot)
-    return model.score(X_test, y_test)
+    probs = model.predict_proba(X_test)
+
+    return model, model.score(X_test, y_test), probs
+
+
+def get_correctly_confident_cells(model, probabilities, test_data, treatment_data):
+    predictions = model.predict(test_data)
+
+    confidence = pd.DataFrame(columns=["Probability", "Treatment", "Predictions"])
+    confidence["Treatment"] = treatment_data
+    # First, ensure 'confidence' DataFrame has a column to store probabilities
+    if 'Probability' not in confidence.columns:
+        confidence['Probability'] = 0  # Initializes the column with zeros
+
+    # Vectorized assignment using numpy where
+    # Update 'Probability' based on 'test_data_treatment' values and corresponding 'og_probs'
+    confidence['Probability'] = np.where(treatment_data == "ON", probabilities[:, 1], probabilities[:, 0])
+    # confidence.reset_index(drop=True, inplace=True)
+    confidence["Predictions"] = predictions
+
+    # select correctly predicted cells compared to the test_treatment data
+    correctly_predicted_cells_on = confidence[(confidence["Predictions"] == "ON") & (
+            test_data_treatment == "ON")]
+    correctly_predicted_cells_pre = confidence[(confidence["Predictions"] == "PRE") & (
+            test_data_treatment == "PRE")]
+
+    # select only the cells with a probability greater than 0.7
+    correctly_predicted_cells_on = correctly_predicted_cells_on[correctly_predicted_cells_on["Probability"] > 0.4]
+    correctly_predicted_cells_pre = correctly_predicted_cells_pre[correctly_predicted_cells_pre["Probability"] > 0.4]
+
+    correctly_predicted_cell_index = pd.concat([correctly_predicted_cells_on, correctly_predicted_cells_pre]).index
+    correctly_predicted_cells = test_data.loc[correctly_predicted_cell_index]
+    correctly_predicted_cells_treatment = test_data_treatment.loc[correctly_predicted_cell_index]
+
+    print(f"Selected {len(correctly_predicted_cells)} correctly predicted cells from {len(test_data)} cells.")
+    return correctly_predicted_cells, correctly_predicted_cells_treatment
 
 
 if __name__ == '__main__':
@@ -105,6 +141,8 @@ if __name__ == '__main__':
     on_treatment_test = clean_column_names(on_treatment_test)
     on_treatment_test["Treatment"] = "ON"
     test_data = pd.concat([pre_treatment_test, on_treatment_test])
+    # reset index
+    test_data.reset_index(drop=True, inplace=True)
 
     train_data_proteins = train_data[SHARED_MARKERS]
     test_data_proteins = test_data[SHARED_MARKERS]
@@ -131,10 +169,21 @@ if __name__ == '__main__':
         X_train = pd.DataFrame(scaler.fit_transform(train_data_proteins), columns=SHARED_MARKERS)
         X_test = pd.DataFrame(scaler.transform(test_data_proteins), columns=SHARED_MARKERS)
 
+        assert "Treatment" not in X_train.columns, "Treatment column is available"
+        assert "Treatment" not in X_test.columns, "Treatment column is available"
+
         # Generating and training on bootstrap samples
         for i in range(30):
             # scale the data
-            original_score = classifier(X_train, train_data_treatment, X_test, test_data_treatment)
+            model, _, og_probs = classifier(X_train, train_data_treatment, X_test, test_data_treatment)
+            og_correct_cells, og_correct_treatment = get_correctly_confident_cells(model, og_probs, X_test,
+                                                                                   test_data_treatment)
+            # check that the correctly predicted cells are not empty
+            assert not og_correct_cells.empty, "Correctly predicted cells are empty"
+
+            # train classifier on correctly predicted cells
+            _, original_score, _ = classifier(X_train, train_data_treatment, og_correct_cells, og_correct_treatment)
+
             print(f"Score for protein {target_protein} using bootstrap sample {i}: {original_score}")
 
             X_train_imp: pd.DataFrame = pd.DataFrame(X_train.copy(), columns=SHARED_MARKERS)
@@ -155,7 +204,16 @@ if __name__ == '__main__':
             X_train_imp = pd.DataFrame(scaler.fit_transform(X_train_imp), columns=SHARED_MARKERS)
             X_test_imp = pd.DataFrame(scaler.transform(X_test_imp), columns=SHARED_MARKERS)
 
-            imputed_score = classifier(X_train_imp, train_data_treatment, X_test_imp, test_data_treatment)
+            imp_model, _, imp_probs = classifier(X_train_imp, train_data_treatment, X_test_imp, test_data_treatment)
+            imp_correct_cells, imp_correct_treatment = get_correctly_confident_cells(imp_model, imp_probs, X_test_imp,
+                                                                                     test_data_treatment)
+
+            # check that the correctly predicted cells are not empty
+            assert not imp_correct_cells.empty, "Correctly predicted cells are empty"
+
+            # train classifier on correctly predicted cells
+            _, imputed_score, _ = classifier(X_train_imp, train_data_treatment, imp_correct_cells,
+                                             imp_correct_treatment)
 
             print(f"Score for protein {target_protein} using imputed data and bootstrap sample {i}: {imputed_score}")
 
@@ -177,7 +235,19 @@ if __name__ == '__main__':
             assert X_train_removed.shape[1] == train_data_proteins.shape[
                 1] - 1, "Removed data and train data shape is not different-"
 
-            removed_score = classifier(X_train_removed, train_data_treatment, X_test_removed, test_data_treatment)
+            rem_model, _, rem_probs = classifier(X_train_removed, train_data_treatment, X_test_removed,
+                                                 test_data_treatment)
+
+            rem_correct_cells, rem_correct_treatment = get_correctly_confident_cells(rem_model, rem_probs,
+                                                                                     X_test_removed,
+                                                                                     test_data_treatment)
+
+            # check that the correctly predicted cells are not empty
+            assert not rem_correct_cells.empty, "Correctly predicted cells are empty"
+
+            # train classifier on correctly predicted cells
+            _, removed_score, _ = classifier(X_train_removed, train_data_treatment, rem_correct_cells,
+                                             rem_correct_treatment)
 
             print(
                 f"Score for protein {target_protein} using data with removed protein and bootstrap sample {i}: {removed_score}")

@@ -92,7 +92,13 @@ To run the LGBM experiments, run the following script from the root dir:
 To run the Auto Encoder experiments, run the following script from the root dir:
 ```./src/ae/run_experiments.sh <num_iterations>```
 
-##### Step 2b.4: Plotting
+#### Step 2b.4: Create required supplemental material
+```./src/data_preparation/create_ae_supplemental_files.sh```
+
+#### Step 2b.5: Run downstream classification analysis
+```./src/classifier/run_downstream_classification.sh```
+
+##### Step 2b.5: Plotting
 
 To create all figures and table as well as supplemental material, run the following script from the root dir:
 ```./src/figures/create_figures.sh```

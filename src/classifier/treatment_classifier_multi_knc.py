@@ -30,8 +30,9 @@ def clean_column_names(df: pd.DataFrame):
 def load_imputed_data() -> dict:
     imputed_data = {}
     for patient in PATIENTS:
-        pre_treatment_path = Path("data", "ae_reconstructed_data", mode, patient, f"{radius}", "pre_treatment.csv")
-        on_treatment_path = Path("data", "ae_reconstructed_data", mode, patient, f"{radius}", "on_treatment.csv")
+        pre_treatment_path = Path("results", "ae_imputed_data", "multi", mode, patient, f"{radius}",
+                                  "pre_treatment.csv")
+        on_treatment_path = Path("results", "ae_imputed_data", "multi", mode, patient, f"{radius}", "on_treatment.csv")
 
         if not pre_treatment_path.exists() or not on_treatment_path.exists():
             print(f"Pre or on treatment file for {patient} does not exist.")

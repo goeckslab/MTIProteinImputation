@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', "-m", type=str, required=True, help="The ae model to evaluate",
                         choices=["ae", "ae_m"])
+    parser.add_argument('--tma', "--tma", )
     args = parser.parse_args()
 
     model = args.model

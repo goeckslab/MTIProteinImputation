@@ -3,8 +3,8 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 
-# PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
-PATIENTS = ["9_2", "9_3"]
+PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
+
 
 image_folder = Path("figures", "figxxx")
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # load scores from results/classifier/exp/patient
     scores = []
     for patient in PATIENTS:
-        patient_scores = pd.read_csv(f"results/classifier_multi/exp/{patient}/0/classifier_scores.csv")
+        patient_scores = pd.read_csv(f"results/classifier_multi/knc/exp/{patient}/0/classifier_scores.csv")
         patient_scores["Patient"] = patient
         scores.append(patient_scores)
 
@@ -26,6 +26,9 @@ if __name__ == '__main__':
     scores = scores.melt(id_vars=["Patient", "Round"],
                          value_vars=["Imputed Score", "Original Score", "Removed Score"], value_name="Score",
                          var_name="Type")
+
+    # remove round 8 and 9
+    scores = scores[scores["Round"] < 8]
 
     # plot results as comparison between imputed, original and removed score
     fig = plt.figure(figsize=(10, 5), dpi=150)

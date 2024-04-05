@@ -8,20 +8,25 @@ save_folder = Path("results", "ae_imputed_data")
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='AE Reconstruction data generator')
     parser.add_argument('--radius', "-r", type=int, default=15, choices=[0, 15, 30, 60, 90, 120])
-    parser.add_argument("single_imputation", action="store_true", help="Use single imputation data")
+    parser.add_argument("--si", action="store_true", help="Use single imputation data")
     parser.add_argument("-m", "--mode", required=True, choices=["ip", "exp"], default="ip")
 
     args = parser.parse_args()
 
     radius: int = args.radius
-    single_imputation: bool = args.single_imputation
+    single_imputation: bool = args.si
     mode: str = args.mode
 
     print(f"Using radius {radius} µm")
     print(f"Using single imputation: {single_imputation}")
     print(f"Using mode: {mode}")
 
-    load_path = Path("src", "ae", "single_imputation", mode, "mean")
+    if single_imputation:
+        load_path = Path("src", "ae", "single_imputation", mode, "mean")
+        save_folder = Path(save_folder, "single")
+    else:
+        load_path = Path("src", "ae", "multi_imputation", mode, "mean")
+        save_folder = Path(save_folder, "multi")
 
     for biopsy in biopsies:
         patient = "_".join(biopsy.split("_")[:-1])

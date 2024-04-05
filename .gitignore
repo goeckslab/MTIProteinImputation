@@ -1,7 +1,7 @@
 figures/*.png
 figures/*.eps
 figures/supplements/
-data/ae_reconstructed_data
+data/ae_imputed_data
 data/ae_imputed_data
 .DS_Store
 src/en/exp_patient/9_*
