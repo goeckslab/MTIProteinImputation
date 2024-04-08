@@ -66,33 +66,24 @@ def load_train_data(base_path: Path, patient: str):
     return pd.concat(train_data)
 
 
-def get_correctly_confident_cells(model, probabilities, test_data, treatment_data):
-    predictions = model.predict(test_data)
+def get_non_confident(predicted_data: pd.DataFrame, remove_markers: list = None):
+    # get all cells with prediction scores bettwen 0.3 and 0.7
+    cell_count = 0
+    lower_bound = 0.4
+    upper_bound = 0.6
+    while cell_count == 0:
+        confident_cells = predicted_data[
+            (predicted_data["prediction_score"] >= lower_bound) & (predicted_data["prediction_score"] <= upper_bound)]
+        cell_count = len(confident_cells)
+        lower_bound -= 0.1
+        upper_bound += 0.1
 
-    confidence = pd.DataFrame(columns=["Probability", "Treatment", "Predictions"])
-    confidence["Treatment"] = treatment_data
-    # First, ensure 'confidence' DataFrame has a column to store probabilities
-    if 'Probability' not in confidence.columns:
-        confidence['Probability'] = 0  # Initializes the column with zeros
+    if remove_markers:
+        # remove the marker from SHARED_MARKER list
+        rem_markers = [marker for marker in SHARED_MARKERS if marker not in remove_markers]
+        return confident_cells[rem_markers]
 
-    # Vectorized assignment using numpy where
-    # Update 'Probability' based on 'test_data_treatment' values and corresponding 'og_probs'
-    confidence['Probability'] = np.where(treatment_data == "ON", probabilities[:, 1], probabilities[:, 0])
-    # confidence.reset_index(drop=True, inplace=True)
-    confidence["Predictions"] = predictions
-
-    # select correctly predicted cells compared to the test_treatment data
-    correctly_predicted_cells_on = confidence[(confidence["Predictions"] == "ON") & (
-            test_data_treatment == "ON")]
-    correctly_predicted_cells_pre = confidence[(confidence["Predictions"] == "PRE") & (
-            test_data_treatment == "PRE")]
-
-    correctly_predicted_cell_index = pd.concat([correctly_predicted_cells_on, correctly_predicted_cells_pre]).index
-    correctly_predicted_cells = test_data.loc[correctly_predicted_cell_index]
-    correctly_predicted_cells_treatment = test_data_treatment.loc[correctly_predicted_cell_index]
-
-    print(f"Selected {len(correctly_predicted_cells)} correctly predicted cells from {len(test_data)} cells.")
-    return correctly_predicted_cells, correctly_predicted_cells_treatment
+    return confident_cells[SHARED_MARKERS]
 
 
 if __name__ == '__main__':
@@ -138,7 +129,9 @@ if __name__ == '__main__':
     # all patients except the patient
     train_imputed_data = pd.concat(
         [imputed_data[current_patient] for current_patient in imputed_data if current_patient != patient])
+    train_imputed_data.reset_index(drop=True, inplace=True)
     test_imputed_data = imputed_data[patient]
+    test_imputed_data.reset_index(drop=True, inplace=True)
 
     # check that train_imputed data shape and train_data_protein shape is similar
     assert train_imputed_data.shape == train_data.shape, "Train imputed data shape is not correct"
@@ -170,13 +163,19 @@ if __name__ == '__main__':
 
         # Generating and training on bootstrap samples
         for i in range(30):
-            og_experiment = ClassificationExperiment()
-            og_experiment.setup(data=train_data, test_data=test_data, target="Treatment", session_id=42, index=False,
-                                normalize=True, normalize_method="minmax", verbose=True)
-            og_classifier = og_experiment.create_model("lightgbm")
-            og_best = og_experiment.compare_models([og_classifier])
+            sub_train_data = train_data.sample(frac=0.8, replace=False, random_state=i)
+            sub_test_data = test_data.sample(frac=0.8, replace=False, random_state=i)
 
-            og_predictions = og_experiment.predict_model(og_best, data=test_data)
+            og_experiment = ClassificationExperiment()
+            og_experiment.setup(data=sub_train_data, test_data=sub_test_data, target="Treatment", session_id=42,
+                                index=False,
+                                normalize=True, normalize_method="minmax", verbose=False)
+            og_classifier = og_experiment.create_model("lightgbm", verbose=False)
+            og_best = og_experiment.compare_models([og_classifier], verbose=False)
+
+            og_predictions = og_experiment.predict_model(og_best, data=sub_test_data, verbose=False)
+            og_subset = get_non_confident(og_predictions)
+            og_predictions = og_experiment.predict_model(og_best, data=og_subset, verbose=False)
 
             # pull f1 score from the model
             og_results = og_experiment.pull()
@@ -186,41 +185,45 @@ if __name__ == '__main__':
             print(f"Score for proteins {target_proteins} using bootstrap sample {i}: {og_score}")
 
             # replace target protein with imputed data using loc
-            train_imp: pd.DataFrame = pd.DataFrame(train_data.copy(), columns=SHARED_MARKERS)
+            train_imp: pd.DataFrame = pd.DataFrame(sub_train_data.copy(), columns=SHARED_MARKERS)
             # replace target protein with imputed data using loc
-            train_imp.loc[:, target_proteins] = train_imputed_data[target_proteins].values
+            train_imp.loc[sub_train_data.index, target_proteins] = train_imputed_data.loc[
+                sub_train_data.index, target_proteins]
 
-            test_imp: pd.DataFrame = pd.DataFrame(test_data.copy(), columns=SHARED_MARKERS)
+            test_imp: pd.DataFrame = pd.DataFrame(sub_test_data.copy(), columns=SHARED_MARKERS)
             # replace target protein with imputed data using loc
-            test_imp.loc[:, target_proteins] = test_imputed_data[target_proteins].values
+            test_imp.loc[sub_test_data.index, target_proteins] = test_imputed_data.loc[
+                sub_test_data.index, target_proteins]
 
             # select only proteins that are not in target proteins
             remaining_markers = [marker for marker in SHARED_MARKERS if marker not in target_proteins]
 
             # check that all remaining columns values are equal to original values
             assert train_imp.loc[:, remaining_markers].equals(
-                train_data.loc[:, remaining_markers]), "Train data is not equal"
+                sub_train_data.loc[:, remaining_markers]), "Train data is not equal"
 
             assert test_imp.loc[:, remaining_markers].equals(
-                test_data.loc[:, remaining_markers]), "Test data is not equal"
+                sub_test_data.loc[:, remaining_markers]), "Test data is not equal"
 
             imp_experiment = ClassificationExperiment()
             imp_experiment.setup(data=train_imp, test_data=test_imp, target="Treatment", session_id=42, index=False,
                                  normalize=True, normalize_method="minmax", verbose=False)
-            imp_classifier = imp_experiment.create_model("lightgbm")
-            imp_best = imp_experiment.compare_models([imp_classifier])
+            imp_classifier = imp_experiment.create_model("lightgbm", verbose=False)
+            imp_best = imp_experiment.compare_models([imp_classifier], verbose=False)
 
-            imp_predictions = imp_experiment.predict_model(imp_best, data=test_imp)
+            imp_predictions = imp_experiment.predict_model(imp_best, data=test_imp, verbose=False)
+            imp_subset = get_non_confident(imp_predictions)
+            imp_predictions = imp_experiment.predict_model(imp_best, data=imp_subset, verbose=False)
 
             imp_results = imp_experiment.pull()
-            # pull f1 score from the model
+            # pull the score from the model
             imp_score = imp_results["Accuracy"].values[0]
 
             print(f"Score for proteins {target_proteins} using imputed data and bootstrap sample {i}: {imp_score}")
 
             # remove target protein from proteins
-            rem_train = train_data.drop(columns=target_proteins)
-            rem_test = test_data.drop(columns=target_proteins)
+            rem_train = sub_train_data.drop(columns=target_proteins)
+            rem_test = sub_test_data.drop(columns=target_proteins)
 
             remaining_markers = [marker for marker in SHARED_MARKERS if marker not in target_proteins]
 
@@ -237,10 +240,12 @@ if __name__ == '__main__':
             rem_experiment = ClassificationExperiment()
             rem_experiment.setup(data=rem_train, test_data=rem_test, target="Treatment", session_id=42,
                                  index=False, normalize=True, normalize_method="minmax", verbose=False)
-            rem_classifier = rem_experiment.create_model("lightgbm")
-            rem_best = rem_experiment.compare_models([rem_classifier])
+            rem_classifier = rem_experiment.create_model("lightgbm", verbose=False)
+            rem_best = rem_experiment.compare_models([rem_classifier], verbose=False)
 
-            rem_predictions = rem_experiment.predict_model(rem_best, data=rem_test)
+            rem_predictions = rem_experiment.predict_model(rem_best, data=rem_test, verbose=False)
+            rem_subset = get_non_confident(rem_predictions, remove_markers=target_proteins)
+            rem_predictions = rem_experiment.predict_model(rem_best, data=rem_subset, verbose=False)
 
             rem_results = rem_experiment.pull()
             # pull f1 score from the model
