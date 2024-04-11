@@ -56,7 +56,16 @@ def load_train_data(base_path: Path, patient: str):
             print("Loading train file: " + file)
             data = pd.read_csv(Path(base_path, file))
             data = clean_column_names(data)
-            data["Treatment"] = "PRE" if "_1" in file else "ON"
+
+            end = file_name.split("_")[-1]
+            end = f"_{end}"
+
+            data["Treatment"] = "PRE" if "_1" in end else "ON"
+
+            if file == "9_14_2.csv" or file == "9_15_2.csv":
+                assert data["Treatment"].values[0] == "ON", "Treatment should be ON for patient 9_14_2"
+            elif file == "9_14_1.csv" or file == "9_15_1.csv":
+                assert data["Treatment"].values[0] == "PRE", "Treatment should be PRE for patient 9_14_1"
 
             assert "Treatment" in data.columns, f"Treatment column is missing for dataframe of patient {file}"
             data = data[SHARED_MARKERS]

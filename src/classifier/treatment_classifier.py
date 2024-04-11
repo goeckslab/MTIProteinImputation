@@ -56,7 +56,16 @@ def load_train_data(base_path: Path, patient: str):
             print("Loading train file: " + file)
             data = pd.read_csv(Path(base_path, file))
             data = clean_column_names(data)
-            data["Treatment"] = "PRE" if "_1" in file else "ON"
+
+            end = file_name.split("_")[-1]
+            end = f"_{end}"
+
+            data["Treatment"] = "PRE" if "_1" in end else "ON"
+
+            if file == "9_14_2.csv" or file == "9_15_2.csv":
+                assert data["Treatment"].values[0] == "ON", "Treatment should be ON for patient 9_14_2"
+            elif file == "9_14_1.csv" or file == "9_15_1.csv":
+                assert data["Treatment"].values[0] == "PRE", "Treatment should be PRE for patient 9_14_1"
 
             assert "Treatment" in data.columns, f"Treatment column is missing for dataframe of patient {file}"
             data = data[SHARED_MARKERS]
@@ -67,9 +76,12 @@ def load_train_data(base_path: Path, patient: str):
 
 
 def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
-    # get all cells with prediction scores bettwen 0.3 and 0.7
+    # get all cells with prediction scores between 0.3 and 0.7
     confident_cells = predicted_data[
         (predicted_data["prediction_score"] >= 0.4) & (predicted_data["prediction_score"] <= 0.6)]
+
+    # get all high confident cells
+    # confident_cells = predicted_data[predicted_data["prediction_score"] >= 0.8]
     if remove_marker:
         # remove the marker from SHARED_MARKER list
         rem_markers = [marker for marker in SHARED_MARKERS if marker != remove_marker]
