@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import os, sys, argparse
 import numpy as np
+from tqdm import tqdm
 
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER', "Treatment"]
@@ -254,10 +255,18 @@ if __name__ == '__main__':
 
         print(f"Running protein {target_protein}...")
 
-        for i in range(30):
+        og_tile_train_sets = {}
+        og_tile_test_sets = {}
+
+        imp_tile_train_sets = {}
+        imp_tile_test_sets = {}
+
+        rem_tile_train_sets = {}
+        rem_tile_test_sets = {}
+        print("Preparing tiles for data...")
+        for i in tqdm(range(30)):
             train_data_sets = {}
             test_data_sets = {}
-
 
             # copy each dataset in the dictionary
             for key in loaded_train_data_sets.keys():
@@ -266,18 +275,20 @@ if __name__ == '__main__':
             for key in loaded_test_data_sets.keys():
                 test_data_sets[key] = loaded_test_data_sets[key].copy()
 
-            og_tile_train_set = None
             og_tile_train_set = create_tiles_for_dfs(train_data_sets.values(), tile_size, 100)
-            print(og_tile_train_set)
-            input()
+
             # treatment should be both pre and on
             assert len(og_tile_train_set["Treatment"].unique()) == 2, "Treatment should be both pre and on"
+
             og_tile_test_set = create_tiles_for_dfs(test_data_sets.values(), tile_size, 100)
             assert len(og_tile_test_set["Treatment"].unique()) == 2, "Treatment should be both pre and on"
 
             # assert that target protein is in train and test data
             assert target_protein in og_tile_train_set.columns, "Target protein is not in the train data"
             assert target_protein in og_tile_test_set.columns, "Target protein is not in the test data"
+
+            og_tile_train_sets[i] = og_tile_train_set
+            og_tile_test_sets[i] = og_tile_test_set
 
             adjusted_imputed_train_data = {}
             # create new imp dataset from original data and replace the target protein with the imputated proteins value by train patients
@@ -329,6 +340,9 @@ if __name__ == '__main__':
             assert imp_tile_train_set.columns.equals(
                 imp_tile_test_set.columns), "Imputed data and test data columns are not the same"
 
+            imp_tile_train_sets[i] = imp_tile_train_set
+            imp_tile_test_sets[i] = imp_tile_test_set
+
             rem_train_sets = {}
             for biopsy in train_data_sets.keys():
                 rem_train_sets[biopsy] = train_data_sets[biopsy].copy()
@@ -356,6 +370,20 @@ if __name__ == '__main__':
                 1], "Removed data and train data shape is not different"
             assert rem_tile_test_set.shape[1] != og_tile_test_set.shape[
                 1], "Removed data and test data shape is not different"
+
+            rem_tile_train_sets[i] = rem_tile_train_set
+            rem_tile_test_sets[i] = rem_tile_test_set
+
+        print("Running experiments...")
+        for i in range(30):
+            og_tile_train_set = og_tile_train_sets[i]
+            og_tile_test_set = og_tile_test_sets[i]
+
+            imp_tile_train_set = imp_tile_train_sets[i]
+            imp_tile_test_set = imp_tile_test_sets[i]
+
+            rem_tile_train_set = rem_tile_train_sets[i]
+            rem_tile_test_set = rem_tile_test_sets[i]
 
             # run experiments
             og_experiment = ClassificationExperiment()
