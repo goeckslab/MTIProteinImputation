@@ -97,7 +97,7 @@ def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
     return confident_cells[SHARED_MARKERS]
 
 
-def calculate_neighbor_stats(df, cell_radius=30):
+def calculate_neighbor_stats(df,remove_protein: str = '', cell_radius=30):
     # Define the search range
     x_range = pd.IntervalIndex.from_arrays(df['X_centroid'] - cell_radius, df['X_centroid'] + cell_radius,
                                            closed='both')
@@ -121,12 +121,15 @@ def calculate_neighbor_stats(df, cell_radius=30):
 
     # Convert list of Series to DataFrame
     means_df = pd.DataFrame(mean_results)
-    means_df = means_df[SHARED_MARKERS[:-1]]
+    # create a new list and remove treatment of its in list
+    shared_columns = SHARED_MARKERS.copy()
+    shared_columns.remove("Treatment")
+    means_df = means_df[shared_columns]
     # rename columns of means_df to neighbor_mean_{column}
     means_df.columns = [f'neighbor_mean_{col}' for col in means_df.columns]
 
     stds_df = pd.DataFrame(std_results)
-    stds_df = stds_df[SHARED_MARKERS[:-1]]
+    stds_df = stds_df[shared_columns]
     # rename columns of stds_df to neighbor_std_{column}
     stds_df.columns = [f'neighbor_std_{col}' for col in stds_df.columns]
 
