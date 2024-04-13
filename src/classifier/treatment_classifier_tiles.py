@@ -97,6 +97,52 @@ def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
     return confident_cells[SHARED_MARKERS]
 
 
+def calculate_neighbor_stats(df, cell_radius=30):
+    # Define the search range
+    x_range = pd.IntervalIndex.from_arrays(df['X_centroid'] - cell_radius, df['X_centroid'] + cell_radius,
+                                           closed='both')
+    y_range = pd.IntervalIndex.from_arrays(df['Y_centroid'] - cell_radius, df['Y_centroid'] + cell_radius,
+                                           closed='both')
+
+    # Initialize containers for results
+    mean_results = []
+    std_results = []
+
+    # drop treatment x, and y centroid columns
+
+    # Iterate over intervals
+    for interval in range(len(df)):
+        # Find neighbors within the x and y range
+        neighbors = df[x_range.overlaps(x_range[interval]) & y_range.overlaps(y_range[interval])]
+
+        # Calculate mean and std
+        mean_results.append(neighbors.mean())
+        std_results.append(neighbors.std())
+
+    # Convert list of Series to DataFrame
+    means_df = pd.DataFrame(mean_results)
+    means_df = means_df[SHARED_MARKERS[:-1]]
+    # rename columns of means_df to neighbor_mean_{column}
+    means_df.columns = [f'neighbor_mean_{col}' for col in means_df.columns]
+
+    stds_df = pd.DataFrame(std_results)
+    stds_df = stds_df[SHARED_MARKERS[:-1]]
+    # rename columns of stds_df to neighbor_std_{column}
+    stds_df.columns = [f'neighbor_std_{col}' for col in stds_df.columns]
+
+    # add means df columns to the original dataframe using loc
+    df.loc[:, means_df.columns] = means_df.values
+    # add stds df columns to the original dataframe using loc
+    df.loc[:, stds_df.columns] = stds_df.values
+
+    # fill NaN values with 0
+    df.fillna(0, inplace=True)
+
+    # assert that no NAN values are in the dataframe
+    assert not df.isnull().values.any(), "NAN values are in the dataset"
+    return df
+
+
 def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col='X_centroid', y_col='Y_centroid',
                         removed_protein: str = '') -> []:
     """
@@ -143,6 +189,8 @@ def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col=
                 features = pd.DataFrame(tile_df.mean()).T
                 # calculate the number of cells in the tile
                 features["cell_count"] = len(tile_df)
+
+                features = calculate_neighbor_stats(tile_df)
 
                 for col in SHARED_MARKERS:
                     if col == "Treatment":
