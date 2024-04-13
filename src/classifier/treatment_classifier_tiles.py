@@ -8,7 +8,7 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
                   'pERK', 'EGFR', 'ER', "Treatment"]
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
-save_path: Path = Path("results", "classifier", "pycaret")
+save_path: Path = Path("results", "classifier", "pycaret_tiles")
 
 
 def clean_column_names(df: pd.DataFrame):
@@ -40,14 +40,14 @@ def load_imputed_data() -> dict:
 
         # load files
         pre_treatment = pd.read_csv(pre_treatment_path)
+        pre_treatment = pre_treatment[SHARED_MARKERS]
+        imputed_data[f"{patient}_1"] = pre_treatment
+
         on_treatment = pd.read_csv(on_treatment_path)
+        on_treatment = on_treatment[SHARED_MARKERS]
+        imputed_data[f"{patient}_2"] = on_treatment
 
-        # combine data
-        combined_data = pd.concat([pre_treatment, on_treatment])
-        imputed_proteins = combined_data[SHARED_MARKERS]
-        imputed_data[patient] = imputed_proteins
-
-    assert len(imputed_data) == 4, "Imputed data should have 4 patients"
+    assert len(imputed_data) == 8, f"Imputed data should have 8 biopsies, had {len(imputed_data)}"
     return imputed_data
 
 
@@ -75,7 +75,7 @@ def load_train_data(base_path: Path, patient: str) -> {}:
             shared_columns = SHARED_MARKERS + ["X_centroid", "Y_centroid"]
             data = data[shared_columns]
 
-            train_data_sets[Path(file).stem].append(data)
+            train_data_sets[Path(file).stem] = data
 
     assert len(train_data_sets) == 6, f"There should be 6 train datasets, loaded {len(train_data_sets)}"
     return train_data_sets
@@ -96,7 +96,8 @@ def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
     return confident_cells[SHARED_MARKERS]
 
 
-def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col='X_centroid', y_col='Y_centroid') -> []:
+def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col='X_centroid', y_col='Y_centroid',
+                        removed_protein: str = '') -> []:
     """
     Extracts a random tile from a pandas DataFrame containing x and y coordinates.
 
@@ -110,65 +111,70 @@ def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col=
     - tile_df: pandas DataFrame, the randomly selected tile of data.
     """
 
-    # Calculate the bounds for your tiles based on the entire biopsy
-    x_min, x_max = df['X_centroid'].min(), df['X_centroid'].max() - tile_size
-    y_min, y_max = df['Y_centroid'].min(), df['Y_centroid'].max() - tile_size
+    # Randomly choose 100 starting points for the tiles
+    # Assuming you define x_min, x_max, y_min, y_max based on your DataFrame df.
+    x_min, x_max = df[x_col].min(), df[x_col].max() - tile_size
+    y_min, y_max = df[y_col].min(), df[y_col].max() - tile_size
 
-    # Initialize a list to hold the top-left coordinates and data points for each tile
+    # Initialize a list to hold each tile's DataFrame after processing
     tile_data = []
     max_attempts = 300
 
-    # Randomly choose 100 starting points for the tiles
+    # Randomly choose starting points for the tiles
     for _ in range(amount_of_tiles):
-        # Initialize an empty DataFrame for the tile
-        tile_df = pd.DataFrame()
         counter = 0
-        while tile_df.empty and counter < max_attempts:
+        successful_tile = False
+        while not successful_tile and counter < max_attempts:
             x_start = np.random.uniform(x_min, x_max)
             y_start = np.random.uniform(y_min, y_max)
-            # Define the boundaries of the tile
             x_end = x_start + tile_size
             y_end = y_start + tile_size
 
             # Extract the cells within this tile
-            tile_df = df[(df['X_centroid'] >= x_start) &
-                         (df['X_centroid'] < x_end) &
-                         (df['Y_centroid'] >= y_start) &
-                         (df['Y_centroid'] < y_end)]
+            tile_df = df[(df[x_col] >= x_start) & (df[x_col] < x_end) &
+                         (df[y_col] >= y_start) & (df[y_col] < y_end)]
 
-            # Calculate features for this tile
-            if tile_df.empty:
+            # If the tile has less than 200 cells, retry
+            if tile_df.empty or len(tile_df) < 200:
                 counter += 1
-                continue
+            else:
+                successful_tile = True
+                features = pd.DataFrame(tile_df.mean()).T
+                # calculate the number of cells in the tile
+                features["cell_count"] = len(tile_df)
 
-            features = pd.DataFrame(tile_df.mean()).T
-            # calculate the number of cells in the tile
-            features["cell_count"] = len(tile_df)
+                for col in SHARED_MARKERS:
+                    if col == "Treatment":
+                        continue
 
-            # add the std for each column of the SHARED COLUMNS
-            for col in SHARED_MARKERS:
-                if col == "Treatment":
-                    continue
-                features[f"{col}_std"] = tile_df[col].std()
+                    if col == removed_protein:
+                        continue
+                    # add the mean for each column of the SHARED COLUMNS
+                    features[f"{col}_mean"] = tile_df[col].mean()
+                    # add the std for each column of the SHARED COLUMNS
+                    features[f"{col}_std"] = tile_df[col].std()
 
-            # add the treatment
-            features["Treatment"] = df["Treatment"].values[0]
+                # add the treatment
+                features["Treatment"] = df["Treatment"].values[0]
 
-            # remove Patient id
-            if "Patient Id" in features.columns:
-                features.drop("Patient Id", axis=1, inplace=True)
+                # remove Patient id
+                if "Patient Id" in features.columns:
+                    features.drop("Patient Id", axis=1, inplace=True)
 
-            # assert that no patient id or cell type column are in the dataset
-            assert "Patient Id" not in features.columns, "Patient Id column is in the dataset"
-            assert "cell_type" not in features.columns, "Cell type column is in the dataset"
+                # assert that no patient id or cell type column are in the dataset
+                assert "Patient Id" not in features.columns, "Patient Id column is in the dataset"
+                assert "cell_type" not in features.columns, "Cell type column is in the dataset"
 
-            # check that treatment are in the dataset
-            assert "Treatment" in features.columns, "Treatment column is missing"
+                # check that treatment are in the dataset
+                assert "Treatment" in features.columns, "Treatment column is missing"
+                # remove the x and y centroid
+                features.drop(["X_centroid", "Y_centroid"], axis=1, inplace=True)
 
-            tile_data.append(features)
+                tile_data.append(features)
 
     # Convert tile data into a DataFrame
     tiles_df = pd.concat(tile_data, axis=0)
+
     # fill NaN values with 0
     tiles_df.fillna(0, inplace=True)
     return tiles_df
@@ -176,28 +182,31 @@ def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col=
 
 def load_test_data() -> {}:
     test_data_sets = {}
-    pre_biopsy: Path = Path(f"{patient}_1.csv")
-    pre_treatment_test = pd.read_csv(Path("data", "bxs", pre_biopsy))
+    pre_biopsy_path: Path = Path(f"{patient}_1.csv")
+    pre_treatment_test = pd.read_csv(Path("data", "bxs", pre_biopsy_path))
     pre_treatment_test = clean_column_names(pre_treatment_test)
     pre_treatment_test["Treatment"] = "PRE"
+    pre_treatment_test = pre_treatment_test[SHARED_MARKERS + ["X_centroid", "Y_centroid"]]
     assert len(pre_treatment_test) > 0, "Pre treatment test data is empty"
-    test_data_sets[pre_biopsy] = pre_treatment_test
+    test_data_sets[Path(pre_biopsy_path).stem] = pre_treatment_test
 
-    on_biopsy: Path = Path(f"{patient}_2.csv")
-    on_treatment_test = pd.read_csv(Path("data", "bxs", on_biopsy))
+    on_biopsy_path: Path = Path(f"{patient}_2.csv")
+    on_treatment_test = pd.read_csv(Path("data", "bxs", on_biopsy_path))
     on_treatment_test = clean_column_names(on_treatment_test)
     on_treatment_test["Treatment"] = "ON"
+    on_treatment_test = on_treatment_test[SHARED_MARKERS + ["X_centroid", "Y_centroid"]]
     assert len(on_treatment_test) > 0, "On treatment test data is empty"
-    test_data_sets[on_biopsy] = on_treatment_test
+    test_data_sets[Path(on_biopsy_path).stem] = on_treatment_test
 
     return test_data_sets
 
 
-def create_tiles_for_dfs(dataframes: [pd.DataFrame], tile_size: int, amount_of_tiles: int) -> pd.DataFrame:
+def create_tiles_for_dfs(dataframes: [pd.DataFrame], tile_size: int, amount_of_tiles: int,
+                         removed_protein: str = '') -> pd.DataFrame:
     # create tiles for original data
     tile_sets = []
     for data_set in dataframes:
-        tile_set = create_tile_dataset(data_set, tile_size, amount_of_tiles)
+        tile_set = create_tile_dataset(data_set, tile_size, amount_of_tiles, removed_protein=removed_protein)
         tile_sets.append(tile_set)
 
     tile_set = pd.concat(tile_sets)
@@ -213,27 +222,29 @@ if __name__ == '__main__':
     parser.add_argument('--radius', "-r", type=int, default=0, choices=[0, 15, 30, 60, 90, 120])
     parser.add_argument("--patient", "-p", type=str, required=True, help="Patient data to use")
     parser.add_argument("--mode", "-m", type=str, required=True, choices=["ip", "exp"], default="ip")
-
+    parser.add_argument("--tile_size", "-ts", type=int, default=200, help="Tile size to use")
     args = parser.parse_args()
 
     radius: int = args.radius
     patient: str = args.patient
     mode: str = args.mode
+    tile_size: int = args.tile_size
 
     print(f"Using radius: {radius} µm")
     print(f"Using patient: {patient}")
     print(f"Using mode: {mode}")
+    print(f"Using tile size: {tile_size}")
 
     save_path = Path(save_path, mode, patient, str(radius))
     if not save_path.exists():
         save_path.mkdir(parents=True)
 
     # load train data sets
-    train_data_sets: dict = load_train_data(Path("data", "bxs"), patient)
+    loaded_train_data_sets: {} = load_train_data(Path("data", "bxs"), patient)
     # load test data sets
-    test_data_sets: {} = load_test_data()
+    loaded_test_data_sets: {} = load_test_data()
     # load imputed data
-    imputed_data: {} = load_imputed_data()
+    loaded_imputed_data: {} = load_imputed_data()
 
     scores = []
     # prepare tile datasets for original, imputed and removed data
@@ -241,34 +252,82 @@ if __name__ == '__main__':
         if target_protein == "Treatment":
             continue
 
-        for i in range(30):
+        print(f"Running protein {target_protein}...")
 
-            og_tile_train_set = create_tiles_for_dfs(train_data_sets.values(), 200, 100)
-            og_tile_test_set = create_tiles_for_dfs(test_data_sets.values(), 200, 100)
+        for i in range(30):
+            train_data_sets = {}
+            test_data_sets = {}
+
+
+            # copy each dataset in the dictionary
+            for key in loaded_train_data_sets.keys():
+                train_data_sets[key] = loaded_train_data_sets[key].copy()
+
+            for key in loaded_test_data_sets.keys():
+                test_data_sets[key] = loaded_test_data_sets[key].copy()
+
+            og_tile_train_set = None
+            og_tile_train_set = create_tiles_for_dfs(train_data_sets.values(), tile_size, 100)
+            print(og_tile_train_set)
+            input()
+            # treatment should be both pre and on
+            assert len(og_tile_train_set["Treatment"].unique()) == 2, "Treatment should be both pre and on"
+            og_tile_test_set = create_tiles_for_dfs(test_data_sets.values(), tile_size, 100)
+            assert len(og_tile_test_set["Treatment"].unique()) == 2, "Treatment should be both pre and on"
+
+            # assert that target protein is in train and test data
+            assert target_protein in og_tile_train_set.columns, "Target protein is not in the train data"
+            assert target_protein in og_tile_test_set.columns, "Target protein is not in the test data"
 
             adjusted_imputed_train_data = {}
             # create new imp dataset from original data and replace the target protein with the imputated proteins value by train patients
             for biopsy in train_data_sets.keys():
                 sub_train_data = train_data_sets[biopsy].copy()
-                sub_imp_train_data = imputed_data[biopsy]
+                sub_imp_train_data = loaded_imputed_data[biopsy].copy()
                 # replace target protein with imputed data using the indexes of the subset
                 sub_train_data.loc[:, target_protein] = sub_imp_train_data.loc[:, target_protein]
-                # assert that sub train data is not equal to original data
-                assert not sub_train_data.equals(train_data_sets[biopsy]), "Sub train data is equal to original data"
-                adjusted_imputed_train_data[biopsy] = sub_imp_train_data.copy()
+
+                #  assert that target protein is not in the original data
+                assert not sub_train_data[target_protein].equals(
+                    train_data_sets[biopsy][target_protein]), "Target protein train data is equal to original data"
+
+                # assert that except of the target protein the data is the same
+                assert sub_train_data.drop(columns=[target_protein]).equals(
+                    train_data_sets[biopsy].drop(
+                        columns=[target_protein])), "Data is not the same except for the target protein"
+
+                adjusted_imputed_train_data[biopsy] = sub_train_data.copy()
 
             adjusted_imputed_test_data = {}
             for biopsy in test_data_sets.keys():
                 sub_test_data = test_data_sets[biopsy].copy()
-                sub_imp_test_data = imputed_data[biopsy]
-
+                sub_imp_test_data = loaded_imputed_data[biopsy].copy()
                 sub_test_data.loc[:, target_protein] = sub_imp_test_data.loc[:, target_protein]
 
-                assert not sub_test_data.equals(test_data_sets[biopsy]), "Sub train data is equal to original data"
-                adjusted_imputed_test_data[biopsy] = sub_imp_test_data
+                # assert that target proteins of subtest data is different compared to test_data_set
+                assert not sub_test_data[target_protein].equals(
+                    test_data_sets[biopsy][target_protein]), "Target protein test data is equal to original data"
 
-            imp_tile_train_set: pd.DataFrame = create_tiles_for_dfs(adjusted_imputed_train_data.values(), 200, 100)
-            imp_tile_test_set: pd.DataFrame = create_tiles_for_dfs(adjusted_imputed_test_data.values(), 200, 100)
+                # assert that except of the target protein the data is the same
+                assert sub_test_data.drop(columns=[target_protein]).equals(
+                    test_data_sets[biopsy].drop(
+                        columns=[target_protein])), "Data is not the same except for the target protein"
+
+                adjusted_imputed_test_data[biopsy] = sub_test_data
+
+            imp_tile_train_set: pd.DataFrame = create_tiles_for_dfs(adjusted_imputed_train_data.values(), tile_size,
+                                                                    100)
+            imp_tile_test_set: pd.DataFrame = create_tiles_for_dfs(adjusted_imputed_test_data.values(), tile_size, 100)
+
+            assert target_protein in imp_tile_train_set.columns, "Target protein is not in the train data"
+            assert target_protein in imp_tile_test_set.columns, "Target protein is not in the test data"
+
+            assert imp_tile_train_set.shape[1] == imp_tile_test_set.shape[
+                1], f"Train and test data shape is not similar, {len(imp_tile_train_set.columns)} != {len(imp_tile_test_set.columns)}"
+            assert imp_tile_train_set.columns.equals(
+                og_tile_train_set.columns), "Imputed data and original data columns are not the same"
+            assert imp_tile_train_set.columns.equals(
+                imp_tile_test_set.columns), "Imputed data and test data columns are not the same"
 
             rem_train_sets = {}
             for biopsy in train_data_sets.keys():
@@ -280,22 +339,29 @@ if __name__ == '__main__':
                 rem_test_sets[biopsy] = test_data_sets[biopsy].copy()
                 rem_test_sets[biopsy].drop(columns=[target_protein], inplace=True)
 
-            rem_tile_train_set: pd.DataFrame = create_tiles_for_dfs(rem_train_sets.values(), 200, 100)
-            rem_tile_test_set: pd.DataFrame = create_tiles_for_dfs(rem_test_sets.values(), 200, 100)
+            rem_tile_train_set: pd.DataFrame = create_tiles_for_dfs(rem_train_sets.values(),
+                                                                    removed_protein=target_protein, tile_size=tile_size,
+                                                                    amount_of_tiles=100)
+            rem_tile_test_set: pd.DataFrame = create_tiles_for_dfs(rem_test_sets.values(),
+                                                                   removed_protein=target_protein, tile_size=tile_size,
+                                                                   amount_of_tiles=100)
 
             # check that x_train removed does not include the target proteins
             assert target_protein not in rem_tile_train_set.columns, "Target protein is still in the data"
             assert target_protein not in rem_tile_test_set.columns, "Target protein is still in the data"
 
-            assert rem_tile_train_set.shape[1] == rem_tile_test_set.shape[1], "Train and test data shape is not similar"
-            assert rem_tile_train_set.shape[1] == og_tile_train_set.shape[
-                1] - 1, "Removed data and train data shape is not different-"
-
+            assert rem_tile_train_set.shape[1] == rem_tile_test_set.shape[
+                1], f"Train and test data shape is not similar, {len(rem_tile_train_set.columns)} != {len(rem_tile_test_set.columns)}"
+            assert rem_tile_train_set.shape[1] != og_tile_train_set.shape[
+                1], "Removed data and train data shape is not different"
+            assert rem_tile_test_set.shape[1] != og_tile_test_set.shape[
+                1], "Removed data and test data shape is not different"
 
             # run experiments
             og_experiment = ClassificationExperiment()
-            og_experiment.setup(data=og_tile_train_set, target="Treatment", session_id=42,
-                                index=True, normalize=True, normalize_method="minmax", verbose=True, fold=10, fold_shuffle=True)
+            og_experiment.setup(data=og_tile_train_set, target="Treatment",
+                                index=True, normalize=True, normalize_method="minmax", verbose=False, fold=10,
+                                fold_shuffle=True)
             og_classifier = og_experiment.create_model("lightgbm", verbose=False)
             og_best = og_experiment.compare_models([og_classifier], verbose=False)
             og_predictions = og_experiment.predict_model(og_best, data=og_tile_test_set, verbose=False)
@@ -307,13 +373,11 @@ if __name__ == '__main__':
 
             imp_experiment = ClassificationExperiment()
             imp_experiment.setup(data=imp_tile_train_set, target="Treatment", session_id=42, index=True,
-                                 normalize=True, normalize_method="minmax", verbose=False)
+                                 normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
             imp_classifier = imp_experiment.create_model("lightgbm", verbose=False)
             imp_best = imp_experiment.compare_models([imp_classifier], verbose=False)
 
             imp_predictions = imp_experiment.predict_model(imp_best, data=imp_tile_test_set, verbose=False)
-            imp_subset = get_non_confident(imp_predictions)
-            imp_predictions = imp_experiment.predict_model(imp_best, data=imp_subset, verbose=False)
 
             imp_results = imp_experiment.pull()
             # pull the score from the model
@@ -322,14 +386,13 @@ if __name__ == '__main__':
             print(f"Score for protein {target_protein} using imputed data and bootstrap sample {i}: {imp_score}")
 
             rem_experiment = ClassificationExperiment()
-            rem_experiment.setup(data=rem_tile_train_set,  target="Treatment", session_id=42,
-                                 index=True, normalize=True, normalize_method="minmax", verbose=True)
+            rem_experiment.setup(data=rem_tile_train_set, target="Treatment", session_id=42,
+                                 index=True, normalize=True, normalize_method="minmax", verbose=False, fold=10,
+                                 fold_shuffle=True)
             rem_classifier = rem_experiment.create_model("lightgbm", verbose=False)
             rem_best = rem_experiment.compare_models([rem_classifier], verbose=False)
 
             rem_predictions = rem_experiment.predict_model(rem_best, data=rem_tile_test_set, verbose=False)
-            rem_subset = get_non_confident(rem_predictions, remove_marker=target_protein)
-            rem_predictions = rem_experiment.predict_model(rem_best, data=rem_subset, verbose=False)
 
             rem_results = rem_experiment.pull()
             # pull the score from the model
@@ -350,5 +413,3 @@ if __name__ == '__main__':
     mean_scores = scores.groupby("Protein").mean().reset_index()
     mean_scores.to_csv(Path(save_path, "mean_classifier_scores.csv"), index=False)
     scores.to_csv(Path(save_path, "classifier_scores.csv"), index=False)
-
-
