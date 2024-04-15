@@ -174,8 +174,8 @@ if __name__ == '__main__':
             sub_test_data = test_data.sample(frac=0.8, replace=False, random_state=i)
 
             og_experiment = ClassificationExperiment()
-            og_experiment.setup(data=sub_train_data, test_data=sub_test_data, target="Treatment", session_id=42,
-                                index=False,
+            og_experiment.setup(data=sub_train_data, target="Treatment", session_id=42,
+                                index=True,
                                 normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
             og_classifier = og_experiment.create_model("lightgbm", verbose=False)
             og_best = og_experiment.compare_models([og_classifier], verbose=False)
@@ -209,7 +209,7 @@ if __name__ == '__main__':
                 sub_test_data.loc[:, sub_test_data.columns != target_protein]), "Test data is not equal"
 
             imp_experiment = ClassificationExperiment()
-            imp_experiment.setup(data=train_imp, test_data=test_imp, target="Treatment", session_id=42, index=False,
+            imp_experiment.setup(data=train_imp, target="Treatment", session_id=42, index=True,
                                  normalize=True, normalize_method="minmax", verbose=False)
             imp_classifier = imp_experiment.create_model("lightgbm", verbose=False)
             imp_best = imp_experiment.compare_models([imp_classifier], verbose=False)
@@ -239,8 +239,8 @@ if __name__ == '__main__':
                 1] - 1, "Removed data and train data shape is not different-"
 
             rem_experiment = ClassificationExperiment()
-            rem_experiment.setup(data=rem_train, test_data=rem_test, target="Treatment", session_id=42,
-                                 index=False, normalize=True, normalize_method="minmax", verbose=False)
+            rem_experiment.setup(data=rem_train, target="Treatment", session_id=42,
+                                 index=True, normalize=True, normalize_method="minmax", verbose=False)
             rem_classifier = rem_experiment.create_model("lightgbm", verbose=False)
             rem_best = rem_experiment.compare_models([rem_classifier], verbose=False)
 
