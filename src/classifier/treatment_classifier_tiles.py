@@ -11,6 +11,7 @@ PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 save_path: Path = Path("results", "classifier", "pycaret_tiles")
 
+iterations = 3
 
 def clean_column_names(df: pd.DataFrame):
     if "ERK-1" in df.columns:
@@ -97,7 +98,7 @@ def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
     return confident_cells[SHARED_MARKERS]
 
 
-def calculate_neighbor_stats(df,remove_protein: str = '', cell_radius=30):
+def calculate_neighbor_stats(df, removed_protein: str = '', cell_radius=30):
     # Define the search range
     x_range = pd.IntervalIndex.from_arrays(df['X_centroid'] - cell_radius, df['X_centroid'] + cell_radius,
                                            closed='both')
@@ -107,6 +108,7 @@ def calculate_neighbor_stats(df,remove_protein: str = '', cell_radius=30):
     # Initialize containers for results
     mean_results = []
     std_results = []
+    neighbors_amount = []
 
     # drop treatment x, and y centroid columns
 
@@ -115,15 +117,19 @@ def calculate_neighbor_stats(df,remove_protein: str = '', cell_radius=30):
         # Find neighbors within the x and y range
         neighbors = df[x_range.overlaps(x_range[interval]) & y_range.overlaps(y_range[interval])]
 
+
         # Calculate mean and std
         mean_results.append(neighbors.mean())
         std_results.append(neighbors.std())
+        neighbors_amount.append(len(neighbors))
 
     # Convert list of Series to DataFrame
     means_df = pd.DataFrame(mean_results)
     # create a new list and remove treatment of its in list
     shared_columns = SHARED_MARKERS.copy()
     shared_columns.remove("Treatment")
+    if removed_protein:
+        shared_columns.remove(removed_protein)
     means_df = means_df[shared_columns]
     # rename columns of means_df to neighbor_mean_{column}
     means_df.columns = [f'neighbor_mean_{col}' for col in means_df.columns]
@@ -138,6 +144,9 @@ def calculate_neighbor_stats(df,remove_protein: str = '', cell_radius=30):
     # add stds df columns to the original dataframe using loc
     df.loc[:, stds_df.columns] = stds_df.values
 
+    # add the neighbors amount to the dataframe
+    df["neighbors_amount"] = neighbors_amount
+
     # fill NaN values with 0
     df.fillna(0, inplace=True)
 
@@ -145,6 +154,62 @@ def calculate_neighbor_stats(df,remove_protein: str = '', cell_radius=30):
     assert not df.isnull().values.any(), "NAN values are in the dataset"
     return df
 
+
+def create_tiles_for_df(df, tile_size, amount_of_tiles, removed_protein: str = '', x_col='X_centroid', y_col='Y_centroid'):
+    x_min, x_max = df[x_col].min(), df[x_col].max() - tile_size
+    y_min, y_max = df[y_col].min(), df[y_col].max() - tile_size
+
+    # Generate random starting points for tiles
+    x_starts = np.random.uniform(x_min, x_max, size=amount_of_tiles)
+    y_starts = np.random.uniform(y_min, y_max, size=amount_of_tiles)
+
+    # Prepare DataFrame to accumulate results
+    tile_data = []
+
+    # Vectorized tile processing
+    for x_start, y_start in zip(x_starts, y_starts):
+        x_end = x_start + tile_size
+        y_end = y_start + tile_size
+
+        # Filter once per tile
+        mask = (
+            (df[x_col] >= x_start) & (df[x_col] < x_end) &
+            (df[y_col] >= y_start) & (df[y_col] < y_end)
+        )
+        tile_df = df[mask]
+
+        if not tile_df.empty and len(tile_df) >= 200:
+            # Calculate neighbor stats and directly integrate them into the features DataFrame
+            features = calculate_neighbor_stats(tile_df, removed_protein=removed_protein)
+
+            # Calculations for shared markers, except removed and treatment-specific handling
+            for col in SHARED_MARKERS:
+                if col != "Treatment" and col != removed_protein:
+                    features[f"{col}_mean"] = tile_df[col].mean()
+                    features[f"{col}_std"] = tile_df[col].std()
+
+            # Add treatment and cell count info
+            features["cell_count"] = len(tile_df)
+            features["Treatment"] = tile_df["Treatment"].iloc[0] if "Treatment" in tile_df.columns else "Not Available"
+
+            # Remove unwanted columns
+            if "Patient Id" in features.columns:
+                features.drop("Patient Id", axis=1, inplace=True)
+
+            # Assert conditions
+            assert "Patient Id" not in features.columns, "Patient Id column is in the dataset"
+            assert "cell_type" not in features.columns, "Cell type column is in the dataset"
+            assert "Treatment" in features.columns, "Treatment column is missing"
+
+            tile_data.append(features)
+
+    # Combine all tiles into a single DataFrame
+    if tile_data:
+        tiles_df = pd.concat(tile_data, ignore_index=True)
+        tiles_df.fillna(0, inplace=True)
+        return tiles_df
+    else:
+        return pd.DataFrame()
 
 def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col='X_centroid', y_col='Y_centroid',
                         removed_protein: str = '') -> []:
@@ -258,7 +323,7 @@ def create_tiles_for_dfs(dataframes: [pd.DataFrame], tile_size: int, amount_of_t
     # create tiles for original data
     tile_sets = []
     for data_set in dataframes:
-        tile_set = create_tile_dataset(data_set, tile_size, amount_of_tiles, removed_protein=removed_protein)
+        tile_set = create_tiles_for_df(data_set, tile_size, amount_of_tiles, removed_protein=removed_protein)
         tile_sets.append(tile_set)
 
     tile_set = pd.concat(tile_sets)
@@ -315,7 +380,7 @@ if __name__ == '__main__':
         rem_tile_train_sets = {}
         rem_tile_test_sets = {}
         print("Preparing tiles for data...")
-        for i in tqdm(range(30)):
+        for i in tqdm(range(iterations)):
             train_data_sets = {}
             test_data_sets = {}
 
@@ -426,7 +491,7 @@ if __name__ == '__main__':
             rem_tile_test_sets[i] = rem_tile_test_set
 
         print("Running experiments...")
-        for i in range(30):
+        for i in range(iterations):
             og_tile_train_set = og_tile_train_sets[i]
             og_tile_test_set = og_tile_test_sets[i]
 
