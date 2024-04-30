@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
@@ -62,7 +63,8 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) 
 
     annotator = Annotator(ax, pairs, data=data, x=x, y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -105,7 +107,8 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
                  'Vimentin', 'pERK', 'EGFR', 'ER']
         annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                               hide_non_significant=True)
-        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside', verbose=2, line_height=0.01)
+        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside', verbose=2, line_height=0.01,
+                            comparisons_correction="Benjamini-Hochberg")
         annotator.apply_and_annotate()
 
     except:

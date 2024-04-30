@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -55,7 +56,8 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
              'pERK', 'EGFR', 'ER']
     annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -99,7 +101,8 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) 
 
     annotator = Annotator(ax, pairs, data=data, x=x, y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -155,11 +158,8 @@ if __name__ == '__main__':
     # rename MOde AP to AP
     all_scores["Mode"] = all_scores["Mode"].replace({"EXP": "AP"})
 
-
-
     fig = plt.figure(figsize=(10, 10), dpi=300)
     gspec = fig.add_gridspec(6, 3)
-
 
     ax2 = fig.add_subplot(gspec[:2, :])
     ax2.text(-0.05, 1.3, "a", transform=ax2.transAxes,

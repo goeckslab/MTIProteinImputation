@@ -53,7 +53,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
 
         annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                               hide_non_significant=True)
-        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside', comparisons_correction="Benjamini-Hochberg")
         annotator.apply_and_annotate()
 
     except:

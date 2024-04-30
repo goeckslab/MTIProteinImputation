@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
@@ -84,7 +85,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
              'pERK', 'EGFR', 'ER', "Mean"]
     annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside', comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -109,7 +110,7 @@ def create_boxen_plot_ip_vs_exp(results: pd.DataFrame, metric: str, title: str):
     order = ["Q1", "Q2", "Q3", "Q4"]
     annotator = Annotator(ax, pairs, data=results, x="Quartile", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -226,7 +227,7 @@ if __name__ == '__main__':
     plt.box(False)
     # remove ticks from ax1
     ax12.set_xticks([])
-    #ax12.text(-0.3, 1, "c", transform=ax12.transAxes,
+    # ax12.text(-0.3, 1, "c", transform=ax12.transAxes,
     #           fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["ER"], color="blue", ax=ax12, kde=True, stat="count")
@@ -243,7 +244,7 @@ if __name__ == '__main__':
     plt.box(False)
     # remove ticks from ax1
     ax13.set_xticks([])
-    #ax13.text(-0.3, 1, "d", transform=ax13.transAxes,
+    # ax13.text(-0.3, 1, "d", transform=ax13.transAxes,
     #          fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["pRB"], color="blue", ax=ax13, kde=True, stat="count")
@@ -255,13 +256,12 @@ if __name__ == '__main__':
     # rotate x ticks of ax13
     ax13.set_xticklabels(ax13.get_xticklabels(), rotation=90)
 
-
     ax14 = fig.add_subplot(gspec[2:4, 3:4])
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
     ax14.set_xticks([])
-    #ax14.text(-0.2, 1, "e", transform=ax14.transAxes,
+    # ax14.text(-0.2, 1, "e", transform=ax14.transAxes,
     #          fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["CK17"], color="blue", ax=ax14, kde=True, stat="count")
@@ -272,7 +272,6 @@ if __name__ == '__main__':
     ax14.set_xlabel("Ck17")
     plt.legend(labels=["9 2", "9 3", "9 14", "9 15"], loc='upper left', ncol=1, bbox_to_anchor=(0.4, 1.05))
     # create legend with custom labels
-
 
     # rotate x ticks of ax13
     ax14.set_xticklabels(ax13.get_xticklabels(), rotation=90)
