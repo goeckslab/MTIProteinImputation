@@ -22,8 +22,16 @@ echo "Running AE Multi experiments..."
 ./src/ae_m/run_experiments.sh 30
 echo "AE Multi experiments done."
 
+echo "Cleaning up..."
+./src/cleanup/clean_score_datasets.sh
+echo "Clean up complete."
+
 echo "Creating figures, tables and supplementary material..."
 ./src/figures/create_figures.sh
 echo "Figures, tables and supplementary material created."
+
+echo "Running downstream tasks..."
+./src/classifier/run_downstream_classification.sh
+echo "Downstream tasks complete."
 
 echo "Script complete."

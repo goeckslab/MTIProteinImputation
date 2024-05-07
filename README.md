@@ -92,6 +92,9 @@ To run the LGBM experiments, run the following script from the root dir:
 To run the Auto Encoder experiments, run the following script from the root dir:
 ```./src/ae/run_experiments.sh <num_iterations>```
 
+##### Step 2b.4: Run cleanup script
+```./src/cleanup/clean_score_datasets.sh```
+
 #### Step 2b.4: Create required supplemental material
 ```./src/data_preparation/create_ae_supplemental_files.sh```
 
