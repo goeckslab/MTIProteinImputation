@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 biopsies = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
-save_folder = Path("results", "ae_imputed_data")
+save_folder = Path("results", "imputed_data", "ae")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='AE Reconstruction data generator')
