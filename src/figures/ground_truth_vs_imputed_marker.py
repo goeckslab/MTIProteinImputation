@@ -127,16 +127,22 @@ if __name__ == '__main__':
         raise ValueError("Model not recognized")
 
     for protein in predictions.columns:
-        pred = predictions[protein]
+        imputed = predictions[protein]
+        # remove 0 predictions
+        imputed = imputed[imputed != 0]
+        print(protein)
+        print("Imputed: ", imputed.shape)
+
         gt = ground_truth[protein]
+        gt = gt[imputed.index]
+
+
+
+
         train = train_data[protein]
-
-        sns.histplot(pred, color="orange", label="Imputed", kde=True, element="poly")
-        # log y-axis
-        plt.yscale('log')
-
+        sns.histplot(imputed, color="orange", label="Imputed", kde=True, element="poly")
         sns.histplot(gt, color="blue", label="Ground Truth", kde=True, element="poly")
-        sns.histplot(train, color="green", label="Train", kde=True, element="poly")
+        # sns.histplot(train, color="green", label="Train", kde=True, element="poly")
 
         # change y axis label to cell count
         plt.ylabel("Cell Count")

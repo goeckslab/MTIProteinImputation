@@ -43,7 +43,18 @@ if __name__ == '__main__':
         imputed_data.append(pd.read_csv(predicted_path))
 
     ground_truth = pd.concat(ground_truth_data)
+    # reset index
+    ground_truth.reset_index(drop=True, inplace=True)
     imputed_data = pd.concat(imputed_data)
+    # reset index
+    imputed_data.reset_index(drop=True, inplace=True)
+
+    # remove all rows that contain only 0 for the given marker
+    ground_truth = ground_truth[ground_truth[marker] != 0]
+    imputed_data = imputed_data.loc[ground_truth.index]
+
+    imputed_data = imputed_data[imputed_data[marker] != 0]
+    ground_truth = ground_truth.loc[imputed_data.index]
 
     fig = plt.figure(figsize=(5, 3), dpi=200)
     plt.scatter(ground_truth[marker], imputed_data[marker], alpha=0.5, label=marker)
