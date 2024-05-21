@@ -11,7 +11,8 @@ PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 save_path: Path = Path("results", "classifier", "pycaret_tiles")
 
-iterations = 3
+iterations = 30
+
 
 def clean_column_names(df: pd.DataFrame):
     if "ERK-1" in df.columns:
@@ -30,9 +31,10 @@ def clean_column_names(df: pd.DataFrame):
 def load_imputed_data() -> dict:
     imputed_data = {}
     for patient in PATIENTS:
-        pre_treatment_path = Path("results", "ae_imputed_data", "single", mode, patient, f"{radius}",
+        pre_treatment_path = Path("results", "imputed_data", "ae", "single", mode, patient, f"{radius}",
                                   "pre_treatment.csv")
-        on_treatment_path = Path("results", "ae_imputed_data", "single", mode, patient, f"{radius}", "on_treatment.csv")
+        on_treatment_path = Path("results", "imputed_data", "ae", "single", mode, patient, f"{radius}",
+                                 "on_treatment.csv")
 
         if not pre_treatment_path.exists() or not on_treatment_path.exists():
             print(f"Pre or on treatment path for patient {patient} does not exist.")
@@ -98,64 +100,9 @@ def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
     return confident_cells[SHARED_MARKERS]
 
 
-def calculate_neighbor_stats(df, removed_protein: str = '', cell_radius=30):
-    # Define the search range
-    x_range = pd.IntervalIndex.from_arrays(df['X_centroid'] - cell_radius, df['X_centroid'] + cell_radius,
-                                           closed='both')
-    y_range = pd.IntervalIndex.from_arrays(df['Y_centroid'] - cell_radius, df['Y_centroid'] + cell_radius,
-                                           closed='both')
 
-    # Initialize containers for results
-    mean_results = []
-    std_results = []
-    neighbors_amount = []
-
-    # drop treatment x, and y centroid columns
-
-    # Iterate over intervals
-    for interval in range(len(df)):
-        # Find neighbors within the x and y range
-        neighbors = df[x_range.overlaps(x_range[interval]) & y_range.overlaps(y_range[interval])]
-
-
-        # Calculate mean and std
-        mean_results.append(neighbors.mean())
-        std_results.append(neighbors.std())
-        neighbors_amount.append(len(neighbors))
-
-    # Convert list of Series to DataFrame
-    means_df = pd.DataFrame(mean_results)
-    # create a new list and remove treatment of its in list
-    shared_columns = SHARED_MARKERS.copy()
-    shared_columns.remove("Treatment")
-    if removed_protein:
-        shared_columns.remove(removed_protein)
-    means_df = means_df[shared_columns]
-    # rename columns of means_df to neighbor_mean_{column}
-    means_df.columns = [f'neighbor_mean_{col}' for col in means_df.columns]
-
-    stds_df = pd.DataFrame(std_results)
-    stds_df = stds_df[shared_columns]
-    # rename columns of stds_df to neighbor_std_{column}
-    stds_df.columns = [f'neighbor_std_{col}' for col in stds_df.columns]
-
-    # add means df columns to the original dataframe using loc
-    df.loc[:, means_df.columns] = means_df.values
-    # add stds df columns to the original dataframe using loc
-    df.loc[:, stds_df.columns] = stds_df.values
-
-    # add the neighbors amount to the dataframe
-    df["neighbors_amount"] = neighbors_amount
-
-    # fill NaN values with 0
-    df.fillna(0, inplace=True)
-
-    # assert that no NAN values are in the dataframe
-    assert not df.isnull().values.any(), "NAN values are in the dataset"
-    return df
-
-
-def create_tiles_for_df(df, tile_size, amount_of_tiles, removed_protein: str = '', x_col='X_centroid', y_col='Y_centroid'):
+def create_tiles_for_df(df, tile_size, amount_of_tiles, removed_protein: str = '', x_col='X_centroid',
+                        y_col='Y_centroid'):
     x_min, x_max = df[x_col].min(), df[x_col].max() - tile_size
     y_min, y_max = df[y_col].min(), df[y_col].max() - tile_size
 
@@ -173,14 +120,14 @@ def create_tiles_for_df(df, tile_size, amount_of_tiles, removed_protein: str = '
 
         # Filter once per tile
         mask = (
-            (df[x_col] >= x_start) & (df[x_col] < x_end) &
-            (df[y_col] >= y_start) & (df[y_col] < y_end)
+                (df[x_col] >= x_start) & (df[x_col] < x_end) &
+                (df[y_col] >= y_start) & (df[y_col] < y_end)
         )
         tile_df = df[mask]
 
-        if not tile_df.empty and len(tile_df) >= 200:
+        if not tile_df.empty and len(tile_df) >= 100:
             # Calculate neighbor stats and directly integrate them into the features DataFrame
-            features = calculate_neighbor_stats(tile_df, removed_protein=removed_protein)
+            features = pd.DataFrame(tile_df.mean(numeric_only=True)).T
 
             # Calculations for shared markers, except removed and treatment-specific handling
             for col in SHARED_MARKERS:
@@ -210,6 +157,7 @@ def create_tiles_for_df(df, tile_size, amount_of_tiles, removed_protein: str = '
         return tiles_df
     else:
         return pd.DataFrame()
+
 
 def create_tile_dataset(df: pd.DataFrame, tile_size, amount_of_tiles=100, x_col='X_centroid', y_col='Y_centroid',
                         removed_protein: str = '') -> []:
@@ -377,8 +325,6 @@ if __name__ == '__main__':
         imp_tile_train_sets = {}
         imp_tile_test_sets = {}
 
-        rem_tile_train_sets = {}
-        rem_tile_test_sets = {}
         print("Preparing tiles for data...")
         for i in tqdm(range(iterations)):
             train_data_sets = {}
@@ -459,37 +405,6 @@ if __name__ == '__main__':
             imp_tile_train_sets[i] = imp_tile_train_set
             imp_tile_test_sets[i] = imp_tile_test_set
 
-            rem_train_sets = {}
-            for biopsy in train_data_sets.keys():
-                rem_train_sets[biopsy] = train_data_sets[biopsy].copy()
-                rem_train_sets[biopsy].drop(columns=[target_protein], inplace=True)
-
-            rem_test_sets = {}
-            for biopsy in test_data_sets.keys():
-                rem_test_sets[biopsy] = test_data_sets[biopsy].copy()
-                rem_test_sets[biopsy].drop(columns=[target_protein], inplace=True)
-
-            rem_tile_train_set: pd.DataFrame = create_tiles_for_dfs(rem_train_sets.values(),
-                                                                    removed_protein=target_protein, tile_size=tile_size,
-                                                                    amount_of_tiles=100)
-            rem_tile_test_set: pd.DataFrame = create_tiles_for_dfs(rem_test_sets.values(),
-                                                                   removed_protein=target_protein, tile_size=tile_size,
-                                                                   amount_of_tiles=100)
-
-            # check that x_train removed does not include the target proteins
-            assert target_protein not in rem_tile_train_set.columns, "Target protein is still in the data"
-            assert target_protein not in rem_tile_test_set.columns, "Target protein is still in the data"
-
-            assert rem_tile_train_set.shape[1] == rem_tile_test_set.shape[
-                1], f"Train and test data shape is not similar, {len(rem_tile_train_set.columns)} != {len(rem_tile_test_set.columns)}"
-            assert rem_tile_train_set.shape[1] != og_tile_train_set.shape[
-                1], "Removed data and train data shape is not different"
-            assert rem_tile_test_set.shape[1] != og_tile_test_set.shape[
-                1], "Removed data and test data shape is not different"
-
-            rem_tile_train_sets[i] = rem_tile_train_set
-            rem_tile_test_sets[i] = rem_tile_test_set
-
         print("Running experiments...")
         for i in range(iterations):
             og_tile_train_set = og_tile_train_sets[i]
@@ -497,9 +412,6 @@ if __name__ == '__main__':
 
             imp_tile_train_set = imp_tile_train_sets[i]
             imp_tile_test_set = imp_tile_test_sets[i]
-
-            rem_tile_train_set = rem_tile_train_sets[i]
-            rem_tile_test_set = rem_tile_test_sets[i]
 
             # run experiments
             og_experiment = ClassificationExperiment()
@@ -509,6 +421,7 @@ if __name__ == '__main__':
             og_classifier = og_experiment.create_model("lightgbm", verbose=False)
             og_best = og_experiment.compare_models([og_classifier], verbose=False)
             og_predictions = og_experiment.predict_model(og_best, data=og_tile_test_set, verbose=False)
+            print(og_predictions.groupby("Treatment").size())
 
             og_results = og_experiment.pull()
             # pull f1 score from the model
@@ -529,24 +442,7 @@ if __name__ == '__main__':
 
             print(f"Score for protein {target_protein} using imputed data and bootstrap sample {i}: {imp_score}")
 
-            rem_experiment = ClassificationExperiment()
-            rem_experiment.setup(data=rem_tile_train_set, target="Treatment", session_id=42,
-                                 index=True, normalize=True, normalize_method="minmax", verbose=False, fold=10,
-                                 fold_shuffle=True)
-            rem_classifier = rem_experiment.create_model("lightgbm", verbose=False)
-            rem_best = rem_experiment.compare_models([rem_classifier], verbose=False)
-
-            rem_predictions = rem_experiment.predict_model(rem_best, data=rem_tile_test_set, verbose=False)
-
-            rem_results = rem_experiment.pull()
-            # pull the score from the model
-            rem_score = rem_results["Accuracy"].values[0]
-
-            print(
-                f"Score for protein {target_protein} using data with removed protein and bootstrap sample {i}: {rem_score}")
-
-            scores.append({"Protein": target_protein, "Imputed Score": imp_score, "Original Score": og_score,
-                           "Removed Score": rem_score})
+            scores.append({"Protein": target_protein, "Imputed Score": imp_score, "Original Score": og_score})
             # print current mean of scores for protein
             print(
                 f"Mean scores for protein {target_protein} for {i + 1} runs:")
