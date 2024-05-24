@@ -85,7 +85,8 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
              'pERK', 'EGFR', 'ER', "Mean"]
     annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside', comparisons_correction="Benjamini-Hochberg")
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -110,7 +111,8 @@ def create_boxen_plot_ip_vs_exp(results: pd.DataFrame, metric: str, title: str):
     order = ["Q1", "Q2", "Q3", "Q4"]
     annotator = Annotator(ax, pairs, data=results, x="Quartile", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',comparisons_correction="Benjamini-Hochberg")
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
     return ax
@@ -207,7 +209,7 @@ if __name__ == '__main__':
     # remove box from ax1
     plt.box(False)
     # remove ticks from ax1
-    ax11.set_xticks([])
+    # ax11.set_xticks([])
     # set y ticks range
     # ax11.set_ylim([-0.2, 4.5])
     ax11.text(-0.5, 1.15, "b", transform=ax11.transAxes,
@@ -215,67 +217,42 @@ if __name__ == '__main__':
 
     # sns.histplot(gt, color="blue", label="Expression", kde=True)
     hist = sns.histplot(bx_data["9_2"]["CK19"], color="blue", ax=ax11, kde=True, stat="count")
-    hist.set(ylabel="CK19")
+    hist.set(ylabel="CK19", xlabel=" ")
     sns.histplot(bx_data["9_3"]["CK19"], color="green", ax=ax11, kde=True, stat="count")
     sns.histplot(bx_data["9_14"]["CK19"], color="yellow", ax=ax11, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["CK19"], color="red", ax=ax11, kde=True, stat="count")
-    # change x axis label
-    ax11.set_xlabel("CK19")
 
     ax12 = fig.add_subplot(gspec[2:4, 1:2])
     # remove box from ax1
     plt.box(False)
-    # remove ticks from ax1
-    ax12.set_xticks([])
-    # ax12.text(-0.3, 1, "c", transform=ax12.transAxes,
-    #           fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["ER"], color="blue", ax=ax12, kde=True, stat="count")
-    hist.set(ylabel="ER")
+    hist.set(ylabel="ER", xlabel=" ")
     sns.histplot(bx_data["9_3"]["ER"], color="green", ax=ax12, kde=True, stat="count")
     sns.histplot(bx_data["9_14"]["ER"], color="yellow", ax=ax12, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["ER"], color="red", ax=ax12, kde=True, stat="count")
-    # rotate x ticks of ax12
-    ax12.set_xticklabels(ax12.get_xticklabels(), rotation=90)
-    ax12.set_xlabel("ER")
 
     ax13 = fig.add_subplot(gspec[2:4, 2:3])
     # remove box from ax1
     plt.box(False)
-    # remove ticks from ax1
-    ax13.set_xticks([])
-    # ax13.text(-0.3, 1, "d", transform=ax13.transAxes,
-    #          fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["pRB"], color="blue", ax=ax13, kde=True, stat="count")
-    hist.set(ylabel="pRB")
+    hist.set(ylabel="pRB", xlabel=" ")
     sns.histplot(bx_data["9_3"]["pRB"], color="green", ax=ax13, kde=True, stat="count")
     sns.histplot(bx_data["9_14"]["pRB"], color="yellow", ax=ax13, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["pRB"], color="red", ax=ax13, kde=True, stat="count")
-    ax13.set_xlabel("pRB")
-    # rotate x ticks of ax13
-    ax13.set_xticklabels(ax13.get_xticklabels(), rotation=90)
 
     ax14 = fig.add_subplot(gspec[2:4, 3:4])
     # remove box from ax1
     plt.box(False)
-    # remove ticks from ax1
-    ax14.set_xticks([])
-    # ax14.text(-0.2, 1, "e", transform=ax14.transAxes,
-    #          fontsize=12, fontweight='bold', va='top', ha='right')
 
     hist = sns.histplot(bx_data["9_2"]["CK17"], color="blue", ax=ax14, kde=True, stat="count")
-    hist.set(ylabel="CK17")
+    hist.set(ylabel="CK17", xlabel=" ")
     sns.histplot(bx_data["9_3"]["CK17"], color="green", ax=ax14, kde=True, stat="count")
     sns.histplot(bx_data["9_14"]["CK17"], color="yellow", ax=ax14, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["CK17"], color="red", ax=ax14, kde=True, stat="count")
-    ax14.set_xlabel("Ck17")
     plt.legend(labels=["9 2", "9 3", "9 14", "9 15"], loc='upper left', ncol=1, bbox_to_anchor=(0.4, 1.05))
     # create legend with custom labels
-
-    # rotate x ticks of ax13
-    ax14.set_xticklabels(ax13.get_xticklabels(), rotation=90)
-    # Set the x-axis to log scale
 
     ax1 = fig.add_subplot(gspec[0:2, :])
     ax1.text(-0.1, 1.15, "a", transform=ax1.transAxes,
