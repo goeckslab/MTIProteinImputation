@@ -107,7 +107,7 @@ def create_tiles_for_df(df, tile_size, amount_of_tiles, removed_protein: str = '
     y_min, y_max = df[y_col].min(), df[y_col].max() - tile_size
 
     # Generate more grid points for higher density
-    grid_size = int(np.sqrt(amount_of_tiles) * 2)  # Further increase grid density
+    grid_size = int(np.sqrt(amount_of_tiles) * 10)  # Further increase grid density
     x_points = np.linspace(x_min, x_max, num=grid_size)
     y_points = np.linspace(y_min, y_max, num=grid_size)
 
@@ -217,13 +217,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--radius', "-r", type=int, default=0, choices=[0, 15, 30, 60, 90, 120])
     parser.add_argument("--patient", "-p", type=str, required=True, help="Patient data to use")
-    parser.add_argument("--mode", "-m", type=str, required=True, choices=["ip", "exp"], default="ip")
-    parser.add_argument("--tile_size", "-ts", type=int, default=200, help="Tile size to use")
+    parser.add_argument("--tile_size", "-ts", type=int, default=350, help="Tile size to use")
     args = parser.parse_args()
 
     radius: int = args.radius
     patient: str = args.patient
-    mode: str = args.mode
+    mode:str = "exp"
     tile_size: int = args.tile_size
 
     print(f"Using radius: {radius} µm")

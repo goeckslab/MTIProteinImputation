@@ -40,25 +40,33 @@ if __name__ == '__main__':
                 ["Treatment", "X_start", "X_end", "Y_start", "Y_end", "prediction_label"]]
 
             # filter only wrong predictions
-            pre_tx_predictions = pre_tx_predictions[
+            wrong_pre_tx_predictions = pre_tx_predictions[
                 pre_tx_predictions["prediction_label"] != pre_tx_predictions["Treatment"]]
-            post_tx_predictions = post_tx_predictions[
+            wrong_post_tx_predictions = post_tx_predictions[
                 post_tx_predictions["prediction_label"] != post_tx_predictions["Treatment"]]
-            # plot the pre-treatment biopsy
+
+            # filter only correct predictions
+            correct_pre_tx_predictions = pre_tx_predictions[
+                pre_tx_predictions["prediction_label"] == pre_tx_predictions["Treatment"]]
+            correct_post_tx_predictions = post_tx_predictions[
+                post_tx_predictions["prediction_label"] == post_tx_predictions["Treatment"]]
 
             sns.set(style="whitegrid")
             fig, ax = plt.subplots(1, 2, figsize=(10, 5))
             sns.scatterplot(data=pre_tx, x="X_centroid", y="Y_centroid", ax=ax[0])
-            for i, row in pre_tx_predictions.iterrows():
+            for i, row in wrong_pre_tx_predictions.iterrows():
                 x = row["X_start"]
                 y = row["Y_start"]
                 width = row["X_end"] - row["X_start"]
                 height = row["Y_end"] - row["Y_start"]
                 ax[0].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='red', lw=2))
-                # add the prediction label
-                # ax[0].text(x, y, "O", fontsize=12, color="red", rotation=90)
-                # center the text in the rectangle
-                # ax[0].text(x + width / 2, y + height / 2, "O", fontsize=12, color="red", rotation=90)
+
+            for i, row in correct_pre_tx_predictions.iterrows():
+                x = row["X_start"]
+                y = row["Y_start"]
+                width = row["X_end"] - row["X_start"]
+                height = row["Y_end"] - row["Y_start"]
+                ax[0].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='green', lw=2))
 
             ax[0].set_title(f"Pre-treatment {protein} biopsy")
             ax[0].set_xlabel("X")
@@ -67,16 +75,19 @@ if __name__ == '__main__':
 
             # plot the post-treatment biopsy
             sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
-            for i, row in post_tx_predictions.iterrows():
+            for i, row in wrong_post_tx_predictions.iterrows():
                 x = row["X_start"]
                 y = row["Y_start"]
                 width = row["X_end"] - row["X_start"]
                 height = row["Y_end"] - row["Y_start"]
                 ax[1].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='red', lw=2))
-                # add the prediction label
-                # ax[1].text(x, y, "P", fontsize=12, color="red", rotation=90)
-                # center the text in the rectangle
-                # ax[1].text(x + width / 2, y + height / 2, "P", fontsize=12, color="red", rotation=90)
+
+            for i, row in correct_post_tx_predictions.iterrows():
+                x = row["X_start"]
+                y = row["Y_start"]
+                width = row["X_end"] - row["X_start"]
+                height = row["Y_end"] - row["Y_start"]
+                ax[1].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='green', lw=2))
 
             ax[1].set_title(f"Post-treatment {protein} biopsy")
             ax[1].set_xlabel("X")
