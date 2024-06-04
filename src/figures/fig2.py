@@ -16,70 +16,52 @@ SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 
-def create_boxen_plot_ip_vs_exp_quartile(data: pd.DataFrame, metric: str) -> plt.Figure:
-    # plot the quartiles
-    ax = sns.boxenplot(x="Quartile", y=metric, hue="Mode", data=data, hue_order=["IP", "AP"],
-                       palette={"IP": "lightblue", "AP": "orange"})
-    ax.set_xlabel("Quartile")
-    ax.set_ylabel(metric.upper())
+def create_boxen_plot_null_model(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["Null", "EN"],
+                       palette={"EN": "lightblue", "Null": "black"})
 
-    hue = "Mode"
-    hue_order = ["IP", "AP"]
-    pairs = [
-        (("Q1", "IP"), ("Q2", "IP")),
-        (("Q2", "IP"), ("Q3", "IP")),
-        (("Q3", "IP"), ("Q4", "IP")),
-        (("Q1", "AP"), ("Q2", "AP")),
-        (("Q2", "AP"), ("Q3", "AP")),
-        (("Q3", "AP"), ("Q4", "AP")),
-    ]
-    order = ["Q1", "Q2", "Q3", "Q4"]
-    annotator = Annotator(ax, pairs, data=data, x="Quartile", y=metric, order=order, hue=hue, hue_order=hue_order,
-                          verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
-    annotator.apply_and_annotate()
-    return ax
+    # Set y axis to log scale
+    ax.set_yscale('log')
 
+    # Optional: Set title and remove axis labels if needed
+    ax.set_ylabel("")
+    ax.set_xlabel("")
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Mode", hue_order=["IP", "AP"],
-                       palette={"IP": "lightblue", "AP": "orange"})
+    # Set y axis limits
+    #ax.set_ylim(ylim[0], ylim[1])
 
-    # plt.title(title)
-    # remove y axis label
-    plt.ylabel("")
-    plt.xlabel("")
-    # plt.legend(loc='upper center')
-    plt.ylim(ylim[0], ylim[1])
-
-    # reduce font size of x and y ticks
+    # Reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
 
-    # set y ticks of fig
-    plt.box(False)
+    # Remove box around the plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
 
-    plt.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
+    # Adjust legend position
+    ax.legend(bbox_to_anchor=[0.6, 0.95], loc='center', ncol=2)
 
-    hue = "Mode"
-    hue_order = ["IP", "AP"]
+    hue = "Network"
+    hue_order = ["Null", "EN"]
     pairs = [
-        (("pRB", "IP"), ("pRB", "AP")),
-        (("CD45", "IP"), ("CD45", "AP")),
-        (("CK19", "IP"), ("CK19", "AP")),
-        (("Ki67", "IP"), ("Ki67", "AP")),
-        (("aSMA", "IP"), ("aSMA", "AP")),
-        (("Ecad", "IP"), ("Ecad", "AP")),
-        (("PR", "IP"), ("PR", "AP")),
-        (("CK14", "IP"), ("CK14", "AP")),
-        (("HER2", "IP"), ("HER2", "AP")),
-        (("AR", "IP"), ("AR", "AP")),
-        (("CK17", "IP"), ("CK17", "AP")),
-        (("p21", "IP"), ("p21", "AP")),
-        (("Vimentin", "IP"), ("Vimentin", "AP")),
-        (("pERK", "IP"), ("pERK", "AP")),
-        (("EGFR", "IP"), ("EGFR", "AP")),
-        (("ER", "IP"), ("ER", "AP")),
-        (("Mean", "IP"), ("Mean", "AP")),
+        (("pRB", "Null"), ("pRB", "EN")),
+        (("CD45", "Null"), ("CD45", "EN")),
+        (("CK19", "Null"), ("CK19", "EN")),
+        (("Ki67", "Null"), ("Ki67", "EN")),
+        (("aSMA", "Null"), ("aSMA", "EN")),
+        (("Ecad", "Null"), ("Ecad", "EN")),
+        (("PR", "Null"), ("PR", "EN")),
+        (("CK14", "Null"), ("CK14", "EN")),
+        (("HER2", "Null"), ("HER2", "EN")),
+        (("AR", "Null"), ("AR", "EN")),
+        (("CK17", "Null"), ("CK17", "EN")),
+        (("p21", "Null"), ("p21", "EN")),
+        (("Vimentin", "Null"), ("Vimentin", "EN")),
+        (("pERK", "Null"), ("pERK", "EN")),
+        (("EGFR", "Null"), ("EGFR", "EN")),
+        (("ER", "Null"), ("ER", "EN")),
+        (("Mean", "Null"), ("Mean", "EN")),
     ]
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
              'pERK', 'EGFR', 'ER', "Mean"]
@@ -92,24 +74,53 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
     return ax
 
 
-def create_boxen_plot_ip_vs_exp(results: pd.DataFrame, metric: str, title: str):
-    # plot the quartiles
-    ax = sns.boxenplot(x="Quartile", y=metric, hue="Mode", data=results, hue_order=["IP", "AP"],
-                       palette={"IP": "lightblue", "AP": "orange"})
-    ax.set_xlabel("Quartile")
+def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
+                       palette={"EN": "lightblue", "LGBM": "orange"}, showfliers=False)
 
-    hue = "Mode"
-    hue_order = ["IP", "AP"]
+    # Optional: Set title and remove axis labels if needed
+    ax.set_ylabel("")
+    ax.set_xlabel("")
+
+    # Set y axis limits
+    # ax.set_ylim(ylim[0], ylim[1])
+
+    # Reduce font size of x and y ticks
+    ax.tick_params(axis='both', which='major', labelsize=8)
+
+    # Remove box around the plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+
+    # Adjust legend position
+    ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
+
+    hue = "Network"
+    hue_order = ["EN", "LGBM"]
     pairs = [
-        (("Q1", "IP"), ("Q2", "IP")),
-        (("Q2", "IP"), ("Q3", "IP")),
-        (("Q3", "IP"), ("Q4", "IP")),
-        (("Q1", "AP"), ("Q2", "AP")),
-        (("Q2", "AP"), ("Q3", "AP")),
-        (("Q3", "AP"), ("Q4", "AP")),
+        (("pRB", "EN"), ("pRB", "LGBM")),
+        (("CD45", "EN"), ("CD45", "LGBM")),
+        (("CK19", "EN"), ("CK19", "LGBM")),
+        (("Ki67", "EN"), ("Ki67", "LGBM")),
+        (("aSMA", "EN"), ("aSMA", "LGBM")),
+        (("Ecad", "EN"), ("Ecad", "LGBM")),
+        (("PR", "EN"), ("PR", "LGBM")),
+        (("CK14", "EN"), ("CK14", "LGBM")),
+        (("HER2", "EN"), ("HER2", "LGBM")),
+        (("AR", "EN"), ("AR", "LGBM")),
+        (("CK17", "EN"), ("CK17", "LGBM")),
+        (("p21", "EN"), ("p21", "LGBM")),
+        (("Vimentin", "EN"), ("Vimentin", "LGBM")),
+        (("pERK", "EN"), ("pERK", "LGBM")),
+        (("EGFR", "EN"), ("EGFR", "LGBM")),
+        (("ER", "EN"), ("ER", "LGBM")),
+        (("Mean", "EN"), ("Mean", "LGBM")),
     ]
-    order = ["Q1", "Q2", "Q3", "Q4"]
-    annotator = Annotator(ax, pairs, data=results, x="Quartile", y=metric, order=order, hue=hue, hue_order=hue_order,
+    order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
+             'pERK', 'EGFR', 'ER', "Mean"]
+    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
@@ -122,54 +133,72 @@ if __name__ == '__main__':
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
 
+    # load null model scores
+    null_model_scores = pd.read_csv(f"results/scores/null_model/null_model.csv")
+    # rename Protein to Marker
+    null_model_scores = null_model_scores.rename(columns={"Protein": "Marker"})
+
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
     lgbm_scores = lgbm_scores[lgbm_scores["FE"] == 0]
     # select only non hp scores
     lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
     # rename lgbm scores EXP TO AP
     lgbm_scores["Mode"] = lgbm_scores["Mode"].replace({"EXP": "AP"})
+    # select only AP scores
+    lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "AP"]
     # sort by marker
     lgbm_scores.sort_values(by=["Marker"], inplace=True)
 
     # calculate mean performance for each marker and mode
-    mean = lgbm_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    lgbm_mean = lgbm_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     # calculate the mean of the mean for each mode
-    mean = mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
-    mean["Marker"] = "Mean"
-    mean["FE"] = 0
-    mean["HP"] = 1
-    mean["Network"] = "LGBM"
+    lgbm_mean = lgbm_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    lgbm_mean["Marker"] = "Mean"
+    lgbm_mean["FE"] = 0
+    lgbm_mean["HP"] = 1
+    lgbm_mean["Network"] = "LGBM"
 
     # add a new row to lgbm scores, adding the mean scores
-    lgbm_scores = lgbm_scores.append(mean, ignore_index=True)
+    lgbm_scores = lgbm_scores.append(lgbm_mean, ignore_index=True)
 
     en_scores = pd.read_csv(Path("results", "scores", "en", "scores.csv"))
     en_scores = en_scores[en_scores["FE"] == 0]
     # rename EXP to AP
     en_scores["Mode"] = en_scores["Mode"].replace({"EXP": "AP"})
+    # select only AP scores
+    en_scores = en_scores[en_scores["Mode"] == "AP"]
     # sort by marker
     en_scores.sort_values(by=["Marker"], inplace=True)
 
     # calculate mean performance for each marker and mode
-    mean = en_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    en_mean = en_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     # calculate the mean of the mean for each mode
-    mean = mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
-    mean["Marker"] = "Mean"
-    mean["FE"] = 0
-    mean["HP"] = 1
-    mean["Network"] = "EN"
+    en_mean = en_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    en_mean["Marker"] = "Mean"
+    en_mean["FE"] = 0
+    en_mean["HP"] = 1
+    en_mean["Network"] = "EN"
 
-    en_scores = en_scores.append(mean, ignore_index=True)
+    en_scores = en_scores.append(en_mean, ignore_index=True)
 
-    ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
-    # Select ae scores where fe  == 0, replace value == mean and noise  == 0
-    ae_scores = ae_scores[(ae_scores["FE"] == 0) & (ae_scores["Replace Value"] == "mean") & (ae_scores["Noise"] == 0)]
-    # select only non hp scores
-    ae_scores = ae_scores[ae_scores["HP"] == 0]
-    ae_scores.sort_values(by=["Marker"], inplace=True)
-    ae_scores = ae_scores[np.abs(ae_scores["MAE"] - ae_scores["MAE"].mean()) <= (3 * ae_scores["MAE"].std())]
+    # calculate mean performance for each marker and mode
+    null_mean = null_model_scores.groupby(["Marker", "Biopsy"]).mean(numeric_only=True).reset_index()
+    # calculate the mean of the mean for each mode
+    null_mean = null_mean.groupby(["Biopsy"]).mean(numeric_only=True).reset_index()
+    null_mean["Marker"] = "Mean"
+    null_mean["FE"] = 0
+    null_mean["HP"] = 1
+    null_mean["Network"] = "Null"
 
-    ae_scores["Mode"] = ae_scores["Mode"].replace({"EXP": "AP"})
+    null_model_scores = null_model_scores.append(null_mean, ignore_index=True)
+    null_model_scores["Network"] = "Null"
+    null_model_scores["FE"] = 0
+    null_model_scores["HP"] = 1
+    null_model_scores["Mode"] = "AP"
+
+    combined_en_lgbm_scores = pd.concat([en_scores, lgbm_scores])
+    combined_null_en_scores = pd.concat([null_model_scores, en_scores])
+
     bx_data = {}
     for patient in PATIENTS:
         patient_scores: pd.DataFrame = pd.read_csv(
@@ -178,40 +207,12 @@ if __name__ == '__main__':
         patient_scores = patient_scores.loc[(patient_scores != 0.0).any(axis=1)]
         bx_data[patient] = patient_scores
 
-    biopsies = {}
-    for data in Path("data", "bxs").iterdir():
-        if "h5ad" in str(data):
-            continue
-
-        bx = Path(data).stem.split('.')[0]
-
-        if "9_" not in bx:
-            continue
-
-        loaded_data = pd.read_csv(Path(data))
-        loaded_data = loaded_data.loc[(loaded_data != 0.0).any(axis=1)]
-        loaded_data["Biopsy"] = bx
-        loaded_data["Patient"] = " ".join(bx.split('_')[0:2])
-        biopsies[bx] = loaded_data
-
-    # combine biopsies based on Patient
-    for patient in PATIENTS:
-        patient_data = []
-        for bx in biopsies.keys():
-            if patient in bx:
-                patient_data.append(biopsies[bx])
-        biopsies[patient] = pd.concat(patient_data)
-
     fig = plt.figure(figsize=(10, 8), dpi=300)
     gspec = fig.add_gridspec(6, 4)
 
     ax11 = fig.add_subplot(gspec[2:4, :1])
     # remove box from ax1
     plt.box(False)
-    # remove ticks from ax1
-    # ax11.set_xticks([])
-    # set y ticks range
-    # ax11.set_ylim([-0.2, 4.5])
     ax11.text(-0.5, 1.15, "b", transform=ax11.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
@@ -258,15 +259,15 @@ if __name__ == '__main__':
     ax1.text(-0.1, 1.15, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax1.set_title('Elastic Net MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax1 = create_boxen_plot(data=en_scores, metric="MAE", ylim=[0.0, 0.4])
+    ax1.set_title('Model MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
+    ax1 = create_boxen_plot_null_model(data=combined_null_en_scores, metric="MAE", ylim=[0.0, 2])
 
     ax2 = fig.add_subplot(gspec[4:6, :])
     ax2.text(-0.1, 1.15, "c", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax2.set_title('LBGM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
+    ax2 = create_boxen_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
 
     plt.tight_layout()
 
