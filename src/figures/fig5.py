@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,22 +22,36 @@ image_folder = Path("figures", "fig5")
 
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List):
     color_palette = {"0 µm": "grey", "15 µm": "magenta", "30 µm": "purple", "60 µm": "green", "90 µm": "yellow",
-                     "120 µm": "blue"}
+                     "120 µm": "red"}
 
     hue = "FE"
     hue_order = microns
     ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
 
-    plt.ylabel("")
-    plt.xlabel("")
+    # Optional: Set title and remove axis labels if needed
+    ax.set_ylabel("")
+    ax.set_xlabel("")
 
-    plt.box(False)
     # remove legend from fig
-    plt.legend(bbox_to_anchor=[0.125, 0.9], loc='center', fontsize=7, ncol=2)
+    ax.legend(bbox_to_anchor=[0.125, 0.9], loc='center', fontsize=7, ncol=2)
 
-    # reduce font size of x and y ticks
-    ax.tick_params(axis='both', which='major', labelsize=8)
-    plt.ylim(0, 0.4)
+    # Remove box around the plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+
+    # Customize this list to specify which x-ticks should have arrows
+    ticks_with_arrows = ['ER', 'Ecad', 'PR', 'EGFR']
+
+    # Add arrows below specific x-axis ticks
+    x_ticks = ax.get_xticks()
+    x_labels = ax.get_xticklabels()
+
+    for tick, label in zip(x_ticks, x_labels):
+        if label.get_text() in ticks_with_arrows:
+            ax.annotate('↑', xy=(tick, ylim[0]), xytext=(tick, ylim[0] - (ylim[1] - ylim[0]) * 0.1),
+                        ha='center', fontsize=16, color='red')
 
     pairs = []
     for micron in microns:
@@ -48,12 +63,12 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
 
     try:
         order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21',
-                 'Vimentin',
-                 'pERK', 'EGFR', 'ER']
+                 'Vimentin', 'pERK', 'EGFR', 'ER']
 
         annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                               hide_non_significant=True)
-        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside', comparisons_correction="Benjamini-Hochberg")
+        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                            comparisons_correction="Benjamini-Hochberg")
         annotator.apply_and_annotate()
 
     except:
@@ -61,7 +76,6 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
         logging.error(data["FE"].unique())
         raise
 
-    # plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
     return ax
 
 
@@ -72,10 +86,14 @@ if __name__ == '__main__':
     if logging_path.exists():
         os.remove(logging_path)
 
+    spatial_categories = [0, 30, 60]
+    # create a new list using the inputs
+    spatial_categories_strings = [f"{spatial_category} µm" for spatial_category in spatial_categories]
+
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
 
     # select only the scores for the 0 µm, 15 µm, 60 µm, 120 µm
-    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin([0, 15, 60, 120])]
+    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin(spatial_categories)]
 
     # select exp scores
     lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
@@ -85,10 +103,10 @@ if __name__ == '__main__':
 
     # Add µm to the FE column
     lgbm_scores["FE"] = lgbm_scores["FE"].astype(str) + " µm"
-    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], ["0 µm", "15 µm", "60 µm", "120 µm"])
+    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], spatial_categories_strings)
 
     # update 23 to 15, 92 to 60 and 184 to 120
-    lgbm_scores["FE"] = lgbm_scores["FE"].cat.rename_categories(["0 µm", "15 µm", "60 µm", "120 µm"])
+    lgbm_scores["FE"] = lgbm_scores["FE"].cat.rename_categories(spatial_categories_strings)
 
     # sort by marker and FE
     lgbm_scores.sort_values(by=["Marker", "FE"], inplace=True)
@@ -120,7 +138,7 @@ if __name__ == '__main__':
     # remove box from ax3
     plt.box(False)
     ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
-                            microns=["0 µm", "15 µm", "60 µm", "120 µm"])
+                            microns=spatial_categories_strings)
 
     plt.tight_layout()
     plt.savefig(Path(image_folder, "fig5.png"), dpi=300, bbox_inches='tight')
