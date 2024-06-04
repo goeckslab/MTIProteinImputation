@@ -10,7 +10,7 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
                   'pERK', 'EGFR', 'ER', "Treatment"]
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
-save_path: Path = Path("results", "classifier", "same_tiles")
+save_path: Path = Path("results", "classifier", "informative_tiles")
 
 
 def clean_column_names(df: pd.DataFrame):
@@ -203,13 +203,12 @@ if __name__ == '__main__':
     exp = ClassificationExperiment()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--radius', "-r", type=int, default=0, choices=[0, 15, 30, 60, 90, 120])
     parser.add_argument("--patient", "-p", type=str, required=True, help="Patient data to use")
     parser.add_argument("--tile_size", "-ts", type=int, default=350, help="Tile size to use")
-    parser.add_argument("--iteration", "-i", type=int, default=30, help="Number of iterations to run the experiment")
+    parser.add_argument("--iteration", "-i", type=int, default=1, help="Number of iterations to run the experiment")
     args = parser.parse_args()
 
-    radius: int = args.radius
+    radius: int = 0
     patient: str = args.patient
     mode: str = "exp"
     tile_size: int = args.tile_size
@@ -358,8 +357,6 @@ if __name__ == '__main__':
             og_tile_train_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
             og_tile_test_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
 
-            print("Running experiment...")
-
             # run experiments
             og_experiment = ClassificationExperiment()
             og_experiment.setup(data=og_tile_train_set, target="Treatment",
@@ -368,12 +365,6 @@ if __name__ == '__main__':
             og_classifier = og_experiment.create_model("lightgbm", verbose=False)
             og_best = og_experiment.compare_models([og_classifier], verbose=False)
             og_predictions = og_experiment.predict_model(og_best, data=og_tile_test_set, verbose=False)
-            print(og_predictions.groupby("Treatment").size())
-
-            og_results = og_experiment.pull()
-            # pull f1 score from the model
-            og_score = og_results["Accuracy"].values[0]
-            print(f"Score for protein {target_protein} using original data: {og_score}")
 
             imp_experiment = ClassificationExperiment()
             imp_experiment.setup(data=imp_tile_train_set, target="Treatment", session_id=42, index=True,
@@ -387,14 +378,6 @@ if __name__ == '__main__':
             imp_results = imp_experiment.pull()
             # pull the score from the model
             imp_score = imp_results["Accuracy"].values[0]
-
-            print(f"Score for protein {target_protein} using imputed data: {imp_score}")
-
-            scores.append({"Protein": target_protein, "Imputed Score": imp_score, "Original Score": og_score})
-            # print current mean of scores for protein
-            print(
-                f"Score for protein {target_protein}")
-            print(pd.DataFrame(scores).groupby('Protein').mean())
 
             imp_predictions = imp_predictions[["Treatment", "prediction_label", "prediction_score", "cell_count"]]
             og_predictions = og_predictions[["Treatment", "prediction_label", "prediction_score", "cell_count"]]
@@ -419,9 +402,3 @@ if __name__ == '__main__':
                                    index=False)
             og_predictions.to_csv(Path(prediction_folder, f"{target_protein}_original_predictions.csv"),
                                   index=False)
-
-        scores = pd.DataFrame(scores)
-        # calculate mean of proteins
-        mean_scores = scores.groupby("Protein").mean().reset_index()
-        mean_scores.to_csv(Path(save_path, "mean_classifier_scores.csv"), index=False)
-        scores.to_csv(Path(save_path, "classifier_scores.csv"), index=False)

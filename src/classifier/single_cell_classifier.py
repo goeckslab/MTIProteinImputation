@@ -10,7 +10,7 @@ SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', '
                   'pERK', 'EGFR', 'ER']
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
-save_path: Path = Path("results", "classifier", "predictive_tissue_v2")
+save_path: Path = Path("results", "classifier", "downstream_classifier")
 
 
 # Function to check if a point is within a tile
@@ -35,10 +35,10 @@ def extract_og_cells_for_biopsy(biopsy: str, tiles: pd.DataFrame, pre_treatment:
     biopsy_path = Path("data", "bxs", f"{biopsy}.csv")
     cells = pd.read_csv(biopsy_path)
     # Convert the DataFrame columns to numpy arrays for faster operations
-    x_start = tiles['X_start'].values
-    x_end = tiles['X_end'].values
-    y_start = tiles['Y_start'].values
-    y_end = tiles['Y_end'].values
+    x_start = tiles['x_start'].values
+    x_end = tiles['x_end'].values
+    y_start = tiles['y_start'].values
+    y_end = tiles['y_end'].values
 
     x_centroid = cells['X_centroid'].values
     y_centroid = cells['Y_centroid'].values
@@ -97,10 +97,10 @@ def extract_imp_cells_for_biopsy(biopsy: str, tiles: pd.DataFrame, protein: str,
     assert not np.array_equal(original_expression, cells[protein]), f"Original expression is the same as cells protein"
 
     # Convert the DataFrame columns to numpy arrays for faster operations
-    x_start = tiles['X_start'].values
-    x_end = tiles['X_end'].values
-    y_start = tiles['Y_start'].values
-    y_end = tiles['Y_end'].values
+    x_start = tiles['x_start'].values
+    x_end = tiles['x_end'].values
+    y_start = tiles['y_start'].values
+    y_end = tiles['y_end'].values
 
     x_centroid = cells['X_centroid'].values
     y_centroid = cells['Y_centroid'].values
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     og_data = {}
 
     # for each patient in the tiles dictioniary, load the biopsy data and extract the cells
-    for tmp_patient, tiles in imp_predictive_tiles.items():
+    for tmp_patient, tiles in og_predictive_tiles.items():
         pre_tiles = tiles[tiles["Treatment"] == "PRE"]
         post_tiles = tiles[tiles["Treatment"] == "ON"]
 
@@ -179,15 +179,12 @@ if __name__ == '__main__':
 
     scores = []
     for i in range(iterations):
-        iteration_save_folder = Path(save_path, f"experiment_{i + 1}")
-        if not iteration_save_folder.exists():
-            iteration_save_folder.mkdir(parents=True)
         print(f"Iteration {i + 1}/{iterations}")
 
         for target_protein in SHARED_MARKERS:
             imp_data = {}
             # Load the imputed predictive tiles
-            for tmp_patient, tiles in imp_predictive_tiles.items():
+            for tmp_patient, tiles in og_predictive_tiles.items():
                 pre_tiles = tiles[tiles["Treatment"] == "PRE"]
                 post_tiles = tiles[tiles["Treatment"] == "ON"]
 

@@ -7,7 +7,7 @@ from statannotations.Annotator import Annotator
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 # PATIENTS = ["9_2", "9_3"]
 
-image_folder = Path("figures", "figxxx")
+image_folder = Path("figures", "fig7")
 
 if __name__ == '__main__':
 
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     # load scores from results/classifier/exp/patient
     scores = []
     for patient in PATIENTS:
-        patient_scores = pd.read_csv(f"results/classifier/pycaret_tiles/exp/{patient}/0/classifier_scores.csv")
+        patient_scores = pd.read_csv(f"results/classifier/downstream_classifier/exp/{patient}/0/classifier_scores.csv")
         patient_scores["Patient"] = patient
         scores.append(patient_scores)
 
