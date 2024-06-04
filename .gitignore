@@ -41,3 +41,4 @@ images/fig5/fig5.eps
 images/fig5/fig5.png
 src/evaluation/lgbm_evaluation.log
 /src/ae_new/single_imputation
+/figures/tiles
