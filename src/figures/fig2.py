@@ -259,14 +259,14 @@ if __name__ == '__main__':
     ax1.text(-0.1, 1.15, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax1.set_title('Model MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
+    ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
     ax1 = create_boxen_plot_null_model(data=combined_null_en_scores, metric="MAE", ylim=[0.0, 2])
 
     ax2 = fig.add_subplot(gspec[4:6, :])
     ax2.text(-0.1, 1.15, "c", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax2.set_title('LBGM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
+    ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
     ax2 = create_boxen_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
 
     plt.tight_layout()
