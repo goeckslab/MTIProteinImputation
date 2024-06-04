@@ -9,13 +9,13 @@ import os, logging
 from typing import List
 from statannotations.Annotator import Annotator
 
-logging_path = Path("src", "figures", "fig5.log")
-logging.root.handlers = []
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[
-                        logging.FileHandler(logging_path),
-                        logging.StreamHandler()
-                    ])
+# logging_path = Path("src", "figures", "fig5.log")
+# logging.root.handlers = []
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
+#                    handlers=[
+#                        logging.FileHandler(logging_path),
+#                        logging.StreamHandler()
+#                    ])
 
 image_folder = Path("figures", "fig5")
 
@@ -44,14 +44,28 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
     # Customize this list to specify which x-ticks should have arrows
     ticks_with_arrows = ['ER', 'Ecad', 'PR', 'EGFR']
 
-    # Add arrows below specific x-axis ticks
-    x_ticks = ax.get_xticks()
     x_labels = ax.get_xticklabels()
 
-    for tick, label in zip(x_ticks, x_labels):
+    for label in x_labels:
+        label.set_fontsize(8)
         if label.get_text() in ticks_with_arrows:
-            ax.annotate('↑', xy=(tick, ylim[0]), xytext=(tick, ylim[0] - (ylim[1] - ylim[0]) * 0.1),
-                        ha='center', fontsize=16, color='red')
+            label.set_fontweight('bold')
+            # Get the position of the label
+            x_pos = label.get_position()[0]
+            y_pos = label.get_position()[1]
+
+            if len(label.get_text()) == 2:
+                # Draw the underline
+                ax.text(x_pos, y_pos - 0.06, '___', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
+                        transform=ax.get_xaxis_transform())
+            elif len(label.get_text()) == 3:
+                # Draw the underline
+                ax.text(x_pos, y_pos - 0.06, '____', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
+                        transform=ax.get_xaxis_transform())
+            else:
+                # Draw the underline
+                ax.text(x_pos, y_pos - 0.06, '_____', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
+                        transform=ax.get_xaxis_transform())
 
     pairs = []
     for micron in microns:
@@ -83,8 +97,8 @@ if __name__ == '__main__':
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
 
-    if logging_path.exists():
-        os.remove(logging_path)
+    # if logging_path.exists():
+    #    os.remove(logging_path)
 
     spatial_categories = [0, 30, 60]
     # create a new list using the inputs
