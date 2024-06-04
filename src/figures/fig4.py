@@ -12,6 +12,60 @@ from statannotations.Annotator import Annotator
 image_folder = Path("figures", "fig4")
 
 
+def create_boxen_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
+    hue = "Network"
+    hue_order = ["AE", "AE M"]
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
+                       palette={"AE": "grey", "AE M": "darkgrey"})
+
+    # Optional: Set title and remove axis labels if needed
+    ax.set_ylabel("")
+    ax.set_xlabel("")
+
+    # Set y axis limits
+    ax.set_ylim(ylim[0], ylim[1])
+
+    # Reduce font size of x and y ticks
+    ax.tick_params(axis='both', which='major', labelsize=8)
+
+    # Remove box around the plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+
+    # Adjust legend position
+    ax.legend(bbox_to_anchor=[0.7, 0.9], loc='center', ncol=2)
+
+    pairs = [
+        (("pRB", "AE"), ("pRB", "AE M")),
+        (("CD45", "AE"), ("CD45", "AE M")),
+        (("CK19", "AE"), ("CK19", "AE M")),
+        (("Ki67", "AE"), ("Ki67", "AE M")),
+        (("aSMA", "AE"), ("aSMA", "AE M")),
+        (("Ecad", "AE"), ("Ecad", "AE M")),
+        (("PR", "AE"), ("PR", "AE M")),
+        (("CK14", "AE"), ("CK14", "AE M")),
+        (("HER2", "AE"), ("HER2", "AE M")),
+        (("AR", "AE"), ("AR", "AE M")),
+        (("CK17", "AE"), ("CK17", "AE M")),
+        (("p21", "AE"), ("p21", "AE M")),
+        (("Vimentin", "AE"), ("Vimentin", "AE M")),
+        (("pERK", "AE"), ("pERK", "AE M")),
+        (("EGFR", "AE"), ("EGFR", "AE M")),
+        (("ER", "AE"), ("ER", "AE M")),
+    ]
+    order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
+             'pERK', 'EGFR', 'ER']
+    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
+                          verbose=1)
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
+    annotator.apply_and_annotate()
+
+    return ax
+
+
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
     hue = "Mode"
     hue_order = ["IP", "AP"]
@@ -27,10 +81,6 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
 
     # reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
-
-    y_ticks = [item.get_text() for item in fig.axes[0].get_yticklabels()]
-    x_ticks = [item.get_text() for item in fig.axes[0].get_xticklabels()]
-    # set y ticks of fig
 
     plt.legend(bbox_to_anchor=[0.7, 0.9], loc='center', ncol=2)
 
@@ -66,10 +116,9 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
 def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
     hue = "Network"
     x = "Mode"
-    order = ["IP", "AP"]
     hue_order = ["LGBM", "EN", "AE", "AE M"]
-    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, order=order,
-                       palette={"EN": "purple", "LGBM": "green", "AE": "grey", "AE M": "darkgrey",
+    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue,
+                       palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey",
                                 "AE ALL": "lightgrey"})
 
     # plt.title(title)
@@ -89,17 +138,13 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) 
     # plt.legend().set_visible(False)
 
     pairs = [
-        (("IP", "LGBM"), ("IP", "EN")),
-        (("IP", "LGBM"), ("IP", "AE")),
-        (("IP", "LGBM"), ("IP", "AE M")),
-        (("IP", "AE"), ("IP", "AE M")),
         (("AP", "LGBM"), ("AP", "EN")),
         (("AP", "LGBM"), ("AP", "AE")),
         (("AP", "LGBM"), ("AP", "AE M")),
         (("AP", "AE"), ("AP", "AE M")),
     ]
 
-    annotator = Annotator(ax, pairs, data=data, x=x, y=metric, order=order, hue=hue, hue_order=hue_order,
+    annotator = Annotator(ax, pairs, data=data, x=x, y=metric, hue=hue, hue_order=hue_order,
                           verbose=1)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
@@ -111,6 +156,9 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) 
 if __name__ == '__main__':
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
+
+    # load image from image folder
+    ae_workflow = plt.imread(Path("figures", "fig3", "ae_workflow.png"))
 
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
     lgbm_scores = lgbm_scores[lgbm_scores["FE"] == 0]
@@ -150,6 +198,14 @@ if __name__ == '__main__':
     assert (ae_m_scores["FE"] == 0).all(), "FE column should only contain 0 for ae_m_scores"
     assert (ae_scores["FE"] == 0).all(), "FE column should only contain 0 for ae_scores"
 
+    # select only AP scores
+    ae_scores = ae_scores[ae_scores["Mode"] == "AP"]
+    ae_m_scores = ae_m_scores[ae_m_scores["Mode"] == "AP"]
+    lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "AP"]
+    en_scores = en_scores[en_scores["Mode"] == "AP"]
+
+    combined_ae_scores = pd.concat([ae_scores, ae_m_scores], axis=0)
+
     # merge all scores together
     all_scores = pd.concat([lgbm_scores, en_scores, ae_scores, ae_m_scores], axis=0)
 
@@ -159,28 +215,31 @@ if __name__ == '__main__':
     all_scores["Mode"] = all_scores["Mode"].replace({"EXP": "AP"})
 
     fig = plt.figure(figsize=(10, 10), dpi=300)
-    gspec = fig.add_gridspec(6, 3)
+    gspec = fig.add_gridspec(7, 3)
 
-    ax2 = fig.add_subplot(gspec[:2, :])
-    ax2.text(-0.05, 1.3, "a", transform=ax2.transAxes,
+    ax1 = fig.add_subplot(gspec[:3, :])
+    ax1.text(-0.05, 1.3, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax2.set_title("AE (Single Protein) MAE", rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax2 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0.0, 0.8])
+    ax1.set_title("AE Workflow", rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax1.imshow(ae_workflow, aspect='auto')
+    # remove y axis from ax1
+    ax1.set_yticks([])
+    ax1.set_xticks([])
 
-    ax3 = fig.add_subplot(gspec[2:4, :])
-    ax3.text(-0.05, 1.2, "b", transform=ax3.transAxes,
+    ax2 = fig.add_subplot(gspec[3:5, :])
+    ax2.text(-0.05, 1.2, "b", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax3.set_title('AE (Multi Protein) MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax3 = create_boxen_plot(data=ae_m_scores, metric="MAE", ylim=[0.0, 0.8], show_legend=True)
+    ax2.set_title('AE MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax2 = create_boxen_plot_ae_ae_m(data=combined_ae_scores, metric="MAE", ylim=[0.0, 0.8])
 
-    ax4 = fig.add_subplot(gspec[4:6, :2])
-    ax4.text(-0.08, 1.2, "c", transform=ax4.transAxes,
+    ax3 = fig.add_subplot(gspec[5:7, :2])
+    ax3.text(-0.08, 1.2, "c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax4.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
-    ax4 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
+    ax3.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
+    ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
 
     plt.tight_layout()
 
