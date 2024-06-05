@@ -61,7 +61,6 @@ if __name__ == '__main__':
             patient_data_save_path.mkdir(parents=True)
 
         try:
-            load_path = Path("results", "classifier", "informative_tiles", "exp", patient, "0", "experiment_1", "predictions")
             # Load the data
             pre_tx_path = Path("data", "bxs", f"{patient}_1.csv")
             post_tx_path = Path("data", "bxs", f"{patient}_2.csv")
@@ -75,6 +74,8 @@ if __name__ == '__main__':
         original_correct_tiles = []
         for marker in SHARED_MARKERS:
             try:
+                load_path = Path("results", "classifier", "informative_tiles", "exp", patient, "0", "experiment_1",
+                                 "predictions")
                 imputed_tiles = pd.read_csv(Path(load_path, f"{marker}_imputed_predictions.csv"))
                 imputed_tiles["Marker"] = marker
 
@@ -97,11 +98,18 @@ if __name__ == '__main__':
         imputed_matching_tiles = find_matching_tiles(imputed_correct_tiles)
         original_matching_tiles = find_matching_tiles(original_correct_tiles)
 
+
+
         imputed_pre_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "PRE"]
         imputed_post_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "ON"]
 
         original_pre_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "PRE"]
         original_post_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "ON"]
+
+
+        print(imputed_pre_matching_tiles)
+        print(original_pre_matching_tiles)
+        input()
 
         unique_imputed_tiles = imputed_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
         unique_original_tiles = original_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
@@ -119,7 +127,7 @@ if __name__ == '__main__':
             x = row["x_start"]
             y = row["y_start"]
             width = row["x_end"] - row["x_start"]
-            height = row["y_end"] - row["x_start"]
+            height = row["y_end"] - row["y_start"]
             ax[0].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
 
         sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
@@ -148,7 +156,7 @@ if __name__ == '__main__':
         sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
         for i, row in original_post_matching_tiles.iterrows():
             x = row["x_start"]
-            y = row["x_start"]
+            y = row["y_start"]
             width = row["x_end"] - row["x_start"]
             height = row["y_end"] - row["y_start"]
             ax[1].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))

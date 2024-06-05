@@ -13,6 +13,7 @@ PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 if __name__ == '__main__':
 
     for patient in PATIENTS:
+        print(f"Processing patient: {patient}...")
         # Load the data
         pre_tx_path = Path("data", "bxs", f"{patient}_1.csv")
         post_tx_path = Path("data", "bxs", f"{patient}_2.csv")
@@ -26,18 +27,18 @@ if __name__ == '__main__':
 
         for protein in SHARED_MARKERS:
             imputed_predictions = pd.read_csv(
-                Path("results", "classifier", "pycaret_tiles_spatial_information", "exp", patient, "0",
+                Path("results", "classifier", "informative_tiles", "exp", patient, "0", "experiment_1", "predictions",
                      f"{protein}_imputed_predictions.csv"))
 
             # get pre treatment predictions
             pre_tx_predictions = imputed_predictions[imputed_predictions["Treatment"] == "PRE"]
             pre_tx_predictions = pre_tx_predictions[
-                ["Treatment", "X_start", "X_end", "Y_start", "Y_end", "prediction_label"]]
+                ["Treatment", "x_start", "x_end", "y_start", "y_end", "prediction_label"]]
 
             # get post treatment predictions
             post_tx_predictions = imputed_predictions[imputed_predictions["Treatment"] == "ON"]
             post_tx_predictions = post_tx_predictions[
-                ["Treatment", "X_start", "X_end", "Y_start", "Y_end", "prediction_label"]]
+                ["Treatment", "x_start", "x_end", "y_start", "y_end", "prediction_label"]]
 
             # filter only wrong predictions
             wrong_pre_tx_predictions = pre_tx_predictions[
@@ -55,17 +56,17 @@ if __name__ == '__main__':
             fig, ax = plt.subplots(1, 2, figsize=(10, 5))
             sns.scatterplot(data=pre_tx, x="X_centroid", y="Y_centroid", ax=ax[0])
             for i, row in wrong_pre_tx_predictions.iterrows():
-                x = row["X_start"]
-                y = row["Y_start"]
-                width = row["X_end"] - row["X_start"]
-                height = row["Y_end"] - row["Y_start"]
+                x = row["x_start"]
+                y = row["y_start"]
+                width = row["x_end"] - row["x_start"]
+                height = row["y_end"] - row["y_start"]
                 ax[0].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='red', lw=2))
 
             for i, row in correct_pre_tx_predictions.iterrows():
-                x = row["X_start"]
-                y = row["Y_start"]
-                width = row["X_end"] - row["X_start"]
-                height = row["Y_end"] - row["Y_start"]
+                x = row["x_start"]
+                y = row["y_start"]
+                width = row["x_end"] - row["x_start"]
+                height = row["y_end"] - row["y_start"]
                 ax[0].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='green', lw=2))
 
             ax[0].set_title(f"Pre-treatment {protein} biopsy")
@@ -76,17 +77,17 @@ if __name__ == '__main__':
             # plot the post-treatment biopsy
             sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
             for i, row in wrong_post_tx_predictions.iterrows():
-                x = row["X_start"]
-                y = row["Y_start"]
-                width = row["X_end"] - row["X_start"]
-                height = row["Y_end"] - row["Y_start"]
+                x = row["x_start"]
+                y = row["y_start"]
+                width = row["x_end"] - row["x_start"]
+                height = row["y_end"] - row["y_start"]
                 ax[1].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='red', lw=2))
 
             for i, row in correct_post_tx_predictions.iterrows():
-                x = row["X_start"]
-                y = row["Y_start"]
-                width = row["X_end"] - row["X_start"]
-                height = row["Y_end"] - row["Y_start"]
+                x = row["x_start"]
+                y = row["y_start"]
+                width = row["x_end"] - row["x_start"]
+                height = row["y_end"] - row["y_start"]
                 ax[1].add_patch(plt.Rectangle((x, y), width, height, fill=False, edgecolor='green', lw=2))
 
             ax[1].set_title(f"Post-treatment {protein} biopsy")
