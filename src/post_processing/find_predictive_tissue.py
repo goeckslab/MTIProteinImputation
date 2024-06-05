@@ -98,18 +98,11 @@ if __name__ == '__main__':
         imputed_matching_tiles = find_matching_tiles(imputed_correct_tiles)
         original_matching_tiles = find_matching_tiles(original_correct_tiles)
 
-
-
         imputed_pre_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "PRE"]
         imputed_post_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "ON"]
 
         original_pre_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "PRE"]
         original_post_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "ON"]
-
-
-        print(imputed_pre_matching_tiles)
-        print(original_pre_matching_tiles)
-        input()
 
         unique_imputed_tiles = imputed_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
         unique_original_tiles = original_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
