@@ -367,7 +367,7 @@ if __name__ == '__main__':
             og_predictions = og_experiment.predict_model(og_best, data=og_tile_test_set, verbose=False)
 
             imp_experiment = ClassificationExperiment()
-            imp_experiment.setup(data=imp_tile_train_set, target="Treatment", session_id=42, index=True,
+            imp_experiment.setup(data=imp_tile_train_set, target="Treatment", index=True,
                                  normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
             imp_classifier = imp_experiment.create_model("lightgbm", verbose=False)
             imp_best = imp_experiment.compare_models([imp_classifier], verbose=False)
@@ -383,15 +383,15 @@ if __name__ == '__main__':
             og_predictions = og_predictions[["Treatment", "prediction_label", "prediction_score", "cell_count"]]
 
             # combine the predictions, the truth treatment with the spatial coordinates of each tile based on the sets
-            imp_predictions["x_start"] = test_set_spatial_data["x_start"]
-            imp_predictions["x_end"] = test_set_spatial_data["x_end"]
-            imp_predictions["y_start"] = test_set_spatial_data["y_start"]
-            imp_predictions["y_end"] = test_set_spatial_data["y_end"]
+            imp_predictions["x_start"] = imp_tile_test_spatial_data["x_start"]
+            imp_predictions["x_end"] = imp_tile_test_spatial_data["x_end"]
+            imp_predictions["y_start"] = imp_tile_test_spatial_data["y_start"]
+            imp_predictions["y_end"] = imp_tile_test_spatial_data["y_end"]
 
-            og_predictions["x_start"] = test_set_spatial_data["x_start"]
-            og_predictions["x_end"] = test_set_spatial_data["x_end"]
-            og_predictions["y_start"] = test_set_spatial_data["y_start"]
-            og_predictions["y_end"] = test_set_spatial_data["y_end"]
+            og_predictions["x_start"] = og_tile_test_spatial_data["x_start"]
+            og_predictions["x_end"] = og_tile_test_spatial_data["x_end"]
+            og_predictions["y_start"] = og_tile_test_spatial_data["y_start"]
+            og_predictions["y_end"] = og_tile_test_spatial_data["y_end"]
 
             prediction_folder = Path(iteration_save_folder, "predictions")
             if not prediction_folder.exists():
