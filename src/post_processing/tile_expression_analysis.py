@@ -1,15 +1,11 @@
 from pathlib import Path
 import pandas as pd
 import sys
-import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 
 SHARED_MARKERS = ["pRB", "CD45", "CK19", "Ki67", "aSMA", "Ecad", "PR", "CK14", "HER2", "AR", "CK17", "p21", "Vimentin",
                   "pERK", "EGFR", "ER"]
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
-
-figure_save_path = Path("figures", "tiles")
-data_save_path = Path("results", "predictive_tissue")
 
 
 def find_matching_tiles(df):
@@ -35,14 +31,6 @@ if __name__ == '__main__':
 
     for patient in PATIENTS:
         print(f"Processing patient: {patient}...")
-
-        patient_figure_save_path = Path(figure_save_path, patient)
-        patient_data_save_path = Path(data_save_path, patient)
-        if not patient_figure_save_path.exists():
-            patient_figure_save_path.mkdir(parents=True)
-
-        if not patient_data_save_path.exists():
-            patient_data_save_path.mkdir(parents=True)
 
         try:
             # Load the data
@@ -91,54 +79,65 @@ if __name__ == '__main__':
         unique_imputed_tiles = imputed_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
         unique_original_tiles = original_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
 
-        # save the matching tiles
-        unique_imputed_tiles.to_csv(Path(patient_data_save_path, "imputed_matching_tiles.csv"), index=False)
-        unique_original_tiles.to_csv(Path(patient_data_save_path, "original_matching_tiles.csv"), index=False)
+        print("Selecting cells...")
 
-        # plot the matching tiles on the original biopsies using matplotlib and seaborn
+        # Extract columns for pre-matching
+        x_start_pre = original_pre_matching_tiles['x_start'].values
+        x_end_pre = original_pre_matching_tiles['x_end'].values
+        y_start_pre = original_pre_matching_tiles['y_start'].values
+        y_end_pre = original_pre_matching_tiles['y_end'].values
 
-        sns.set(style="whitegrid")
-        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-        sns.scatterplot(data=pre_tx, x="X_centroid", y="Y_centroid", ax=ax[0])
-        for i, row in imputed_pre_matching_tiles.iterrows():
-            x = row["x_start"]
-            y = row["y_start"]
-            width = row["x_end"] - row["x_start"]
-            height = row["y_end"] - row["y_start"]
-            ax[0].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+        # Create boolean masks for pre-matching
+        mask_pre = (
+                (pre_tx['X_centroid'].values[:, None] >= x_start_pre) &
+                (pre_tx['X_centroid'].values[:, None] < x_end_pre) &
+                (pre_tx['Y_centroid'].values[:, None] >= y_start_pre) &
+                (pre_tx['Y_centroid'].values[:, None] < y_end_pre)
+        )
 
-        sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
-        for i, row in imputed_post_matching_tiles.iterrows():
-            x = row["x_start"]
-            y = row["y_start"]
-            width = row["x_end"] - row["x_start"]
-            height = row["y_end"] - row["y_start"]
-            ax[1].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+        # Apply mask and concatenate results for pre-matching
+        original_pre_matching_cells = pre_tx[np.any(mask_pre, axis=1)]
 
-        plt.suptitle(f"Correctly classified tiles over all markers for patient {patient}")
-        plt.tight_layout()
-        plt.savefig(Path(patient_figure_save_path, f"imputed_matching_tiles.png"), dpi=300)
-        plt.close('all')
+        # Extract columns for post-matching
+        x_start_post = original_post_matching_tiles['x_start'].values
+        x_end_post = original_post_matching_tiles['x_end'].values
+        y_start_post = original_post_matching_tiles['y_start'].values
+        y_end_post = original_post_matching_tiles['y_end'].values
 
-        sns.set(style="whitegrid")
-        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-        sns.scatterplot(data=pre_tx, x="X_centroid", y="Y_centroid", ax=ax[0])
-        for i, row in original_pre_matching_tiles.iterrows():
-            x = row["x_start"]
-            y = row["y_start"]
-            width = row["x_end"] - row["x_start"]
-            height = row["y_end"] - row["y_start"]
-            ax[0].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+        # Create boolean masks for post-matching
+        mask_post = (
+                (post_tx['X_centroid'].values[:, None] >= x_start_post) &
+                (post_tx['X_centroid'].values[:, None] < x_end_post) &
+                (post_tx['Y_centroid'].values[:, None] >= y_start_post) &
+                (post_tx['Y_centroid'].values[:, None] < y_end_post)
+        )
 
-        sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
-        for i, row in original_post_matching_tiles.iterrows():
-            x = row["x_start"]
-            y = row["y_start"]
-            width = row["x_end"] - row["x_start"]
-            height = row["y_end"] - row["y_start"]
-            ax[1].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+        # Apply mask and concatenate results for post-matching
+        original_post_matching_cells = post_tx[np.any(mask_post, axis=1)]
 
-        plt.suptitle(f"Correctly classified tiles over all markers for patient {patient}")
-        plt.tight_layout()
-        plt.savefig(Path(patient_figure_save_path, f"original_matching_tiles.png"), dpi=300)
-        plt.close('all')
+        print("Dropping duplicates...")
+        # only keep unique cells
+        original_pre_matching_cells.drop_duplicates(subset=['X_centroid', 'Y_centroid'], inplace=True)
+        original_post_matching_cells.drop_duplicates(subset=['X_centroid', 'Y_centroid'], inplace=True)
+
+        print(original_post_matching_cells)
+        print(original_pre_matching_cells)
+
+
+
+        # check if any of the SHARED MARKERS is hihgly expressed in pre matching cells and post matching cells
+        pre_highly_expressed_markers = []
+        on_highly_expressed_markers = []
+        for marker in SHARED_MARKERS:
+            if np.mean(original_pre_matching_cells[marker]) > 0.5:
+                pre_highly_expressed_markers.append(marker)
+            if np.mean(original_post_matching_cells[marker]) > 0.5:
+                on_highly_expressed_markers.append(marker)
+
+
+
+        print(f"Patient: {patient}")
+        print(f"Pre highly expressed markers: {pre_highly_expressed_markers}")
+        print(f"Post highly expressed markers: {on_highly_expressed_markers}")
+        input()
+
