@@ -246,7 +246,7 @@ if __name__ == '__main__':
             print(f"Score for protein {target_protein} using original data: {og_score}")
 
             imp_experiment = ClassificationExperiment()
-            imp_experiment.setup(data=imp_train_set, target="Treatment", session_id=42, index=True,
+            imp_experiment.setup(data=imp_train_set, target="Treatment", index=True,
                                  normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
             imp_classifier = imp_experiment.create_model("lightgbm", verbose=False)
             imp_predictions = imp_experiment.predict_model(imp_classifier, data=imp_test_set,
