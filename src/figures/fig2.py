@@ -21,7 +21,7 @@ def create_boxen_plot_null_model(data: pd.DataFrame, metric: str, ylim: List, sh
                        palette={"EN": "lightblue", "Null": "black"})
 
     # Set y axis to log scale
-    ax.set_yscale('log')
+    ax.set_yscale('log', base=2)
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")

@@ -12,8 +12,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 base_path = Path("src/tma/en")
 l1_ratios = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-SHARED_MARKERS = ['AR', 'Ki67', 'CK14', 'aSMA', 'ER', 'HER2', 'EGFR', 'p21', 'Vimentin',
-                  'Ecad', 'CK17', 'pERK', 'PR', 'pRB', 'CK19']
+SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
+                  'pERK', 'EGFR', 'ER']
 
 
 def load_train_data(exclude_patient: str):

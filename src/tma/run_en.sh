@@ -8,7 +8,8 @@ fi
 
 echo "Iterations:" ${repetitions}
 
-markers=('AR' 'Ki67' 'CK14' 'aSMA' 'ER' 'HER2' 'EGFR' 'p21' 'Vimentin' 'Ecad' 'CK17' 'pERK' 'PR' 'pRB' 'CK19')
+#markers=('CD45' 'AR' 'Ki67' 'CK14' 'aSMA' 'ER' 'HER2' 'EGFR' 'p21' 'Vimentin' 'Ecad' 'CK17' 'pERK' 'PR' 'pRB' 'CK19')
+markers=('CD45')
 cores=('A8' 'H8' 'G9' 'E5' 'C1' 'D2' 'G3' 'B9' 'A5' 'B10' 'H7' 'H3' 'G7' 'F2' 'H2' 'E8' 'A10' 'B3' 'H6' 'E10' 'G1' 'E6' 'C10' 'B7' 'D8' 'E9' 'F7' 'E3' 'F1' 'B6' 'B1' 'A6' 'H10' 'H4')
 
 batch_size=5

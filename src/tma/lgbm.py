@@ -5,10 +5,12 @@ import argparse
 from patient_mapping import patient_mapping
 from pycaret.regression import *
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error, \
+    root_mean_squared_error
 
 base_path = Path("src/tma/lgbm")
-SHARED_MARKERS = ['AR', 'Ki67', 'CK14', 'aSMA', 'ER', 'HER2', 'EGFR', 'p21', 'Vimentin',
-                  'Ecad', 'CK17', 'pERK', 'PR', 'pRB', 'CK19']
+SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
+                  'pERK', 'EGFR', 'ER']
 
 
 def load_train_data(exclude_patient: str):
@@ -63,29 +65,35 @@ if __name__ == '__main__':
     test_df.reset_index(drop=True, inplace=True)
 
     # normalize data
-    train_df = pd.DataFrame(MinMaxScaler().fit_transform(train_df), columns=SHARED_MARKERS)
-    test_df = pd.DataFrame(MinMaxScaler().fit_transform(test_df), columns=SHARED_MARKERS)
+    scaler = MinMaxScaler()
+    train_df = pd.DataFrame(scaler.fit_transform(train_df), columns=SHARED_MARKERS)
+    test_df = pd.DataFrame(scaler.transform(test_df), columns=SHARED_MARKERS)
 
-    # normalize using min max scaler
-    test_df = pd.DataFrame(MinMaxScaler().fit_transform(test_df), columns=SHARED_MARKERS)
+    test_marker = test_df[marker]
     # drop marker from test df
     test_df = test_df.drop(columns=[marker])
+
+    # assert that the marker is not in the test_df
+    assert marker not in test_df.columns, f"Marker {marker} is in the test_df"
 
     experiment = setup(data=train_df, target=marker, verbose=False, normalize=False)
     regressor = experiment.create_model("lightgbm", verbose=False)
     predictions = experiment.predict_model(regressor, data=test_df, verbose=False)
-    results = experiment.pull()
+
+    predictions = pd.DataFrame(predictions)
+    marker_prediction = predictions["prediction_label"]
 
     scores = [{
         "Patient": patient,
         "Biopsy": core,
         "Experiment Id": experiment_id,
         "Model": "LGBM",
-        "MAE": results["MAE"].values[0],
-        "MSE": results["MSE"].values[0],
-        "RMSE": results["RMSE"].values[0],
-        "MAPE": results["MAPE"].values[0],
-        "R2": results["R2"].values[0]
+        "Marker": marker,
+        "MAE": mean_absolute_error(marker_prediction, test_marker),
+        "MSE": mean_squared_error(marker_prediction, test_marker),
+        "RMSE": root_mean_squared_error(marker_prediction, test_marker),
+        "MAPE": mean_absolute_percentage_error(marker_prediction, test_marker),
+        "R2": r2_score(marker_prediction, test_marker)
     }]
 
     scores = pd.DataFrame(scores)
