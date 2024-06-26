@@ -28,7 +28,7 @@ if __name__ == '__main__':
         for protein in SHARED_MARKERS:
             imputed_predictions = pd.read_csv(
                 Path("results", "classifier", "informative_tiles", "exp", patient, "0", "experiment_1", "predictions",
-                     f"{protein}_imputed_predictions.csv"))
+                     f"{protein}_original_predictions.csv"))
 
             # get pre treatment predictions
             pre_tx_predictions = imputed_predictions[imputed_predictions["Treatment"] == "PRE"]
@@ -97,5 +97,5 @@ if __name__ == '__main__':
             # title
             plt.suptitle(f"Biopsy images for {protein} in patient {patient}")
             plt.tight_layout()
-            plt.savefig(Path(patient_save_path, f"{protein}_biopsy.png"), dpi=300)
+            plt.savefig(Path(patient_save_path, f"{protein}.png"), dpi=300)
             plt.close('all')

@@ -85,8 +85,15 @@ if __name__ == '__main__':
         imputed_pre_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "PRE"]
         imputed_post_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "ON"]
 
+        imputed_post_matching_tiles.to_csv(Path(patient_data_save_path, "imputed_post_matching_tiles.csv"), index=False)
+        imputed_pre_matching_tiles.to_csv(Path(patient_data_save_path, "imputed_pre_matching_tiles.csv"), index=False)
+
         original_pre_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "PRE"]
         original_post_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "ON"]
+
+        original_pre_matching_tiles.to_csv(Path(patient_data_save_path, "original_pre_matching_tiles.csv"), index=False)
+        original_post_matching_tiles.to_csv(Path(patient_data_save_path, "original_post_matching_tiles.csv"),
+                                            index=False)
 
         unique_imputed_tiles = imputed_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
         unique_original_tiles = original_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
@@ -129,6 +136,9 @@ if __name__ == '__main__':
             width = row["x_end"] - row["x_start"]
             height = row["y_end"] - row["y_start"]
             ax[0].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+            # set x axis name to X
+            ax[0].set_xlabel("X")
+            ax[0].set_ylabel("Y")
 
         sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
         for i, row in original_post_matching_tiles.iterrows():
@@ -137,8 +147,10 @@ if __name__ == '__main__':
             width = row["x_end"] - row["x_start"]
             height = row["y_end"] - row["y_start"]
             ax[1].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+            ax[1].set_xlabel("X")
+            ax[1].set_ylabel("Y")
 
-        plt.suptitle(f"Correctly classified tiles over all markers for patient {patient}")
+        plt.suptitle(f"Correctly classified tiles over all markers for patient {patient.replace('_', ' ')}")
         plt.tight_layout()
         plt.savefig(Path(patient_figure_save_path, f"original_matching_tiles.png"), dpi=300)
         plt.close('all')
