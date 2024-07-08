@@ -2,6 +2,7 @@ import pandas as pd
 from pathlib import Path
 import argparse
 import os
+from tqdm import tqdm
 
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
@@ -52,9 +53,10 @@ if __name__ == '__main__':
         test_data = pd.read_csv(Path("data", "bxs", f"{biopsy}.csv"))
         train_data = load_train_data(Path("data", "bxs"), patient=patient)
         for protein in SHARED_MARKERS:
-            for i in range(30):
-                # draw random samples from train set for each test set sample
-                y_hat = train_data.sample(n=len(test_data), replace=True)[protein]
+            for i in tqdm(range(30)):
+                # use the mean to impute the values
+                #y_hat = train_data.sample(n=len(test_data), replace=True)[protein]
+                y_hat = train_data[protein].sample(n=len(test_data), replace=True).mean()
 
                 # calculate mae, rmse
                 mae = (y_hat - test_data[protein]).abs().mean()

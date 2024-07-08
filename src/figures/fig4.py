@@ -22,7 +22,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: []) -> plt.Figure:
     ax.set_ylabel("")
     ax.set_xlabel("")
     # plt.legend(loc='upper center')
-    ax.set_yscale('log', base=10)
+    #ax.set_yscale('log', base=10)
     # set ylim
     #ax.set_ylim(ylim)
 
@@ -60,13 +60,20 @@ if __name__ == '__main__':
     ae_scores = pd.read_csv(Path("results", "tma", "ae_scores.csv"))
     ae_scores = ae_scores[ae_scores["Marker"].isin(SHARED_MARKERS)]
     ae_scores = ae_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # scale scores between 0 and 1
+    ae_scores["MAE"] = (ae_scores["MAE"] - ae_scores["MAE"].min()) / (ae_scores["MAE"].max() - ae_scores["MAE"].min())
 
     en_scores = pd.read_csv(Path("results", "tma", "en_scores.csv"))
     # select Biopsy, Patient, Marker, MAE columns
     en_scores = en_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # scale scores between 0 and 1
+    en_scores["MAE"] = (en_scores["MAE"] - en_scores["MAE"].min()) / (en_scores["MAE"].max() - en_scores["MAE"].min())
+
 
     lgbm_scores = pd.read_csv(Path("results", "tma", "lgbm_scores.csv"))
     lgbm_scores = lgbm_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # scale scores between 0 and 1
+    lgbm_scores["MAE"] = (lgbm_scores["MAE"] - lgbm_scores["MAE"].min()) / (lgbm_scores["MAE"].max() - lgbm_scores["MAE"].min())
 
     network_scores = pd.concat([ae_scores, en_scores, lgbm_scores])
     # select
