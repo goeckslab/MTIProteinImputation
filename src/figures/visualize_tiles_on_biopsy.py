@@ -1,5 +1,4 @@
 import pandas as pd
-from argparse import ArgumentParser
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
