@@ -2,7 +2,6 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
@@ -16,19 +15,20 @@ SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 
-def create_boxen_plot_null_model(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["Null", "EN"],
-                       palette={"EN": "lightblue", "Null": "black"})
+def create_boxen_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
+    hue = "Model"
+    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, hue_order=["Null", "EN"],
+                     palette={"EN": "lightblue", "Null": "red"})
 
     # Set y axis to log scale
-    #ax.set_yscale('log', base=10)
+    # ax.set_yscale('log', base=10)
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")
     ax.set_xlabel("")
 
     # Set y axis limits
-    #ax.set_ylim(ylim[0], ylim[1])
+    ax.set_ylim(0, 0.6)
 
     # Reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
@@ -42,7 +42,6 @@ def create_boxen_plot_null_model(data: pd.DataFrame, metric: str, ylim: List, sh
     # Adjust legend position
     ax.legend(bbox_to_anchor=[0.6, 0.95], loc='center', ncol=2)
 
-    hue = "Network"
     hue_order = ["Null", "EN"]
     pairs = [
         (("pRB", "Null"), ("pRB", "EN")),
@@ -74,7 +73,7 @@ def create_boxen_plot_null_model(data: pd.DataFrame, metric: str, ylim: List, sh
     return ax
 
 
-def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
+def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str) -> plt.Figure:
     ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
                        palette={"EN": "lightblue", "LGBM": "orange"}, showfliers=False)
 
@@ -83,7 +82,7 @@ def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ylim: List, sh
     ax.set_xlabel("")
 
     # Set y axis limits
-    # ax.set_ylim(ylim[0], ylim[1])
+    ax.set_ylim(0, 0.6)
 
     # Reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
@@ -134,9 +133,12 @@ if __name__ == '__main__':
         image_folder.mkdir(parents=True, exist_ok=True)
 
     # load null model scores
-    null_model_scores = pd.read_csv(f"results/scores/null_model/null_model.csv")
+    null_model_scores = pd.read_csv(f"results/scores/null_model/scores.csv")
     # rename Protein to Marker
     null_model_scores = null_model_scores.rename(columns={"Protein": "Marker"})
+    # scale MAE scores between 0 and 1
+    null_model_scores["MAE"] = (null_model_scores["MAE"] - null_model_scores["MAE"].min()) / (
+            null_model_scores["MAE"].max() - null_model_scores["MAE"].min())
 
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
     lgbm_scores = lgbm_scores[lgbm_scores["FE"] == 0]
@@ -178,26 +180,17 @@ if __name__ == '__main__':
     en_mean["FE"] = 0
     en_mean["HP"] = 1
     en_mean["Network"] = "EN"
-
     en_scores = en_scores.append(en_mean, ignore_index=True)
 
     # calculate mean performance for each marker and mode
-    null_mean = null_model_scores.groupby(["Marker", "Biopsy"]).mean(numeric_only=True).reset_index()
-    # calculate the mean of the mean for each mode
-    null_mean = null_mean.groupby(["Biopsy"]).mean(numeric_only=True).reset_index()
-    null_mean["Marker"] = "Mean"
-    null_mean["FE"] = 0
-    null_mean["HP"] = 1
-    null_mean["Network"] = "Null"
-
-    null_model_scores = null_model_scores.append(null_mean, ignore_index=True)
-    null_model_scores["Network"] = "Null"
-    null_model_scores["FE"] = 0
-    null_model_scores["HP"] = 1
-    null_model_scores["Mode"] = "AP"
+    null_scores = null_model_scores.groupby(["Model", "Biopsy", "Marker"]).mean(numeric_only=True).reset_index()
+    # calculate mean for each model
+    null_scores["Marker"] = "Mean"
+    null_scores["FE"] = 0
+    null_scores["HP"] = 1
+    null_model_scores = null_model_scores.append(null_scores, ignore_index=True)
 
     combined_en_lgbm_scores = pd.concat([en_scores, lgbm_scores])
-    combined_null_en_scores = pd.concat([null_model_scores, en_scores])
 
     bx_data = {}
     for patient in PATIENTS:
@@ -260,14 +253,14 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax1 = create_boxen_plot_null_model(data=combined_null_en_scores, metric="MAE", ylim=[0.0, 2])
+    ax1 = create_boxen_plot_null_model(data=null_model_scores, metric="MAE")
 
     ax2 = fig.add_subplot(gspec[4:6, :])
     ax2.text(-0.1, 1.15, "c", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax2 = create_boxen_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
+    ax2 = create_boxen_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE")
 
     plt.tight_layout()
 

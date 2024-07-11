@@ -58,7 +58,7 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
-    ax = sns.boxplot(data=scores, x="Protein", y="Score", hue="Type", hue_order=["Original Score", "Imputed Score"],
+    ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type", hue_order=["Original Score", "Imputed Score"],
                      palette={"Original Score": "green", "Imputed Score": "darkgreen"})
 
     ax.set_ylabel("")
@@ -117,27 +117,6 @@ if __name__ == '__main__':
         og_vs_imputed_scores.append(patient_scores)
 
     og_vs_imputed_scores = pd.concat(og_vs_imputed_scores)
-
-    ae_scores = pd.read_csv(Path("results", "tma", "ae_scores.csv"))
-    ae_scores = ae_scores[ae_scores["Marker"].isin(SHARED_MARKERS)]
-    ae_scores = ae_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
-
-    en_scores = pd.read_csv(Path("results", "tma", "en_scores.csv"))
-    # select Biopsy, Patient, Marker, MAE columns
-    en_scores = en_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
-
-    lgbm_scores = pd.read_csv(Path("results", "tma", "lgbm_scores.csv"))
-    lgbm_scores = lgbm_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
-
-    network_scores = pd.concat([ae_scores, en_scores, lgbm_scores])
-    # select
-    network_scores = network_scores[network_scores["Marker"].isin(SHARED_MARKERS)]
-    # print(network_scores)
-    # create set of ae and en scores
-
-    # assert that both EN and AE have the same unique markers
-    assert set(ae_scores["Marker"].unique()) == set(en_scores["Marker"].unique())
-
     downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
 
     # Create new figure
@@ -176,7 +155,7 @@ if __name__ == '__main__':
 
     # Create a subplot in the third row of the outer GridSpec
     ax3 = fig.add_subplot(gspec[2])
-    ax3.text(0, 1.15, "c", transform=ax3.transAxes,
+    ax3.text(0, 1.15, "d", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax3.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
