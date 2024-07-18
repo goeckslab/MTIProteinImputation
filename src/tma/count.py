@@ -31,3 +31,13 @@ patients_df = pd.DataFrame(patients)
 # print unique patients
 print(len(patients_df["Patient"].unique()))
 
+cell_count = []
+for core in patient_mapping.keys():
+    try:
+        # load file
+        df = pd.read_csv(f"data/tma/base/{core}.csv")
+        cell_count.append(len(df))
+    except:
+        continue
+
+print(f"Average cell count: {sum(cell_count) / len(cell_count)}")
