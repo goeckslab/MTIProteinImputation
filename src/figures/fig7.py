@@ -23,23 +23,54 @@ def filter_iqr(data):
     return lower_bound, upper_bound
 
 
-def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame):
+# Function to check overlap between two tiles
+def is_overlapping(tile1, tile2):
+    return not (tile1['x_end'] < tile2['x_start'] or tile1['x_start'] > tile2['x_end'] or
+                tile1['y_end'] < tile2['y_start'] or tile1['y_start'] > tile2['y_end'])
+
+# Function to select non-overlapping tiles
+def select_non_overlapping_tiles(df, num_tiles=20):
+    selected_tiles = []
+    for _, row in df.iterrows():
+        if len(selected_tiles) >= num_tiles:
+            break
+        overlap = any(is_overlapping(row, selected_tile) for selected_tile in selected_tiles)
+        if not overlap:
+            selected_tiles.append(row)
+    return pd.DataFrame(selected_tiles)
+
+def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame, x_start, y_start, x_end, y_end):
     # Calculate IQR bounds for X_centroid and Y_centroid
-    x_lower, x_upper = filter_iqr(biopsy['X_centroid'])
-    y_lower, y_upper = filter_iqr(biopsy['Y_centroid'])
+    # x_lower, x_upper = filter_iqr(biopsy['X_centroid'])
+    # y_lower, y_upper = filter_iqr(biopsy['Y_centroid'])
+    x_lower, x_upper = x_start, x_end
+    y_lower, y_upper = y_start, y_end
 
     # Filter the DataFrame based on the IQR bounds
     filtered_df = biopsy[(biopsy['X_centroid'] >= x_lower) & (biopsy['X_centroid'] <= x_upper) &
                          (biopsy['Y_centroid'] >= y_lower) & (biopsy['Y_centroid'] <= y_upper)]
 
     ax = sns.scatterplot(data=filtered_df, x="X_centroid", y="Y_centroid")
+
+    # filter matching tiles
+    matching_tiles = matching_tiles[(matching_tiles["x_start"] >= x_lower) & (matching_tiles["x_end"] <= x_upper) &
+                                    (matching_tiles["y_start"] >= y_lower) & (matching_tiles["y_end"] <= y_upper)]
+
+    # only keep 20 distinct non overlapping tiles
+    matching_tiles = select_non_overlapping_tiles(matching_tiles, num_tiles=25)
+
+
     for i, row in matching_tiles.iterrows():
         x = row["x_start"]
         y = row["y_start"]
         width = row["x_end"] - row["x_start"]
         height = row["y_end"] - row["y_start"]
-        ax.add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
+        ax.add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none', linewidth=2.5))
 
+
+    # rename x and y axis
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
     # Remove box around the plot
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -121,43 +152,45 @@ if __name__ == '__main__':
 
     # Create new figure
     # Create the figure and outer GridSpec
-    fig = plt.figure(figsize=(10, 7), dpi=100)
+    fig = plt.figure(figsize=(10, 8), dpi=300)
     gspec = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
 
     ax1 = fig.add_subplot(gspec[0, :])
     ax1.text(0, 1.15, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax1.set_title("Downstream Workflow", rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax1.set_title("Downstream Workflow", rotation='vertical', x=-0.05, y=0, fontsize=8)
     ax1.imshow(downstream_workflow, aspect='auto')
     # remove y axis from ax1
     ax1.set_yticks([])
     ax1.set_xticks([])
 
     # Create a nested GridSpec in the second row of the outer GridSpec
-    inner_gs = gridspec.GridSpecFromSubplotSpec(1, 4, subplot_spec=gspec[1], wspace=0.5)
+    inner_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gspec[1], wspace=0.5)
 
     # Create a subplot in the first column of the nested GridSpec
-    ax4 = fig.add_subplot(inner_gs[0, :2])
+    ax4 = fig.add_subplot(inner_gs[0, :1])
     ax4.text(0, 1.15, "b", transform=ax4.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax4.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
     ax4 = create_predictive_tissue(pd.read_csv("data/bxs/9_2_1.csv"),
-                                   pd.read_csv("results/predictive_tissue/9_2/original_pre_matching_tiles.csv"))
+                                   pd.read_csv("results/predictive_tissue/9_2/original_pre_matching_tiles.csv"),
+                                   x_start=7000, x_end=8500, y_start=4000, y_end=6000)
 
     # Create a subplot in the first column of the nested GridSpec
-    ax5 = fig.add_subplot(inner_gs[0, 2:])
+    ax5 = fig.add_subplot(inner_gs[0, 1:])
     ax5.text(0, 1.15, "c", transform=ax5.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax5.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
     ax5 = create_predictive_tissue(pd.read_csv("data/bxs/9_2_2.csv"),
-                                   pd.read_csv("results/predictive_tissue/9_2/original_post_matching_tiles.csv"))
+                                   pd.read_csv("results/predictive_tissue/9_2/original_post_matching_tiles.csv"),
+                                   x_start=6000, x_end=8000, y_start=7000, y_end=10000)
 
     # Create a subplot in the third row of the outer GridSpec
     ax3 = fig.add_subplot(gspec[2])
     ax3.text(0, 1.15, "d", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax3.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
+    ax3.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.1, fontsize=8)
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
 
     plt.tight_layout()

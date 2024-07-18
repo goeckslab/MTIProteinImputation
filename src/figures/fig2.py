@@ -74,8 +74,8 @@ def create_boxen_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
 
 
 def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str) -> plt.Figure:
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
-                       palette={"EN": "lightblue", "LGBM": "orange"}, showfliers=False)
+    ax = sns.barplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
+                       palette={"EN": "lightblue", "LGBM": "orange"})
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")

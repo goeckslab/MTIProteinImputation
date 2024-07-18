@@ -154,6 +154,8 @@ if __name__ == '__main__':
     ax3.set_title('AE MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
     ax3 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
 
+    # add title
+    plt.suptitle("MAE for Elastic Net, Light GBM and AE (IP vs AP)", fontsize=16)
     plt.tight_layout()
 
     plt.savefig(Path(image_folder, "ip_vs_ap.png"), dpi=300, bbox_inches='tight')

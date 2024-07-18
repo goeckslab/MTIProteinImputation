@@ -14,7 +14,7 @@ image_folder = Path("figures", "fig4")
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: []) -> plt.Figure:
     hue = "Model"
     x = "Marker"
-    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
+    ax = sns.barplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
                        palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
 
     # plt.title(title)

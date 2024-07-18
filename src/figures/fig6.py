@@ -122,8 +122,6 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
                 ax.text(x_pos, y_pos - 0.06, '_____', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
                         transform=ax.get_xaxis_transform())
 
-
-
     pairs = []
     for micron in microns:
         if micron == "0 µm":
@@ -250,7 +248,7 @@ if __name__ == '__main__':
     gspec = fig.add_gridspec(3, 3)
 
     ax1 = fig.add_subplot(gspec[0, :])
-    ax1.set_title('AE S 0 vs. 15 µm, 60 µm and 120 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
+    ax1.set_title('AE S 0 µm, 30 µm and 60 µm', rotation='vertical', x=-0.05, y=-0.2, fontsize=8)
     ax1.text(-0.01, 1.3, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax3
@@ -261,7 +259,7 @@ if __name__ == '__main__':
                             ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB"])
 
     ax2 = fig.add_subplot(gspec[1, :])
-    ax2.set_title('AE M 0 vs. 15 µm, 60 µm and 120 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
+    ax2.set_title('AE M 0 µm, 30 µm and 60 µm', rotation='vertical', x=-0.05, y=-0.2, fontsize=8)
     ax2.text(x=-0.01, y=1.3, s="b", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax4
