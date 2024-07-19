@@ -6,30 +6,20 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
-from matplotlib.patches import PathPatch
-from matplotlib.textpath import TextPath
 from typing import List
 from statannotations.Annotator import Annotator
 import logging
 
-# logging_path = Path("src", "figures", "fig6.log")
-# logging.root.handlers = []
-# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
-#                    handlers=[
-#                        logging.FileHandler(logging_path),
-#                        logging.StreamHandler()
-#                    ])
-
 image_folder = Path("figures", "fig6")
 
 
-def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List, microns: List) -> plt.Figure:
+def create_bar_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List, microns: List) -> plt.Figure:
     hue = "Network"
     x = "FE"
     order = microns
     hue_order = ["LGBM", "AE", "AE M"]
-    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, order=order,
-                       palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
+    ax = sns.barplot(data=data, x=x, y=metric, hue=hue, order=order,
+                     palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
 
     # plt.title(title)
     # remove y axis label
@@ -48,7 +38,7 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List, 
     ax.spines['bottom'].set_visible(False)
 
     # remove legend from fig
-    ax.legend(prop={"size": 7}, loc='center', bbox_to_anchor=[0.3, 0.7])
+    ax.legend(prop={"size": 7}, loc='center', bbox_to_anchor=[0.05, 0.7])
     # plt.legend().set_visible(False)
 
     pairs = []
@@ -74,13 +64,13 @@ def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List, 
     return ax
 
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List, model: str, legend_position: List,
+def create_bar_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List, model: str, legend_position: List,
                       ticks_with_arrows: List):
     color_palette = {"0 µm": "grey", "15 µm": "magenta", "30 µm": "purple", "60 µm": "green", "90 µm": "yellow",
                      "120 µm": "red"}
     hue = "FE"
     hue_order = microns
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette, showfliers=False)
+    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
 
     ax.set_ylabel("")
     ax.set_xlabel("")
@@ -91,7 +81,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
     ax.spines['left'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
 
-    ax.legend(bbox_to_anchor=legend_position, loc='center', fontsize=7, ncol=3)
+    ax.legend(bbox_to_anchor=legend_position, loc='center', fontsize=7, ncol=2)
 
     # reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
@@ -254,9 +244,10 @@ if __name__ == '__main__':
     # remove box from ax3
     plt.box(False)
 
-    ax1 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0, 0.6],
-                            microns=spatial_categories_strings, model="AE", legend_position=[0.15, 0.9],
-                            ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB"])
+    ax1 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.3],
+                            microns=spatial_categories_strings, model="AE", legend_position=[0.10, 0.8],
+                            ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB", 'EGFR', 'CK17', 'aSMA',
+                                               'p21', "Vimentin"])
 
     ax2 = fig.add_subplot(gspec[1, :])
     ax2.set_title('AE M 0 µm, 30 µm and 60 µm', rotation='vertical', x=-0.05, y=-0.2, fontsize=8)
@@ -264,16 +255,16 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax4
     plt.box(False)
-    ax2 = create_boxen_plot(data=ae_m_scores, metric="MAE", ylim=[0, 0.6],
-                            microns=spatial_categories_strings, model="AE M", legend_position=[0.15, 0.9],
-                            ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB"])
+    ax2 = create_bar_plot(data=ae_m_scores, metric="MAE", ylim=[0, 0.3],
+                            microns=spatial_categories_strings, model="AE M", legend_position=[0.10, 0.8],
+                            ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB", "CK17", "EGFR", "aSMA"])
 
     ax3 = fig.add_subplot(gspec[2, :])
     ax3.text(x=-0.01, y=1.3, s="c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax3.set_title('Performance', rotation='vertical', x=-0.05, y=0, fontsize=8)
-    ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8],
+    ax3 = create_bar_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.3],
                                          microns=spatial_categories_strings)
 
     plt.tight_layout()

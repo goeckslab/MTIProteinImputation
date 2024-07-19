@@ -26,7 +26,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
 
     hue = "FE"
     hue_order = microns
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
+    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")
@@ -42,7 +42,7 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
     ax.spines['bottom'].set_visible(False)
 
     # Customize this list to specify which x-ticks should have arrows
-    ticks_with_arrows = ['ER', 'Ecad', 'PR', 'EGFR']
+    ticks_with_arrows = ['AR', 'EGFR', 'ER', 'EGFR', 'Ecad', 'CK14', 'PR', 'CK19']
 
     x_labels = ax.get_xticklabels()
 

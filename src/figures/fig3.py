@@ -12,10 +12,10 @@ from statannotations.Annotator import Annotator
 image_folder = Path("figures", "fig3")
 
 
-def create_boxen_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
+def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
     hue = "Network"
     hue_order = ["AE", "AE M"]
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
+    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
                        palette={"AE": "grey", "AE M": "darkgrey"})
 
     # Optional: Set title and remove axis labels if needed
@@ -66,58 +66,11 @@ def create_boxen_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> pl
     return ax
 
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
-    hue = "Mode"
-    hue_order = ["IP", "AP"]
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
-                       palette={"IP": "lightblue", "AP": "orange"})
-
-    # plt.title(title)
-    # remove y axis label
-    plt.ylabel("")
-    plt.xlabel("")
-    # plt.legend(loc='upper center')
-    plt.ylim(ylim[0], ylim[1])
-
-    # reduce font size of x and y ticks
-    ax.tick_params(axis='both', which='major', labelsize=8)
-
-    plt.legend(bbox_to_anchor=[0.7, 0.9], loc='center', ncol=2)
-
-    pairs = [
-        (("pRB", "IP"), ("pRB", "AP")),
-        (("CD45", "IP"), ("CD45", "AP")),
-        (("CK19", "IP"), ("CK19", "AP")),
-        (("Ki67", "IP"), ("Ki67", "AP")),
-        (("aSMA", "IP"), ("aSMA", "AP")),
-        (("Ecad", "IP"), ("Ecad", "AP")),
-        (("PR", "IP"), ("PR", "AP")),
-        (("CK14", "IP"), ("CK14", "AP")),
-        (("HER2", "IP"), ("HER2", "AP")),
-        (("AR", "IP"), ("AR", "AP")),
-        (("CK17", "IP"), ("CK17", "AP")),
-        (("p21", "IP"), ("p21", "AP")),
-        (("Vimentin", "IP"), ("Vimentin", "AP")),
-        (("pERK", "IP"), ("pERK", "AP")),
-        (("EGFR", "IP"), ("EGFR", "AP")),
-        (("ER", "IP"), ("ER", "AP")),
-    ]
-    order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
-             'pERK', 'EGFR', 'ER']
-    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
-                          verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
-                        comparisons_correction="Benjamini-Hochberg")
-    annotator.apply_and_annotate()
-
-    return ax
-
-
-def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
+def create_bar_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
     hue = "Network"
     x = "Mode"
     hue_order = ["LGBM", "EN", "AE", "AE M"]
-    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue,
+    ax = sns.barplot(data=data, x=x, y=metric, hue=hue,
                        palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey",
                                 "AE ALL": "lightgrey"})
 
@@ -232,14 +185,14 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax2.set_title('AE MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax2 = create_boxen_plot_ae_ae_m(data=combined_ae_scores, metric="MAE", ylim=[0.0, 0.8])
+    ax2 = create_bar_plot_ae_ae_m(data=combined_ae_scores, metric="MAE", ylim=[0.0, 0.3])
 
     ax3 = fig.add_subplot(gspec[5:7, :2])
     ax3.text(-0.08, 1.2, "c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax3.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
-    ax3 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
+    ax3 = create_bar_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.3])
 
     plt.tight_layout()
 
