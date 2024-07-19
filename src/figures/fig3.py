@@ -54,9 +54,10 @@ def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.
         (("pERK", "AE"), ("pERK", "AE M")),
         (("EGFR", "AE"), ("EGFR", "AE M")),
         (("ER", "AE"), ("ER", "AE M")),
+        (("Mean", "AE"), ("Mean", "AE M")),
     ]
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
-             'pERK', 'EGFR', 'ER']
+             'pERK', 'EGFR', 'ER', "Mean"]
     annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
@@ -145,6 +146,26 @@ if __name__ == '__main__':
     ae_m_scores.sort_values(by=["Marker"], inplace=True)
     # replace EXP WITH AP
     ae_m_scores["Mode"] = ae_m_scores["Mode"].replace({"EXP": "AP"})
+
+    # calculate mean performance for each marker and mode
+    ae_mean = ae_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    # calculate the mean of the mean for each mode
+    ae_mean = ae_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    ae_mean["Marker"] = "Mean"
+    ae_mean["FE"] = 0
+    ae_mean["HP"] = 0
+    ae_mean["Network"] = "AE"
+    ae_scores = ae_scores.append(ae_mean, ignore_index=True)
+
+    # calculate mean performance for each marker and mode
+    ae_m_mean = ae_m_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    # calculate the mean of the mean for each mode
+    ae_m_mean = ae_m_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    ae_m_mean["Marker"] = "Mean"
+    ae_m_mean["FE"] = 0
+    ae_m_mean["HP"] = 0
+    ae_m_mean["Network"] = "AE M"
+    ae_m_scores = ae_m_scores.append(ae_m_mean, ignore_index=True)
 
     # assert that FE column only contains 0
     assert (lgbm_scores["FE"] == 0).all(), "FE column should only contain 0 for lgbm_scores"

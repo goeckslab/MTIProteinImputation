@@ -7,7 +7,6 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 import sys
-from typing import List
 from statannotations.Annotator import Annotator
 
 image_folder = Path("figures", "supplements", "ip_vs_ap")
@@ -16,17 +15,18 @@ SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Mode", hue_order=["IP", "AP"],
-                       palette={"IP": "lightblue", "AP": "orange"})
+def create_bar_plot(data: pd.DataFrame, metric: str) -> plt.Figure:
+    # select only the shared proteins
+    data = data[data["Marker"].isin(SHARED_PROTEINS)]
+    ax = sns.barplot(data=data, x="Marker", y=metric, hue="Mode", hue_order=["IP", "AP"],
+                     palette={"IP": "gold", "AP": "lime"})
 
-    # plt.title(title)
     # remove y axis label
     plt.ylabel("")
     plt.xlabel("")
     # plt.legend(loc='upper center')
-    plt.ylim(ylim[0], ylim[1])
-    ax.set_yticks([0.1, 0.2, 0.3, 0.4, 0.5])
+    plt.ylim(0, 0.3)
+    ax.set_yticks([0.1, 0.2, 0.3])
 
     # reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
@@ -55,10 +55,9 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: 
         (("pERK", "IP"), ("pERK", "AP")),
         (("EGFR", "IP"), ("EGFR", "AP")),
         (("ER", "IP"), ("ER", "AP")),
-        (("Mean", "IP"), ("Mean", "AP")),
     ]
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
-             'pERK', 'EGFR', 'ER', "Mean"]
+             'pERK', 'EGFR', 'ER']
     annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
                           verbose=1)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
@@ -134,25 +133,25 @@ if __name__ == '__main__':
     gspec = fig.add_gridspec(6, 4)
 
     ax1 = fig.add_subplot(gspec[0:2, :])
-    ax1.text(-0.1, 1.15, "a", transform=ax1.transAxes,
+    ax1.text(-0.05, 1.15, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax1.set_title('Elastic Net MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax1 = create_boxen_plot(data=en_scores, metric="MAE", ylim=[0.0, 0.4])
+    ax1.set_title('Elastic Net MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax1 = create_bar_plot(data=en_scores, metric="MAE")
 
     ax2 = fig.add_subplot(gspec[2:4, :])
-    ax2.text(-0.1, 1.15, "b", transform=ax2.transAxes,
+    ax2.text(-0.05, 1.15, "b", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax2.set_title('Light GBM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0.0, 0.4])
+    ax2.set_title('Light GBM MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax2 = create_bar_plot(data=lgbm_scores, metric="MAE")
 
     ax3 = fig.add_subplot(gspec[4:6, :])
-    ax3.text(-0.1, 1.15, "c", transform=ax3.transAxes,
+    ax3.text(-0.05, 1.15, "c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax3.set_title('AE MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax3 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0.0, 0.4], show_legend=True)
+    ax3.set_title('AE MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax3 = create_bar_plot(data=ae_scores, metric="MAE")
 
     # add title
     plt.suptitle("MAE for Elastic Net, Light GBM and AE (IP vs AP)", fontsize=16)

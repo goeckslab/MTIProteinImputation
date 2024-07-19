@@ -6,6 +6,11 @@ echo "Preparing data..."
 
 echo "Data preparation complete."
 echo "Running experiments..."
+
+echo "Running null model experiments..."
+python3 src/null_model/run_experiments.sh
+echo "Null model experiments done."
+
 echo "Running EN experiments..."
 ./src/en/run_experiments.sh 30
 echo "EN experiments done."
@@ -26,12 +31,12 @@ echo "Cleaning up..."
 ./src/cleanup/clean_score_datasets.sh
 echo "Clean up complete."
 
-echo "Creating figures, tables and supplementary material..."
-./src/figures/create_figures.sh
-echo "Figures, tables and supplementary material created."
-
 echo "Running downstream tasks..."
 ./src/classifier/run_downstream_classification.sh
 echo "Downstream tasks complete."
+
+echo "Creating figures, tables and supplementary material..."
+./src/figures/create_figures.sh
+echo "Figures, tables and supplementary material created."
 
 echo "Script complete."

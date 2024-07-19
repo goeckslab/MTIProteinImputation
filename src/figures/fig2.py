@@ -15,7 +15,7 @@ SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 
 
-def create_boxen_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
+def create_bar_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
     hue = "Model"
     ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, hue_order=["Null", "EN"],
                      palette={"EN": "lightblue", "Null": "red"})
@@ -75,7 +75,7 @@ def create_boxen_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
 
 def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str) -> plt.Figure:
     ax = sns.barplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
-                       palette={"EN": "lightblue", "LGBM": "orange"})
+                     palette={"EN": "lightblue", "LGBM": "orange"})
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")
@@ -178,17 +178,17 @@ if __name__ == '__main__':
     en_mean = en_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
     en_mean["Marker"] = "Mean"
     en_mean["FE"] = 0
-    en_mean["HP"] = 1
+    en_mean["HP"] = 0
     en_mean["Network"] = "EN"
     en_scores = en_scores.append(en_mean, ignore_index=True)
 
     # calculate mean performance for each marker and mode
-    null_scores = null_model_scores.groupby(["Model", "Biopsy", "Marker"]).mean(numeric_only=True).reset_index()
+    null_mean = null_model_scores.groupby(["Model", "Biopsy", "Marker"]).mean(numeric_only=True).reset_index()
     # calculate mean for each model
-    null_scores["Marker"] = "Mean"
-    null_scores["FE"] = 0
-    null_scores["HP"] = 1
-    null_model_scores = null_model_scores.append(null_scores, ignore_index=True)
+    null_mean["Marker"] = "Mean"
+    null_mean["FE"] = 0
+    null_mean["HP"] = 0
+    null_model_scores = null_model_scores.append(null_mean, ignore_index=True)
 
     combined_en_lgbm_scores = pd.concat([en_scores, lgbm_scores])
 
@@ -253,7 +253,7 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax1 = create_boxen_plot_null_model(data=null_model_scores, metric="MAE")
+    ax1 = create_bar_plot_null_model(data=null_model_scores, metric="MAE")
 
     ax2 = fig.add_subplot(gspec[4:6, :])
     ax2.text(-0.1, 1.15, "c", transform=ax2.transAxes,

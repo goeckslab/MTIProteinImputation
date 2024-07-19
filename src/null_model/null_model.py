@@ -2,7 +2,6 @@ import pandas as pd
 from pathlib import Path
 import os
 from tqdm import tqdm
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 import numpy as np
 from sklearn.linear_model import ElasticNetCV
