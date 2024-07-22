@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     ax3 = fig.add_subplot(gspec[2, :])
     ax3.set_title('AE M 0 µm and 120 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
-    ax3.text(x=-0.01, y=1.3, s="b", transform=ax3.transAxes,
+    ax3.text(x=-0.01, y=1.3, s="c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax4
     plt.box(False)
