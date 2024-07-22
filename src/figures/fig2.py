@@ -203,10 +203,11 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(10, 8), dpi=300)
     gspec = fig.add_gridspec(6, 4)
 
-    ax11 = fig.add_subplot(gspec[2:4, :1])
+
+    ax11 = fig.add_subplot(gspec[4:6, :1])
     # remove box from ax1
     plt.box(False)
-    ax11.text(-0.5, 1.15, "b", transform=ax11.transAxes,
+    ax11.text(-0.5, 1.15, "c", transform=ax11.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
     # sns.histplot(gt, color="blue", label="Expression", kde=True)
@@ -216,7 +217,7 @@ if __name__ == '__main__':
     sns.histplot(bx_data["9_14"]["CK19"], color="yellow", ax=ax11, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["CK19"], color="red", ax=ax11, kde=True, stat="count")
 
-    ax12 = fig.add_subplot(gspec[2:4, 1:2])
+    ax12 = fig.add_subplot(gspec[4:6, 1:2])
     # remove box from ax1
     plt.box(False)
 
@@ -226,7 +227,7 @@ if __name__ == '__main__':
     sns.histplot(bx_data["9_14"]["ER"], color="yellow", ax=ax12, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["ER"], color="red", ax=ax12, kde=True, stat="count")
 
-    ax13 = fig.add_subplot(gspec[2:4, 2:3])
+    ax13 = fig.add_subplot(gspec[4:6, 2:3])
     # remove box from ax1
     plt.box(False)
 
@@ -236,7 +237,7 @@ if __name__ == '__main__':
     sns.histplot(bx_data["9_14"]["pRB"], color="yellow", ax=ax13, kde=True, stat="count")
     sns.histplot(bx_data["9_15"]["pRB"], color="red", ax=ax13, kde=True, stat="count")
 
-    ax14 = fig.add_subplot(gspec[2:4, 3:4])
+    ax14 = fig.add_subplot(gspec[4:6, 3:4])
     # remove box from ax1
     plt.box(False)
 
@@ -255,8 +256,8 @@ if __name__ == '__main__':
     ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
     ax1 = create_bar_plot_null_model(data=null_model_scores, metric="MAE")
 
-    ax2 = fig.add_subplot(gspec[4:6, :])
-    ax2.text(-0.1, 1.15, "c", transform=ax2.transAxes,
+    ax2 = fig.add_subplot(gspec[2:4, :])
+    ax2.text(-0.1, 1.15, "b", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
