@@ -1,0 +1,13 @@
+{
+    "biopsy": "B6",
+    "patient": "HTA14_17",
+    "mode": "EXP",
+    "mean_squared_error": 5.2866740186579255,
+    "mean_absolute_error": 2.1079635011765587,
+    "root_mean_squared_error": 2.299276846892937,
+    "mape": 70257178183.69893,
+    "marker": "CK19",
+    "model": "elastic_net",
+    "l1_ratio": 0.7,
+    "experiment_id": 0
+}
