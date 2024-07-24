@@ -42,6 +42,15 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
     # Adjust legend position
     ax.legend(bbox_to_anchor=[0.6, 0.95], loc='center', ncol=2)
 
+    # Change font style of the 'mean' column
+    for label in ax.get_xticklabels():
+        if label.get_text() == 'Mean':
+            label.set_fontstyle('italic')
+            label.set_fontweight('bold')
+    # rename mean column to Mean of all proteins
+    ax.set_xticklabels(
+        ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()])
+
     hue_order = ["Null", "EN"]
     pairs = [
         (("pRB", "Null"), ("pRB", "EN")),
@@ -73,7 +82,7 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
     return ax
 
 
-def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str) -> plt.Figure:
+def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str) -> plt.Figure:
     ax = sns.barplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
                      palette={"EN": "lightblue", "LGBM": "orange"})
 
@@ -95,6 +104,15 @@ def create_boxen_plot_en_vs_lgbm(data: pd.DataFrame, metric: str) -> plt.Figure:
 
     # Adjust legend position
     ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
+
+    # Change font style of the 'mean' column
+    for label in ax.get_xticklabels():
+        if label.get_text() == 'Mean':
+            label.set_fontstyle('italic')
+            label.set_fontweight('bold')
+    # rename mean column to Mean of all proteins
+    ax.set_xticklabels(
+        ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()])
 
     hue = "Network"
     hue_order = ["EN", "LGBM"]
@@ -203,7 +221,6 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(10, 8), dpi=300)
     gspec = fig.add_gridspec(6, 4)
 
-
     ax11 = fig.add_subplot(gspec[4:6, :1])
     # remove box from ax1
     plt.box(False)
@@ -261,7 +278,7 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
     ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.1, y=0, fontsize=12)
-    ax2 = create_boxen_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE")
+    ax2 = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE")
 
     plt.tight_layout()
 

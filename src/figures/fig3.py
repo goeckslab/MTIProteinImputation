@@ -16,7 +16,7 @@ def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.
     hue = "Network"
     hue_order = ["AE", "AE M"]
     ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
-                       palette={"AE": "grey", "AE M": "darkgrey"})
+                     palette={"AE": "grey", "AE M": "darkgrey"})
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")
@@ -24,6 +24,22 @@ def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.
 
     # Set y axis limits
     ax.set_ylim(ylim[0], ylim[1])
+
+    # Customize the x-axis tick labels
+    new_labels = []
+    for label in ax.get_xticklabels():
+        if label.get_text() == 'Mean':
+            new_label = 'Mean of\n all proteins'  # Change the label text here
+            new_labels.append(new_label)
+            label.set_fontstyle('italic')
+            label.set_fontweight('bold')
+        else:
+            new_labels.append(label.get_text())
+
+    print(new_labels)
+
+    # Set the new tick labels
+    ax.set_xticklabels(new_labels)
 
     # Reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
@@ -72,8 +88,8 @@ def create_bar_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) ->
     x = "Mode"
     hue_order = ["LGBM", "EN", "AE", "AE M"]
     ax = sns.barplot(data=data, x=x, y=metric, hue=hue,
-                       palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey",
-                                "AE ALL": "lightgrey"})
+                     palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey",
+                              "AE ALL": "lightgrey"})
 
     # plt.title(title)
     # remove y axis label
@@ -89,7 +105,6 @@ def create_bar_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) ->
     plt.box(False)
     # remove legend from fig
     plt.legend(prop={"size": 7}, loc='upper center')
-    # plt.legend().set_visible(False)
 
     pairs = [
         (("AP", "LGBM"), ("AP", "EN")),
