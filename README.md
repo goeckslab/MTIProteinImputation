@@ -73,7 +73,11 @@ To create all spatial features, run the following script from the root dir:
 
 #### Step 2b: Run Analyses
 
-##### Step 2b.1: Elastic Net
+##### Step 2b.1 Null Model
+To run the Null Model experiments, run the following script from the root dir:
+```./src/null_model/run_experiments.sh```
+
+##### Step 2b.2: Elastic Net
 
 To run the Elastic Net experiments, run the following script from the root dir:
 ```./src/en/run_experiments.sh <num_iterations>```
@@ -82,17 +86,26 @@ E.g.
 ```./src/en/run_experiments.sh 30 ```
 This will run the experiments 30 times.
 
-##### Step 2b.2: LGBM
+##### Step 2b.3: LGBM
 
 To run the LGBM experiments, run the following script from the root dir:
 ```./src/lgbm/run_experiments.sh <num_iterations>```
 
-##### Step 2b.3: Auto Encoder
+##### Step 2b.4: Auto Encoder
 
 To run the Auto Encoder experiments, run the following script from the root dir:
 ```./src/ae/run_experiments.sh <num_iterations>```
 
-##### Step 2b.4: Plotting
+##### Step 2b.5: Run cleanup script
+```./src/cleanup/clean_score_datasets.sh```
+
+#### Step 2b.6: Create required supplemental material
+```./src/data_preparation/create_ae_supplemental_files.sh```
+
+#### Step 2b.7: Run downstream classification analysis
+```./src/classifier/run_downstream_classification.sh```
+
+##### Step 2b.8: Plotting
 
 To create all figures and table as well as supplemental material, run the following script from the root dir:
 ```./src/figures/create_figures.sh```

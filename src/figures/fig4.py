@@ -1,191 +1,100 @@
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
-import os, sys
-from typing import List
 from statannotations.Annotator import Annotator
+
+PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
+SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
+                  'pERK', 'EGFR', 'ER']
 
 image_folder = Path("figures", "fig4")
 
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, show_legend: bool = False) -> plt.Figure:
-    hue = "Mode"
-    hue_order = ["IP", "AP"]
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
-                       palette={"IP": "lightblue", "AP": "orange"})
+def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: []) -> plt.Figure:
+    hue = "Model"
+    x = "Marker"
+    ax = sns.barplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
+                       palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
 
     # plt.title(title)
     # remove y axis label
-    plt.ylabel("")
-    plt.xlabel("")
+    ax.set_ylabel("")
+    ax.set_xlabel("")
     # plt.legend(loc='upper center')
-    plt.ylim(ylim[0], ylim[1])
+    #ax.set_yscale('log', base=10)
+    # set ylim
+    #ax.set_ylim(ylim)
 
     # reduce font size of x and y ticks
     ax.tick_params(axis='both', which='major', labelsize=8)
 
-    y_ticks = [item.get_text() for item in fig.axes[0].get_yticklabels()]
-    x_ticks = [item.get_text() for item in fig.axes[0].get_xticklabels()]
-    # set y ticks of fig
+    # Remove box around the plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
 
-    plt.legend(bbox_to_anchor=[0.7, 0.9], loc='center', ncol=2)
+    pairs = []
+    for marker in data["Marker"].unique():
+        pairs.append(((marker, "LGBM"), (marker, "AE")))
+        pairs.append(((marker, "EN"), (marker, "LGBM")))
+        pairs.append(((marker, "EN"), (marker, "AE")))
 
-    pairs = [
-        (("pRB", "IP"), ("pRB", "AP")),
-        (("CD45", "IP"), ("CD45", "AP")),
-        (("CK19", "IP"), ("CK19", "AP")),
-        (("Ki67", "IP"), ("Ki67", "AP")),
-        (("aSMA", "IP"), ("aSMA", "AP")),
-        (("Ecad", "IP"), ("Ecad", "AP")),
-        (("PR", "IP"), ("PR", "AP")),
-        (("CK14", "IP"), ("CK14", "AP")),
-        (("HER2", "IP"), ("HER2", "AP")),
-        (("AR", "IP"), ("AR", "AP")),
-        (("CK17", "IP"), ("CK17", "AP")),
-        (("p21", "IP"), ("p21", "AP")),
-        (("Vimentin", "IP"), ("Vimentin", "AP")),
-        (("pERK", "IP"), ("pERK", "AP")),
-        (("EGFR", "IP"), ("EGFR", "AP")),
-        (("ER", "IP"), ("ER", "AP")),
-    ]
-    order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
-             'pERK', 'EGFR', 'ER']
-    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
-                          verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
+    annotator = Annotator(ax, pairs, data=data, x=x, y=metric, hue=hue, verbose=1)
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
-    return ax
-
-
-def create_boxen_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Figure:
-    hue = "Network"
-    x = "Mode"
-    order = ["IP", "AP"]
-    hue_order = ["LGBM", "EN", "AE", "AE M"]
-    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, order=order,
-                       palette={"EN": "purple", "LGBM": "green", "AE": "grey", "AE M": "darkgrey",
-                                "AE ALL": "lightgrey"})
-
-    # plt.title(title)
-    # remove y axis label
-    plt.ylabel("")
-    plt.xlabel("")
-    # plt.legend(loc='upper center')
-    plt.ylim(ylim[0], ylim[1])
-
-    # reduce font size of x and y ticks
-    ax.tick_params(axis='both', which='major', labelsize=8)
-
-    # set y ticks of fig
-    plt.box(False)
-    # remove legend from fig
-    plt.legend(prop={"size": 7}, loc='upper center')
-    # plt.legend().set_visible(False)
-
-    pairs = [
-        (("IP", "LGBM"), ("IP", "EN")),
-        (("IP", "LGBM"), ("IP", "AE")),
-        (("IP", "LGBM"), ("IP", "AE M")),
-        (("IP", "AE"), ("IP", "AE M")),
-        (("AP", "LGBM"), ("AP", "EN")),
-        (("AP", "LGBM"), ("AP", "AE")),
-        (("AP", "LGBM"), ("AP", "AE M")),
-        (("AP", "AE"), ("AP", "AE M")),
-    ]
-
-    annotator = Annotator(ax, pairs, data=data, x=x, y=metric, order=order, hue=hue, hue_order=hue_order,
-                          verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside')
-    annotator.apply_and_annotate()
+    # change legend position and and add only 1 row
+    ax.legend(prop={"size": 7}, loc='center right', bbox_to_anchor=[1, 0.95], ncol=3)
 
     return ax
 
 
 if __name__ == '__main__':
+    dpi = 300
     if not image_folder.exists():
-        image_folder.mkdir(parents=True, exist_ok=True)
+        image_folder.mkdir(parents=True)
 
-    lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
-    lgbm_scores = lgbm_scores[lgbm_scores["FE"] == 0]
-    # select only non hp scores
-    lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
-    # replace EXP WITH AP
-    lgbm_scores["Mode"] = lgbm_scores["Mode"].replace({"EXP": "AP"})
+    ae_scores = pd.read_csv(Path("results", "tma", "ae_scores.csv"))
+    ae_scores = ae_scores[ae_scores["Marker"].isin(SHARED_MARKERS)]
+    ae_scores = ae_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # scale scores between 0 and 1
+    ae_scores["MAE"] = (ae_scores["MAE"] - ae_scores["MAE"].min()) / (ae_scores["MAE"].max() - ae_scores["MAE"].min())
 
-    en_scores = pd.read_csv(Path("results", "scores", "en", "scores.csv"))
-    en_scores = en_scores[en_scores["FE"] == 0]
-    # replace EXP WITH AP
-    en_scores["Mode"] = en_scores["Mode"].replace({"EXP": "AP"})
-
-    ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
-    ae_m_scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
-    # replace EXP WITH AP
-    ae_scores["Mode"] = ae_scores["Mode"].replace({"EXP": "AP"})
-
-    # Select ae scores where fe  == 0, replace value == mean and noise  == 0
-    ae_scores = ae_scores[
-        (ae_scores["FE"] == 0) & (ae_scores["Replace Value"] == "mean") & (ae_scores["Noise"] == 0)]
-    # select only non hp scores
-    ae_scores = ae_scores[ae_scores["HP"] == 0]
-    ae_scores.sort_values(by=["Marker"], inplace=True)
-
-    # Select ae scores where fe  == 0, replace value == mean and noise  == 0
-    ae_m_scores = ae_m_scores[
-        (ae_m_scores["FE"] == 0) & (ae_m_scores["Replace Value"] == "mean") & (ae_m_scores["Noise"] == 0)]
-    # select only non hp scores
-    ae_m_scores = ae_m_scores[ae_m_scores["HP"] == 0]
-    ae_m_scores.sort_values(by=["Marker"], inplace=True)
-    # replace EXP WITH AP
-    ae_m_scores["Mode"] = ae_m_scores["Mode"].replace({"EXP": "AP"})
-
-    # assert that FE column only contains 0
-    assert (lgbm_scores["FE"] == 0).all(), "FE column should only contain 0 for lgbm_scores"
-    assert (ae_m_scores["FE"] == 0).all(), "FE column should only contain 0 for ae_m_scores"
-    assert (ae_scores["FE"] == 0).all(), "FE column should only contain 0 for ae_scores"
-
-    # merge all scores together
-    all_scores = pd.concat([lgbm_scores, en_scores, ae_scores, ae_m_scores], axis=0)
-
-    # remove column hyper, experiment, Noise, Replace Value
-    all_scores.drop(columns=["HP", "Experiment", "Noise", "Replace Value", "Hyper"], inplace=True)
-    # rename MOde AP to AP
-    all_scores["Mode"] = all_scores["Mode"].replace({"EXP": "AP"})
+    en_scores = pd.read_csv(Path("results", "tma", "en_scores.csv"))
+    # select Biopsy, Patient, Marker, MAE columns
+    en_scores = en_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # scale scores between 0 and 1
+    en_scores["MAE"] = (en_scores["MAE"] - en_scores["MAE"].min()) / (en_scores["MAE"].max() - en_scores["MAE"].min())
 
 
+    lgbm_scores = pd.read_csv(Path("results", "tma", "lgbm_scores.csv"))
+    lgbm_scores = lgbm_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # scale scores between 0 and 1
+    lgbm_scores["MAE"] = (lgbm_scores["MAE"] - lgbm_scores["MAE"].min()) / (lgbm_scores["MAE"].max() - lgbm_scores["MAE"].min())
 
-    fig = plt.figure(figsize=(10, 10), dpi=300)
-    gspec = fig.add_gridspec(6, 3)
+    network_scores = pd.concat([ae_scores, en_scores, lgbm_scores])
+    # select
+    network_scores = network_scores[network_scores["Marker"].isin(SHARED_MARKERS)]
+    # print(network_scores)
+    # create set of ae and en scores
 
+    # assert that both EN and AE have the same unique markers
+    assert set(ae_scores["Marker"].unique()) == set(en_scores["Marker"].unique())
 
-    ax2 = fig.add_subplot(gspec[:2, :])
-    ax2.text(-0.05, 1.3, "a", transform=ax2.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    plt.box(False)
-    ax2.set_title("AE (Single Protein) MAE", rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax2 = create_boxen_plot(data=ae_scores, metric="MAE", ylim=[0.0, 0.8])
+    # Create new figure
+    fig = plt.figure(figsize=(10, 7), dpi=dpi)
+    gspec = fig.add_gridspec(1, 1)
 
-    ax3 = fig.add_subplot(gspec[2:4, :])
-    ax3.text(-0.05, 1.2, "b", transform=ax3.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    plt.box(False)
-    ax3.set_title('AE (Multi Protein) MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax3 = create_boxen_plot(data=ae_m_scores, metric="MAE", ylim=[0.0, 0.8], show_legend=True)
-
-    ax4 = fig.add_subplot(gspec[4:6, :2])
-    ax4.text(-0.08, 1.2, "c", transform=ax4.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    plt.box(False)
-    ax4.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
-    ax4 = create_boxen_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.8])
+    ax1 = fig.add_subplot(gspec[:, :])
+    #ax1.text(0, 1.15, "b", transform=ax1.transAxes,
+    #         fontsize=12, fontweight='bold', va='top', ha='right')
+    ax1.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
+    ax1 = create_boxen_plot(network_scores, "MAE", [0, 1])
+    # set ax2 tit
 
     plt.tight_layout()
-
-    # save figure
-    fig.savefig(Path(image_folder, "fig4.png"), dpi=300, bbox_inches='tight')
-    fig.savefig(Path(image_folder, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')
-
-    sys.exit()
+    plt.savefig(Path(image_folder, "fig4.png"), dpi=300)
+    plt.savefig(Path(image_folder, "fig4.eps"), dpi=300)
