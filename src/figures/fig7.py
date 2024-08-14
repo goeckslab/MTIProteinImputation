@@ -190,7 +190,7 @@ if __name__ == '__main__':
     ax3 = fig.add_subplot(gspec[2])
     ax3.text(0, 1.15, "d", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax3.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.1, fontsize=8)
+    ax3.set_title('Original vs Imputed score', rotation='vertical', x=-0.05, y=0.1, fontsize=8)
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
 
     plt.tight_layout()
