@@ -208,6 +208,7 @@ if __name__ == '__main__':
             og_train_data = {biopsy: data for biopsy, data in og_data.items() if patient not in biopsy}
             removed_train_data = {biopsy: data.copy() for biopsy, data in og_data.items() if patient not in biopsy}
 
+
             # create train sets
             imp_train_set = pd.concat(imp_train_data.values())
             og_train_set = pd.concat(og_train_data.values())
@@ -277,6 +278,7 @@ if __name__ == '__main__':
             rm_score = rm_results["Accuracy"].values[0]
 
             print(f"Score for protein {target_protein} using removed data: {rm_score}")
+
 
             imp_experiment = ClassificationExperiment()
             imp_experiment.setup(data=imp_train_set, target="Treatment", index=True,

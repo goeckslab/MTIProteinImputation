@@ -40,7 +40,7 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str) -> plt.Figure:
     ax.spines['bottom'].set_visible(False)
 
     # Adjust legend position
-    ax.legend(bbox_to_anchor=[0.6, 0.95], loc='center', ncol=2)
+    ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
 
     # Change font style of the 'mean' column
     for label in ax.get_xticklabels():
