@@ -202,33 +202,52 @@ if __name__ == '__main__':
             # create dictionary comprehension to select all biopsies for the current patient
             imp_test_data = {biopsy: data for biopsy, data in imp_data.items() if patient in biopsy}
             og_test_data = {biopsy: data for biopsy, data in og_data.items() if patient in biopsy}
+            removed_test_data = {biopsy: data.copy() for biopsy, data in og_data.items() if patient in biopsy}
 
             imp_train_data = {biopsy: data for biopsy, data in imp_data.items() if patient not in biopsy}
             og_train_data = {biopsy: data for biopsy, data in og_data.items() if patient not in biopsy}
+            removed_train_data = {biopsy: data.copy() for biopsy, data in og_data.items() if patient not in biopsy}
 
             # create train sets
             imp_train_set = pd.concat(imp_train_data.values())
             og_train_set = pd.concat(og_train_data.values())
+            removed_train_set = pd.concat(removed_train_data.values())
 
             # bootstrap the data and use only 80%
             imp_train_set = imp_train_set.sample(frac=0.8, random_state=42)
             og_train_set = og_train_set.sample(frac=0.8, random_state=42)
+            removed_train_set = removed_train_set.sample(frac=0.8, random_state=42)
 
             # reset index
             imp_train_set.reset_index(drop=True, inplace=True)
             og_train_set.reset_index(drop=True, inplace=True)
+            removed_train_set.reset_index(drop=True, inplace=True)
 
             # create test sets
             imp_test_set = pd.concat(imp_test_data.values())
             og_test_set = pd.concat(og_test_data.values())
+            removed_test_set = pd.concat(removed_test_data.values())
 
             # bootstrap the data and use only 80%
             imp_test_set = imp_test_set.sample(frac=0.8, random_state=42)
             og_test_set = og_test_set.sample(frac=0.8, random_state=42)
+            removed_test_set = removed_test_set.sample(frac=0.8, random_state=42)
 
             # reset index
             imp_test_set.reset_index(drop=True, inplace=True)
             og_test_set.reset_index(drop=True, inplace=True)
+            removed_test_set.reset_index(drop=True, inplace=True)
+
+            # remove target protein from removed data
+            removed_train_set.drop(columns=[target_protein], inplace=True)
+            removed_test_set.drop(columns=[target_protein], inplace=True)
+
+            assert target_protein not in removed_train_set.columns, f"Target protein {target_protein} still in removed_train_set"
+            assert target_protein not in removed_test_set.columns, f"Target protein {target_protein} still in removed_test_set"
+            assert len(removed_train_set.columns) == len(
+                og_train_set.columns) - 1, f"Length of removed_train_set and og_train_set should be -1 length, but got {len(removed_train_set)} and {len(og_train_set)}"
+            assert len(removed_test_set.columns) == len(
+                og_test_set.columns) - 1, f"Length of removed_test_set and og_test_set should be -1 length, but got {len(removed_test_set)} and {len(og_test_set)}"
 
             print(f"Running experiment for target: {target_protein}")
 
@@ -245,6 +264,20 @@ if __name__ == '__main__':
             og_score = og_results["Accuracy"].values[0]
             print(f"Score for protein {target_protein} using original data: {og_score}")
 
+            # Run experiment with removed target protein
+            rm_experiment = ClassificationExperiment()
+            rm_experiment.setup(data=removed_train_set, target="Treatment", index=True,
+                                normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
+            rm_classifier = rm_experiment.create_model("lightgbm", verbose=False)
+            rm_predictions = rm_experiment.predict_model(rm_classifier, data=removed_test_set,
+                                                         verbose=False)
+
+            rm_results = rm_experiment.pull()
+            # pull the score from the model
+            rm_score = rm_results["Accuracy"].values[0]
+
+            print(f"Score for protein {target_protein} using removed data: {rm_score}")
+
             imp_experiment = ClassificationExperiment()
             imp_experiment.setup(data=imp_train_set, target="Treatment", index=True,
                                  normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
@@ -258,7 +291,8 @@ if __name__ == '__main__':
 
             print(f"Score for protein {target_protein} using imputed data: {imp_score}")
 
-            scores.append({"Protein": target_protein, "Imputed Score": imp_score, "Original Score": og_score})
+            scores.append({"Protein": target_protein, "Imputed Score": imp_score, "Original Score": og_score,
+                           "Removed Score": rm_score})
             # print current mean of scores for protein
             print(
                 f"Score for protein {target_protein}")
