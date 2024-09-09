@@ -28,6 +28,7 @@ def is_overlapping(tile1, tile2):
     return not (tile1['x_end'] < tile2['x_start'] or tile1['x_start'] > tile2['x_end'] or
                 tile1['y_end'] < tile2['y_start'] or tile1['y_start'] > tile2['y_end'])
 
+
 # Function to select non-overlapping tiles
 def select_non_overlapping_tiles(df, num_tiles=20):
     selected_tiles = []
@@ -38,6 +39,7 @@ def select_non_overlapping_tiles(df, num_tiles=20):
         if not overlap:
             selected_tiles.append(row)
     return pd.DataFrame(selected_tiles)
+
 
 def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame, x_start, y_start, x_end, y_end):
     # Calculate IQR bounds for X_centroid and Y_centroid
@@ -59,14 +61,12 @@ def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame,
     # only keep 20 distinct non overlapping tiles
     matching_tiles = select_non_overlapping_tiles(matching_tiles, num_tiles=25)
 
-
     for i, row in matching_tiles.iterrows():
         x = row["x_start"]
         y = row["y_start"]
         width = row["x_end"] - row["x_start"]
         height = row["y_end"] - row["y_start"]
         ax.add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none', linewidth=2.5))
-
 
     # rename x and y axis
     ax.set_xlabel("X")
@@ -83,14 +83,15 @@ def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame,
 def create_imputed_vs_original_scores(scores: pd.DataFrame):
     # pivot scores so that these columns Imputed Score,Original Score,Removed score form one column
     scores = scores.melt(id_vars=["Patient", "Protein"],
-                         value_vars=["Imputed Score", "Original Score"], value_name="Score",
+                         value_vars=["Imputed Score", "Removed Score", "Original Score"], value_name="Score",
                          var_name="Type")
 
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
-    ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type", hue_order=["Original Score", "Imputed Score"],
-                     palette={"Original Score": "green", "Imputed Score": "darkgreen"})
+    ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type",
+                     hue_order=["Original Score", "Removed Score", "Imputed Score"],
+                     palette={"Original Score": "yellow", "Imputed Score": "darkgreen", "Removed Score": "red"})
 
     ax.set_ylabel("")
     ax.set_xlabel("")
@@ -124,7 +125,24 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     annotator.apply_and_annotate()
 
     # change legend position and and add only 1 row
-    ax.legend(prop={"size": 7}, loc='center', bbox_to_anchor=[0.8, 0.95], ncol=2)
+    # ax.legend(prop={"size": 6}, loc='center', bbox_to_anchor=[0.82, 0.95], ncol=3)
+
+    # Extract handles and labels from the seaborn plot
+    # Get handles and labels for the legend
+    handles, labels = ax.get_legend_handles_labels()
+
+    # Split the legend into two parts: the first for "Original Score" and "Removed Score", and the second for "Imputed Score"
+    first_legend_handles = handles[:2]
+    first_legend_labels = labels[:2]
+    second_legend_handles = handles[2:]
+    second_legend_labels = labels[2:]
+
+    # Add the first legend to the plot (for "Original Score" and "Removed Score")
+    first_legend = ax.legend(first_legend_handles, first_legend_labels, loc='center', prop={"size": 6}, ncol=2, bbox_to_anchor=[0.55, 0.95])
+
+    # Add the second legend manually (for "Imputed Score")
+    ax.add_artist(first_legend)  # Keep the first legend on the plot
+    ax.legend(second_legend_handles, second_legend_labels, loc='center', prop={"size": 6}, ncol=1, bbox_to_anchor=[0.92, 0.95])
 
     # Remove box around the plot
     ax.spines['top'].set_visible(False)
