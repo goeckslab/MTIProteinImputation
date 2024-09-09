@@ -86,12 +86,16 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
                          value_vars=["Imputed Score", "Removed Score", "Original Score"], value_name="Score",
                          var_name="Type")
 
+    # rename Imputed Score to Imputed Data, Removed Score to Removed Data, Original Score to Original Data
+    scores["Type"] = scores["Type"].replace({"Imputed Score": "Imputed Data", "Removed Score": "Removed Data",
+                                             "Original Score": "Original Data"})
+
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
     ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type",
-                     hue_order=["Original Score", "Removed Score", "Imputed Score"],
-                     palette={"Original Score": "yellow", "Imputed Score": "darkgreen", "Removed Score": "red"})
+                     hue_order=["Original Data", "Removed Data", "Imputed Data"],
+                     palette={"Original Data": "yellow", "Imputed Data": "darkgreen", "Removed Data": "red"})
 
     ax.set_ylabel("")
     ax.set_xlabel("")
@@ -100,22 +104,38 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
              'pERK', 'EGFR', 'ER']
     pairs = [
-        (("pRB", "Original Score"), ("pRB", "Imputed Score")),
-        (("CD45", "Original Score"), ("CD45", "Imputed Score")),
-        (("CK19", "Original Score"), ("CK19", "Imputed Score")),
-        (("Ki67", "Original Score"), ("Ki67", "Imputed Score")),
-        (("aSMA", "Original Score"), ("aSMA", "Imputed Score")),
-        (("Ecad", "Original Score"), ("Ecad", "Imputed Score")),
-        (("PR", "Original Score"), ("PR", "Imputed Score")),
-        (("CK14", "Original Score"), ("CK14", "Imputed Score")),
-        (("HER2", "Original Score"), ("HER2", "Imputed Score")),
-        (("AR", "Original Score"), ("AR", "Imputed Score")),
-        (("CK17", "Original Score"), ("CK17", "Imputed Score")),
-        (("p21", "Original Score"), ("p21", "Imputed Score")),
-        (("Vimentin", "Original Score"), ("Vimentin", "Imputed Score")),
-        (("pERK", "Original Score"), ("pERK", "Imputed Score")),
-        (("EGFR", "Original Score"), ("EGFR", "Imputed Score")),
-        (("ER", "Original Score"), ("ER", "Imputed Score"))
+        (("pRB", "Original Data"), ("pRB", "Imputed Data")),
+        (("CD45", "Original Data"), ("CD45", "Imputed Data")),
+        (("CK19", "Original Data"), ("CK19", "Imputed Data")),
+        (("Ki67", "Original Data"), ("Ki67", "Imputed Data")),
+        (("aSMA", "Original Data"), ("aSMA", "Imputed Data")),
+        (("Ecad", "Original Data"), ("Ecad", "Imputed Data")),
+        (("PR", "Original Data"), ("PR", "Imputed Data")),
+        (("CK14", "Original Data"), ("CK14", "Imputed Data")),
+        (("HER2", "Original Data"), ("HER2", "Imputed Data")),
+        (("AR", "Original Data"), ("AR", "Imputed Data")),
+        (("CK17", "Original Data"), ("CK17", "Imputed Data")),
+        (("p21", "Original Data"), ("p21", "Imputed Data")),
+        (("Vimentin", "Original Data"), ("Vimentin", "Imputed Data")),
+        (("pERK", "Original Data"), ("pERK", "Imputed Data")),
+        (("EGFR", "Original Data"), ("EGFR", "Imputed Data")),
+        (("ER", "Original Data"), ("ER", "Imputed Data")),
+        (("pRB", "Original Data"), ("pRB", "Removed Data")),
+        (("CD45", "Original Data"), ("CD45", "Removed Data")),
+        (("CK19", "Original Data"), ("CK19", "Removed Data")),
+        (("Ki67", "Original Data"), ("Ki67", "Removed Data")),
+        (("aSMA", "Original Data"), ("aSMA", "Removed Data")),
+        (("Ecad", "Original Data"), ("Ecad", "Removed Data")),
+        (("PR", "Original Data"), ("PR", "Removed Data")),
+        (("CK14", "Original Data"), ("CK14", "Removed Data")),
+        (("HER2", "Original Data"), ("HER2", "Removed Data")),
+        (("AR", "Original Data"), ("AR", "Removed Data")),
+        (("CK17", "Original Data"), ("CK17", "Removed Data")),
+        (("p21", "Original Data"), ("p21", "Removed Data")),
+        (("Vimentin", "Original Data"), ("Vimentin", "Removed Data")),
+        (("pERK", "Original Data"), ("pERK", "Removed Data")),
+        (("EGFR", "Original Data"), ("EGFR", "Removed Data")),
+        (("ER", "Original Data"), ("ER", "Removed Data"))
     ]
 
     annotator = Annotator(ax, pairs, data=scores, x="Protein", y="Score", order=order, hue="Type",
@@ -138,11 +158,13 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     second_legend_labels = labels[2:]
 
     # Add the first legend to the plot (for "Original Score" and "Removed Score")
-    first_legend = ax.legend(first_legend_handles, first_legend_labels, loc='center', prop={"size": 6}, ncol=2, bbox_to_anchor=[0.55, 0.95])
+    first_legend = ax.legend(first_legend_handles, first_legend_labels, loc='center', prop={"size": 6}, ncol=2,
+                             bbox_to_anchor=[0.55, 0.95])
 
     # Add the second legend manually (for "Imputed Score")
     ax.add_artist(first_legend)  # Keep the first legend on the plot
-    ax.legend(second_legend_handles, second_legend_labels, loc='center', prop={"size": 6}, ncol=1, bbox_to_anchor=[0.92, 0.95])
+    ax.legend(second_legend_handles, second_legend_labels, loc='center', prop={"size": 6}, ncol=1,
+              bbox_to_anchor=[0.92, 0.95])
 
     # Remove box around the plot
     ax.spines['top'].set_visible(False)
@@ -209,7 +231,7 @@ if __name__ == '__main__':
     ax3.text(0, 1.15, "d", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
 
-    ax3.set_title('Original vs Imputed accuracy score', rotation='vertical', x=-0.05, y=0.1, fontsize=8)
+    ax3.set_title('Original, Removed & Imputed\n accuracy score', rotation='vertical', x=-0.06, y=-0.1, fontsize=8)
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
 
     plt.tight_layout()
