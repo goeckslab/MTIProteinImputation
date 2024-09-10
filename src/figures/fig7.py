@@ -93,14 +93,15 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
+    hue_order = ["Original Data", "Removed Data", "Imputed Data"]
     ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type",
-                     hue_order=["Original Data", "Removed Data", "Imputed Data"],
+                     hue_order=hue_order,
                      palette={"Original Data": "yellow", "Imputed Data": "darkgreen", "Removed Data": "red"})
 
     ax.set_ylabel("")
     ax.set_xlabel("")
-    # log y axis
-    ax.set_yscale('linear')
+
+    ax.set_ylim(0, 1)
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
              'pERK', 'EGFR', 'ER']
     pairs = [
@@ -120,6 +121,7 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
         (("pERK", "Original Data"), ("pERK", "Imputed Data")),
         (("EGFR", "Original Data"), ("EGFR", "Imputed Data")),
         (("ER", "Original Data"), ("ER", "Imputed Data")),
+
         (("pRB", "Original Data"), ("pRB", "Removed Data")),
         (("CD45", "Original Data"), ("CD45", "Removed Data")),
         (("CK19", "Original Data"), ("CK19", "Removed Data")),
@@ -135,11 +137,12 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
         (("Vimentin", "Original Data"), ("Vimentin", "Removed Data")),
         (("pERK", "Original Data"), ("pERK", "Removed Data")),
         (("EGFR", "Original Data"), ("EGFR", "Removed Data")),
-        (("ER", "Original Data"), ("ER", "Removed Data"))
+        (("ER", "Original Data"), ("ER", "Removed Data")),
+
     ]
 
     annotator = Annotator(ax, pairs, data=scores, x="Protein", y="Score", order=order, hue="Type",
-                          verbose=1)
+                          verbose=1, hue_order=hue_order)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
