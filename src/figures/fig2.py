@@ -253,7 +253,7 @@ if __name__ == '__main__':
         bx_data[patient] = patient_scores
 
     # Create the figure with a grid specification
-    fig = plt.figure(figsize=(12, 17), dpi=150)
+    fig = plt.figure(figsize=(17, 17), dpi=150)
     gspec = fig.add_gridspec(8, 4)
 
     # Histograms for each marker
