@@ -9,7 +9,7 @@
 #SBATCH --mem=128000
 #SBATCH --output=./output_reports/slurm.%N.%j.out
 #SBATCH --error=./error_reports/slurm.%N.%j.err
-#SBATCH --mail-type=FAIL,REQUEUE,TIME_LIMIT_80, END
+#SBATCH --mail-type=FAIL,REQUEUE,TIME_LIMIT_80,END,BEGIN
 #SBATCH --requeue
 #SBATCH --mail-user=kirchgae@ohsu.edu
 
