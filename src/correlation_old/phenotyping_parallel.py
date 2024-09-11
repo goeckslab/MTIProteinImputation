@@ -25,8 +25,8 @@ file_name = "metrics.csv"
 # Constants
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
-# BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
-BIOPSIES = ["9_14_1", "9_14_2", "9_15_1", "9_15_2"]
+BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
+#BIOPSIES = ["9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 save_folder = Path("results", "phenotypes")
 
 # List to collect scores and thread lock for thread safety
