@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --job-name=exp_92
 #SBATCH --time=10-00:00:00
-#SBATCH --partition=exacloud
+#SBATCH --partition=batch
 #SBATCH --qos=long_jobs
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
