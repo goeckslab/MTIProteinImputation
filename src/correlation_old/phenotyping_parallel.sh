@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --job-name=exp_92
+#SBATCH --job-name=ppheno
 #SBATCH --time=10-00:00:00
 #SBATCH --partition=batch
 #SBATCH --qos=long_jobs

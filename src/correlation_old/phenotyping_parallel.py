@@ -195,6 +195,8 @@ if __name__ == '__main__':
 
     workers: int = args.workers
 
+    print(f"Using {workers} workers for parallel processing.")
+
     # Ensure the output file does not exist, so the header is written only once
     if Path(save_folder, file_name).exists():
         Path(save_folder, file_name).unlink()
