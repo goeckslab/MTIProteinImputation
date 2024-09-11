@@ -14,7 +14,6 @@ import numpy as np
 from scipy.spatial.distance import pdist
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
-from pycaret.classification import ClassificationExperiment
 import argparse
 
 # Suppress warnings
@@ -86,27 +85,6 @@ def process_biopsy(biopsy, phenotype):
         # fill na of phenotypes with Unknown
         original_data.obs["phenotype"] = original_data.obs["phenotype"].fillna("Unknown")
 
-        org_data = pd.DataFrame(original_data.X, columns=SHARED_MARKERS)
-        # assert that original data has only the shared markers
-        assert org_data.columns.equals(data.columns), "Original data has different columns than original data"
-        org_data["phenotype"] = original_data.obs["phenotype"].values
-
-        print(org_data["phenotype"].unique())
-        print(org_data["phenotype"].value_counts())
-
-        org_exp = ClassificationExperiment()
-        org_exp.setup(data=org_data, target="phenotype", normalize=True, verbose=False, fold=5)
-        org_classifier = org_exp.create_model("lightgbm", verbose=False)
-        org_experiment_metrics = org_exp.pull()
-
-        original_accuracy = org_experiment_metrics["Accuracy"]["Mean"]
-        original_auc = org_experiment_metrics["AUC"]["Mean"]
-        original_recall = org_experiment_metrics["Recall"]["Mean"]
-        original_precision = org_experiment_metrics["Prec."]["Mean"]
-        original_f1 = org_experiment_metrics["F1"]["Mean"]
-        original_kappa = org_experiment_metrics["Kappa"]["Mean"]
-        original_mcc = org_experiment_metrics["MCC"]["Mean"]
-
         for protein in imp_data.columns:
             if protein not in SHARED_MARKERS:
                 continue
@@ -128,8 +106,6 @@ def process_biopsy(biopsy, phenotype):
             # This method will evaluate how well each cell belongs to its predicted phenotype cluster.
             original_silhouette_score = silhouette_score(original_data.X, original_data.obs["phenotype"])
             imp_silhouette_score = silhouette_score(imp_ad.X, imp_ad.obs["phenotype"])
-
-
 
             # Calculate ARI between original and imputed phenotype calls
             # You can compare how stable the clustering assignments are before and after imputation by calculating the Adjusted Rand Index (ARI)
@@ -155,27 +131,6 @@ def process_biopsy(biopsy, phenotype):
 
             # Cross-validation score for imputed data
             imputed_cv_score = cross_val_score(clf, imp_ad.X, imp_ad.obs["phenotype"], cv=5).mean()
-
-            imputed_data = pd.DataFrame(imp_ad.X, columns=SHARED_MARKERS)
-            # assert that imputed data has only the shared markers
-            assert imputed_data.columns.equals(data.columns), "Imputed data has different columns than original data"
-            imputed_data["phenotype"] = imp_ad.obs["phenotype"].values
-
-            print(imputed_data["phenotype"].unique())
-            print(imputed_data["phenotype"].value_counts())
-
-            imp_exp = ClassificationExperiment()
-            imp_exp.setup(data=imputed_data, target="phenotype", normalize=True, verbose=False, fold=5)
-            imp_classifier = imp_exp.create_model("lightgbm", verbose=False)
-            imp_experiment_metrics = imp_exp.pull()
-
-            imputed_accuracy = imp_experiment_metrics["Accuracy"]["Mean"]
-            imputed_auc = imp_experiment_metrics["AUC"]["Mean"]
-            imputed_recall = imp_experiment_metrics["Recall"]["Mean"]
-            imputed_precision = imp_experiment_metrics["Prec."]["Mean"]
-            imputed_f1 = imp_experiment_metrics["F1"]["Mean"]
-            imputed_kappa = imp_experiment_metrics["Kappa"]["Mean"]
-            imputed_mcc = imp_experiment_metrics["MCC"]["Mean"]
 
             # print(f"Biopsy: {biopsy}, Protein: {protein}, "
             #      f"Original Silhouette Score: {original_silhouette_score}, "
@@ -203,12 +158,6 @@ def process_biopsy(biopsy, phenotype):
                 "Imputed Compactness Score": imputed_compactness,
                 "Original CV Score": original_cv_score,
                 "Imputed CV Score": imputed_cv_score,
-                "Imputed LGBM Accuracy": imputed_accuracy,
-                "Imputed LGBM AUC": imputed_auc,
-                "Imputed LGBM F1": imputed_f1,
-                "Original LGBM Accuracy": original_accuracy,
-                "Original LGBM AUC": original_auc,
-                "Original LGBM F1": original_f1,
             }
 
             print(result)
