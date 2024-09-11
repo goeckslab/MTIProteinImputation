@@ -3,14 +3,18 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score, silhouette_score
 from sklearn.preprocessing import MinMaxScaler
-import seaborn as sns
-import matplotlib.pyplot as plt
+
+save_folder = Path("results", "evaluation")
 
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 
 if __name__ == '__main__':
+
+    if not save_folder.exists():
+        save_folder.mkdir(parents=True)
+
     original_data = {}
     imputed_data = {}
     for biopsy in BIOPSIES:
@@ -36,7 +40,7 @@ if __name__ == '__main__':
 
     # calculate cluster for original data for each protein
     for biopsy in BIOPSIES:
-        print("Biopsy: ", biopsy)
+        print(f"Biopsy: {biopsy}")
         original = original_data[biopsy]
         imputed_markers = imputed_data[biopsy]
         for marker in SHARED_MARKERS:
@@ -75,29 +79,28 @@ if __name__ == '__main__':
                             "Silhouette Original": silhouette_original, "Silhouette Imputed": silhouette_imputed})
 
     results_df = pd.DataFrame(results)
-    print(results_df)
     # save
-    results_df.to_csv(Path("results", "cluster_evaluation.csv"), index=False)
+    results_df.to_csv(Path(save_folder, "cluster_metrics.csv"), index=False)
 
-    # Plot ARI
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=results_df, x="Marker", y="ARI")
-    plt.ylabel("Adjusted Rand Index")
-    plt.xlabel("Marker")
-    plt.title("Adjusted Rand Index for each marker")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
-
-    # Plot Silhouette Scores
-    plt.figure(figsize=(12, 6))
-    sns.barplot(data=results_df.melt(id_vars=["Biopsy", "Marker"],
-                                     value_vars=["Silhouette Original", "Silhouette Imputed"],
-                                     var_name="Silhouette Type", value_name="Score"),
-                x="Marker", y="Score", hue="Silhouette Type")
-    plt.ylabel("Silhouette Score")
-    plt.xlabel("Marker")
-    plt.title("Silhouette Scores for Original and Imputed Data")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    # # Plot ARI
+    # plt.figure(figsize=(10, 6))
+    # sns.barplot(data=results_df, x="Marker", y="ARI")
+    # plt.ylabel("Adjusted Rand Index")
+    # plt.xlabel("Marker")
+    # plt.title("Adjusted Rand Index for each marker")
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+    # plt.show()
+    #
+    # # Plot Silhouette Scores
+    # plt.figure(figsize=(12, 6))
+    # sns.barplot(data=results_df.melt(id_vars=["Biopsy", "Marker"],
+    #                                  value_vars=["Silhouette Original", "Silhouette Imputed"],
+    #                                  var_name="Silhouette Type", value_name="Score"),
+    #             x="Marker", y="Score", hue="Silhouette Type")
+    # plt.ylabel("Silhouette Score")
+    # plt.xlabel("Marker")
+    # plt.title("Silhouette Scores for Original and Imputed Data")
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+    # plt.show()
