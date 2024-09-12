@@ -110,6 +110,7 @@ def run_classifier(train_data: pd.DataFrame, test_data: ad.AnnData) -> float:
 
     return accuracy_score(predictions["phenotype_enc"], predictions["label_encoded"])
 
+
 def process_biopsy(biopsy, phenotype):
     try:
         print(f"Processing Biopsy: {biopsy}")
@@ -242,9 +243,6 @@ if __name__ == '__main__':
 
     # Remove CK7 from phenotype
     phenotype = phenotype.drop("CK7", axis=1)
-
-    process_biopsy(BIOPSIES[0], phenotype)
-    input()
 
     with ProcessPoolExecutor(max_workers=workers) as executor:  # Using ProcessPoolExecutor for CPU-bound tasks
         futures = [executor.submit(process_biopsy, biopsy, phenotype) for biopsy in BIOPSIES]
