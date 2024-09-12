@@ -13,11 +13,12 @@ from sklearn.metrics import adjusted_rand_score
 import numpy as np
 from scipy.spatial.distance import pdist
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score, KFold
 import argparse
 from sklearn.metrics import accuracy_score
 from pycaret.classification import ClassificationExperiment
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import adjusted_mutual_info_score, jaccard_score
+from sklearn.preprocessing import MinMaxScaler
 
 # Suppress warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -111,6 +112,35 @@ def run_classifier(train_data: pd.DataFrame, test_data: ad.AnnData) -> float:
     return accuracy_score(predictions["phenotype_enc"], predictions["label_encoded"])
 
 
+def run_random_forest(train_data: pd.DataFrame, test_data: ad.AnnData):
+    train = train_data.drop(columns=["phenotype"])
+    test = pd.DataFrame(test_data.X, columns=SHARED_MARKERS)
+
+    # scale train data
+    scaler = MinMaxScaler()
+    train = pd.DataFrame(scaler.fit_transform(train), columns=train.columns)
+    test = pd.DataFrame(scaler.transform(test), columns=test.columns)
+
+    train_target = train_data["phenotype"]
+    test_target = test_data.obs["phenotype"]
+
+    # assert that test_data.X does not contain phenotype column
+    assert "phenotype" not in train.columns, "Train data should not contain phenotype column"
+    assert "phenotype" not in test.columns, "Test data should not contain phenotype column"
+
+    # Create the classifier
+    clf = RandomForestClassifier()
+
+    # Train the classifier on the training dataset
+    clf.fit(train, train_target)  # Train on training data
+
+    # Validate the classifier on the validation dataset
+    val_predictions = clf.predict(test)  # Predict on validation data
+
+    # Calculate accuracy or other performance metrics
+    return accuracy_score(test_target, val_predictions)
+
+
 def process_biopsy(biopsy, phenotype):
     try:
         print(f"Processing Biopsy: {biopsy}")
@@ -167,23 +197,15 @@ def process_biopsy(biopsy, phenotype):
             # For imputed data
             imputed_compactness = compute_cluster_compactness(imp_ad.X, imp_ad.obs["phenotype"])
 
-            original_cv_score = run_classifier(train_data=train_data, test_data=original_test_data)
-            imputed_cv_score = run_classifier(train_data=train_data, test_data=imp_ad)
+            ami = adjusted_mutual_info_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
+            print(f"Adjusted Mutual Information (NMI): {ami}")
 
-            # print(f"Biopsy: {biopsy}, Protein: {protein}, "
-            #      f"Original Silhouette Score: {original_silhouette_score}, "
-            #      f"Imputed Silhouette Score: {imp_silhouette_score}, "
-            #      f"ARI Score: {ari},"
-            #      f"Original Compactness: {original_compactness},"
-            #      f"Imputed Compactness: {imputed_compactness},"
-            #      f"Original CV Score: {original_cv_score},"
-            #      f"Imputed CV Score: {imputed_cv_score},"
-            #      f"Imputed LGBM Accuracy: {imputed_accuracy},"
-            #      f"Imputed LGBM AUC: {imputed_auc},"
-            #      f"Imputed LGBM F1: {imputed_f1},"
-            #     f"Original LGBM Accuracy: {original_accuracy},"
-            #     f"Original LGBM AUC: {original_auc},"
-            #     f"Original LGBM F1: {original_f1},")
+            jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
+            print(f"Jaccard Index: {jaccard}")
+
+            # Calculate accuracy or other performance metrics
+            original_accuracy = run_random_forest(train_data, original_test_data)
+            imputed_accuracy = run_random_forest(train_data, imp_ad)
 
             # Prepare the results to append to file
             result = {
@@ -194,8 +216,10 @@ def process_biopsy(biopsy, phenotype):
                 "ARI Score": ari,
                 "Original Compactness Score": original_compactness,
                 "Imputed Compactness Score": imputed_compactness,
-                "Original CV Score": original_cv_score,
-                "Imputed CV Score": imputed_cv_score,
+                "AMI": ami,
+                "Jaccard": jaccard,
+                "Original CV Score": original_accuracy,
+                "Imputed CV Score": imputed_accuracy,
             }
 
             print(result)
@@ -243,6 +267,9 @@ if __name__ == '__main__':
 
     # Remove CK7 from phenotype
     phenotype = phenotype.drop("CK7", axis=1)
+
+    process_biopsy("9_2_1", phenotype)
+    input()
 
     with ProcessPoolExecutor(max_workers=workers) as executor:  # Using ProcessPoolExecutor for CPU-bound tasks
         futures = [executor.submit(process_biopsy, biopsy, phenotype) for biopsy in BIOPSIES]
