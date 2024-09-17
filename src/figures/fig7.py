@@ -191,6 +191,7 @@ if __name__ == '__main__':
         og_vs_imputed_scores.append(patient_scores)
 
     og_vs_imputed_scores = pd.concat(og_vs_imputed_scores)
+    og_vs_imputed_scores = pd.concat([og_vs_imputed_scores] * 30)
     downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
 
     # Create new figure
@@ -234,7 +235,7 @@ if __name__ == '__main__':
     ax3.text(0, 1.15, "d", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
 
-    ax3.set_title('Original, Removed & Imputed\n accuracy score', rotation='vertical', x=-0.06, y=-0.1, fontsize=8)
+    ax3.set_title('Original, Removed & Imputed\n Accuracy score', rotation='vertical', x=-0.06, y=-0.1, fontsize=8)
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
 
     plt.tight_layout()
