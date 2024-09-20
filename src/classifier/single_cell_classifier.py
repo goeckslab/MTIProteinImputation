@@ -1,10 +1,8 @@
 from pycaret.classification import ClassificationExperiment
 from pathlib import Path
 import pandas as pd
-import os, sys, argparse
+import argparse
 import numpy as np
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score
 
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
@@ -20,15 +18,15 @@ def is_within_tile(x, y, tile):
 
 def load_predictive_tiles():
     tmp_og_predictive_tiles = {}
-    tmp_imp_predictive_tiles = {}
+    tmp_removed_predictive_tiles = {}
     for tmp_patient in PATIENTS:
         load_path = Path("results", "predictive_tissue", tmp_patient)
         original_tiles = pd.read_csv(Path(load_path, "original_matching_tiles.csv"))
-        imputed_tiles = pd.read_csv(Path(load_path, "imputed_matching_tiles.csv"))
+        removed_tiles = pd.read_csv(Path(load_path, "removed_matching_tiles.csv"))
         tmp_og_predictive_tiles[tmp_patient] = original_tiles
-        tmp_imp_predictive_tiles[tmp_patient] = imputed_tiles
+        tmp_removed_predictive_tiles[tmp_patient] = removed_tiles
 
-    return tmp_og_predictive_tiles, tmp_imp_predictive_tiles
+    return tmp_og_predictive_tiles, tmp_removed_predictive_tiles
 
 
 def extract_og_cells_for_biopsy(biopsy: str, tiles: pd.DataFrame, pre_treatment: bool):
@@ -159,12 +157,12 @@ if __name__ == '__main__':
     if not save_path.exists():
         save_path.mkdir(parents=True)
 
-    og_predictive_tiles, imp_predictive_tiles = load_predictive_tiles()
+    _, removed_predictive_tiles = load_predictive_tiles()
 
     og_data = {}
 
     # for each patient in the tiles dictioniary, load the biopsy data and extract the cells
-    for tmp_patient, tiles in og_predictive_tiles.items():
+    for tmp_patient, tiles in removed_predictive_tiles.items():
         pre_tiles = tiles[tiles["Treatment"] == "PRE"]
         post_tiles = tiles[tiles["Treatment"] == "ON"]
 
@@ -184,7 +182,7 @@ if __name__ == '__main__':
         for target_protein in SHARED_MARKERS:
             imp_data = {}
             # Load the imputed predictive tiles
-            for tmp_patient, tiles in og_predictive_tiles.items():
+            for tmp_patient, tiles in removed_predictive_tiles.items():
                 pre_tiles = tiles[tiles["Treatment"] == "PRE"]
                 post_tiles = tiles[tiles["Treatment"] == "ON"]
 

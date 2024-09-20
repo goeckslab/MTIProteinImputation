@@ -15,4 +15,4 @@
 
 patient=$1
 
-python3 src/classifier/single_cell_classifier_v2.py -p ${patient}
+python3 src/classifier/single_cell_classifier.py -p ${patient}
