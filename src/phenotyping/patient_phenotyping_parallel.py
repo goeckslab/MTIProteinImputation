@@ -93,50 +93,18 @@ def load_train_data(biopsy: str, phenotype: pd.DataFrame):
         sys.exit(0)
 
 
-def run_classifier(train_data: pd.DataFrame, test_data: ad.AnnData) -> float:
-    test_df = pd.DataFrame(test_data.X, columns=SHARED_MARKERS)
-    test_df["phenotype"] = test_data.obs["phenotype"].values
+def run_lgbm(train_data, test_features, test_target):
+    test_df = pd.DataFrame(test_features, columns=SHARED_MARKERS)
+    test_df["phenotype"] = test_target
 
     # Setup the experiment
     exp = ClassificationExperiment()
-    exp.setup(data=train_data, target="phenotype", verbose=False, normalize=True, fold=5)
+    exp.setup(data=train_data, target="phenotype", verbose=False, normalize=True, fold=3)
     clf = exp.create_model("lightgbm", verbose=False)
-    predictions = exp.predict_model(clf, data=test_df, verbose=False)
+    predictions = exp.predict_model(clf, data=test_features, verbose=False)
 
-    le = LabelEncoder()
-    predictions["phenotype_enc"] = le.fit_transform(test_df["phenotype"])
-    predictions["label_encoded"] = le.transform(predictions["prediction_label"])
-
-    return accuracy_score(predictions["phenotype_enc"], predictions["label_encoded"])
-
-
-def run_random_forest(train_data: pd.DataFrame, test_data: ad.AnnData):
-    train = train_data.drop(columns=["phenotype"])
-    test = pd.DataFrame(test_data.X, columns=SHARED_MARKERS)
-
-    # scale train data
-    scaler = MinMaxScaler()
-    train = pd.DataFrame(scaler.fit_transform(train), columns=train.columns)
-    test = pd.DataFrame(scaler.transform(test), columns=test.columns)
-
-    train_target = train_data["phenotype"]
-    test_target = test_data.obs["phenotype"]
-
-    # assert that test_data.X does not contain phenotype column
-    assert "phenotype" not in train.columns, "Train data should not contain phenotype column"
-    assert "phenotype" not in test.columns, "Test data should not contain phenotype column"
-
-    # Create the classifier
-    clf = RandomForestClassifier()
-
-    # Train the classifier on the training dataset
-    clf.fit(train, train_target)  # Train on training data
-
-    # Validate the classifier on the validation dataset
-    val_predictions = clf.predict(test)  # Predict on validation data
-
-    # Calculate accuracy or other performance metrics
-    return accuracy_score(test_target, val_predictions)
+    metrics = exp.pull()
+    return metrics["Accuracy"][0]
 
 
 def process_biopsy(biopsy, phenotype):
@@ -165,9 +133,6 @@ def process_biopsy(biopsy, phenotype):
         # Calculate silhouette score for original data
         original_silhouette_score = silhouette_score(original_test_data.X, original_test_data.obs["phenotype"])
 
-        # compactness of original data
-        original_compactness = compute_cluster_compactness(original_test_data.X,
-                                                           original_test_data.obs["phenotype"])
         for protein in imp_data.columns:
             if protein not in SHARED_MARKERS:
                 continue
@@ -193,20 +158,16 @@ def process_biopsy(biopsy, phenotype):
             # This will show how similar the phenotype assignments are between both datasets.
             ari = adjusted_rand_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
 
-            # For original data
-            # You can check for compactness (intra-cluster distance) of the phenotype groups.
-            # A decrease in intra-cluster variance after imputation might indicate improved phenotype resolution.
-
-            # For imputed data
-            imputed_compactness = compute_cluster_compactness(imp_ad.X, imp_ad.obs["phenotype"])
             # Calculate AMI between original and imputed phenotype calls
             ami = adjusted_mutual_info_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
             # Calculate Jaccard between original and imputed phenotype calls
             jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
 
             # Calculate accuracy or other performance metrics
-            original_accuracy = run_random_forest(train_data, original_test_data)
-            imputed_accuracy = run_random_forest(train_data, imp_ad)
+            original_accuracy = run_lgbm(train_data, pd.DataFrame(original_test_data.X, columns=SHARED_MARKERS),
+                                         original_test_data.obs["phenotype"])
+            imputed_accuracy = run_lgbm(train_data, pd.DataFrame(imp_ad.X, columns=SHARED_MARKERS),
+                                        original_test_data.obs["phenotype"])
 
             # Prepare the results to append to file
             result = {
@@ -215,8 +176,6 @@ def process_biopsy(biopsy, phenotype):
                 "Original Silhouette Score": original_silhouette_score,
                 "Imputed Silhouette Score": imp_silhouette_score,
                 "ARI Score": ari,
-                "Original Compactness Score": original_compactness,
-                "Imputed Compactness Score": imputed_compactness,
                 "AMI": ami,
                 "Jaccard": jaccard,
                 "Original CV Score": original_accuracy,

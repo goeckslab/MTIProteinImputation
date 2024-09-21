@@ -13,4 +13,4 @@
 #SBATCH --requeue
 #SBATCH --mail-user=kirchgae@ohsu.edu
 
-python3 src/correlation_old/patient_phenotyping_parallel.py -w 8
+python3 src/phenotyping/patient_phenotyping_parallel.py -w 8
