@@ -9,8 +9,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=ImplicitModificationWarning)
 
-file_name = "patient_metrics.csv"
-
 # Constants
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
@@ -23,14 +21,12 @@ if not save_folder.exists():
 
 if __name__ == '__main__':
 
-    # Ensure the output file does not exist, so the header is written only once
-    if Path(save_folder, file_name).exists():
-        Path(save_folder, file_name).unlink()
-
     phenotype = pd.read_csv("data/tumor_phenotypes.csv")
 
     # Remove CK7 from phenotype
     phenotype = phenotype.drop("CK7", axis=1)
+    # Remove CD45 from phenotype
+    #phenotype = phenotype.drop("CD45", axis=1)
 
     for biopsy in BIOPSIES:
         print("Processing biopsy: ", biopsy)

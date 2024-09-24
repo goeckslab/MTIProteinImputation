@@ -12,3 +12,4 @@ matplotlib==3.6.3
 ludwig==0.7.4
 lightgbm==3.3.5
 hummingbird-ml
+scimap

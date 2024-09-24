@@ -142,7 +142,7 @@ def plot_ari():
 
 
 def plot_phenotype_ari(ari_scores: pd.DataFrame):
-    ax = sns.barplot(data=ari_scores, x="Protein", y="Score",  palette="Set2")
+    ax = sns.barplot(data=ari_scores, x="Protein", y="Score", palette="Set2")
     ax.set_ylabel("Phenotype ARI Score")
     ax.set_xlabel("Protein")
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
@@ -156,9 +156,9 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame):
 
 
 def plot_phenotype_cv(cv_scores: pd.DataFrame):
-    cv_scores = pd.concat([cv_scores] * 30, ignore_index=True)
-    ax = sns.barplot(data=cv_scores, x="Protein", y="Score", hue="CV")
-    ax.set_ylabel("Phenotype Classifier Score")
+    hue_order = ["Original CV Score", "Imputed CV Score"]
+    ax = sns.barplot(data=cv_scores, x="Protein", y="Score", hue="CV", hue_order=hue_order)
+    ax.set_ylabel("Phenotype Classifier Accuracy")
     ax.set_xlabel("Protein")
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
     # change legend handles to Origin and Imputed
@@ -192,7 +192,7 @@ def plot_phenotype_cv(cv_scores: pd.DataFrame):
 
     order = SHARED_PROTEINS
     annotator = Annotator(ax, pairs, data=cv_scores, x="Protein", y="Score", order=order, hue="CV",
-                          hue_order=["Original CV Score", "Imputed CV Score"])
+                          hue_order=hue_order)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
 
@@ -216,6 +216,11 @@ def plot_silhouette():
     ax = sns.barplot(data=melt, x="Marker", y="Score", hue="Silhouette Type")
     ax.set_ylabel("Expression Silhouette Score")
     ax.set_xlabel("Protein")
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
 
     # adjust legend
     ax.legend(bbox_to_anchor=[0.4, 0.97], loc='center', ncol=2, fontsize=8)
@@ -308,6 +313,8 @@ if __name__ == '__main__':
     combined_en_lgbm_scores = pd.concat([en_scores, lgbm_scores])
 
     phenotype_scores = pd.read_csv(Path(phenotype_folder, "patient_metrics.csv"))
+    # sort the dataframe by the protein
+    phenotype_scores = phenotype_scores.sort_values(by="Protein")
 
     ari_scores = pd.melt(phenotype_scores, id_vars=["Biopsy", "Protein"],
                          value_vars=["ARI Score"],
@@ -339,28 +346,28 @@ if __name__ == '__main__':
     ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.05, y=0.25, fontsize=12)
     ax2 = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ax=ax2)
 
+    # Third bar plot (ARI)
     ax31 = fig.add_subplot(gspec[4:6, :2])
     ax31.text(-0.05, 1.1, "c", transform=ax31.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax31 = plot_phenotype_ari(ari_scores)
 
+    ax31 = plot_ari()
+
+    # Fourth bar plot (Silhouette)
     ax32 = fig.add_subplot(gspec[4:6, 2:])
     ax32.text(-0.05, 1.1, "d", transform=ax32.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax32 = plot_phenotype_cv(cv_scores)
+    ax32 = plot_silhouette()
 
-    # Third bar plot (ARI)
     ax41 = fig.add_subplot(gspec[6:8, :2])
     ax41.text(-0.05, 1.1, "e", transform=ax41.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
+    ax41 = plot_phenotype_ari(ari_scores)
 
-    ax41 = plot_ari()
-
-    # Fourth bar plot (Silhouette)
     ax42 = fig.add_subplot(gspec[6:8, 2:])
     ax42.text(-0.05, 1.1, "f", transform=ax42.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax42 = plot_silhouette()
+    ax42 = plot_phenotype_cv(cv_scores)
 
     plt.box(False)
 

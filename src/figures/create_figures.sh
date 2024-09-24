@@ -14,3 +14,5 @@ python3 src/figures/spatial_supplements_lgbm.py
 python3 src/figures/spatial_supplements_ae.py
 python3 src/figures/spatial_supplements_ae_m.py
 python3 src/figures/supplements_correlation.py
+python3 src/figures/supplements_histogram.py
+

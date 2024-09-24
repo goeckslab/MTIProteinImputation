@@ -12,20 +12,25 @@ import threading
 from sklearn.metrics import adjusted_rand_score
 import numpy as np
 from scipy.spatial.distance import pdist
+from sklearn.ensemble import RandomForestClassifier
 import argparse
+from sklearn.metrics import accuracy_score
 from pycaret.classification import ClassificationExperiment
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import adjusted_mutual_info_score, jaccard_score
+from sklearn.preprocessing import MinMaxScaler
 
 # Suppress warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=ImplicitModificationWarning)
 
+file_name = "unknown_patient_metrics.csv"
+gate = 0.1
 # Constants
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 save_folder = Path("results", "phenotypes")
-file_name = "patient_metrics.csv"
 
 # List to collect scores and thread lock for thread safety
 lock = threading.Lock()
@@ -73,7 +78,7 @@ def load_train_data(biopsy: str, phenotype: pd.DataFrame):
             df = ad.AnnData(df)
             df.obs["imageid"] = file.stem
             df = sm.pp.rescale(df, method="standard", verbose=False)
-            df = sm.tl.phenotype_cells(df, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
+            df = sm.tl.phenotype_cells(df, phenotype=phenotype, gate=gate, label="phenotype", verbose=False)
 
             new_df = pd.DataFrame(df.X, columns=SHARED_MARKERS)
             new_df["phenotype"] = df.obs["phenotype"].values
@@ -103,10 +108,8 @@ def run_lgbm(train_data, test_features, test_target):
 
 
 def process_biopsy(biopsy, phenotype):
-    results = []
     try:
         print(f"Processing Biopsy: {biopsy}")
-        # Ensure the output file does not exist, so the header is written only once
 
         train_data = load_train_data(biopsy, phenotype)
 
@@ -120,28 +123,33 @@ def process_biopsy(biopsy, phenotype):
         original_test_data = sm.pp.rescale(original_test_data, method="standard", verbose=False)
 
         # Process original data
-        original_test_data: ad.AnnData = sm.tl.phenotype_cells(original_test_data, phenotype=phenotype, gate=0.5,
+        original_test_data: ad.AnnData = sm.tl.phenotype_cells(original_test_data, phenotype=phenotype, gate=gate,
                                                                label="phenotype", verbose=False)
 
-        # fill na of phenotypes with Unknown
-
-        original_test_data.obs["phenotype"] = original_test_data.obs["phenotype"].fillna("Unknown")
+        # only keep rows where the phenotype is known
+        original_test_data = original_test_data[original_test_data.obs["phenotype"] != "Unknown"]
+        original_index = original_test_data.obs.index
+        # convert to int
+        original_index = original_index.astype(int)
 
         # Calculate silhouette score for original data
         original_silhouette_score = silhouette_score(original_test_data.X, original_test_data.obs["phenotype"])
 
+        results = []
         for protein in imp_data.columns:
             if protein not in SHARED_MARKERS:
                 continue
 
             tmp_data = test_data.copy()
             tmp_data[protein] = imp_data[protein]
+            # select the original index rows only
+            tmp_data = tmp_data.loc[original_index]
             imp_ad: ad.AnnData = ad.AnnData(tmp_data)
             # Rescale data
             imp_ad.obs["imageid"] = 1
             imp_ad = sm.pp.rescale(imp_ad, method="standard", verbose=False)
 
-            imp_ad = sm.tl.phenotype_cells(imp_ad, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
+            imp_ad = sm.tl.phenotype_cells(imp_ad, phenotype=phenotype, gate=gate, label="phenotype", verbose=False)
 
             # Calculate silhouette scores (CPU-bound task)
             # You can calculate the silhouette score before and after imputation for each cell cluster.
@@ -160,37 +168,28 @@ def process_biopsy(biopsy, phenotype):
             # Calculate Jaccard between original and imputed phenotype calls
             jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
 
-            for i in range(3):
-                # select 80% of the data for training and testing
-                tmp_train_data = train_data.sample(frac=0.8)
-                tmp_test_features = pd.DataFrame(original_test_data.X, columns=SHARED_MARKERS).sample(frac=0.8)
-                # select index of the test data and select the obs based on the index
-                tmp_test_target = original_test_data.obs["phenotype"].iloc[tmp_test_features.index]
-                original_accuracy = run_lgbm(train_data, pd.DataFrame(tmp_test_features, columns=SHARED_MARKERS),
-                                             tmp_test_target)
+            # Calculate accuracy or other performance metrics
+            original_accuracy = run_lgbm(train_data, pd.DataFrame(original_test_data.X, columns=SHARED_MARKERS),
+                                         original_test_data.obs["phenotype"])
+            imputed_accuracy = run_lgbm(train_data, pd.DataFrame(imp_ad.X, columns=SHARED_MARKERS),
+                                        original_test_data.obs["phenotype"])
 
-                tmp_imp_features = pd.DataFrame(imp_ad.X, columns=SHARED_MARKERS).sample(frac=0.8)
-                tmp_imp_target = original_test_data.obs["phenotype"].iloc[tmp_imp_features.index]
+            # Prepare the results to append to file
+            protein_result = {
+                "Biopsy": biopsy,
+                "Protein": protein,
+                "Original Silhouette Score": original_silhouette_score,
+                "Imputed Silhouette Score": imp_silhouette_score,
+                "ARI Score": ari,
+                "AMI": ami,
+                "Jaccard": jaccard,
+                "Original CV Score": original_accuracy,
+                "Imputed CV Score": imputed_accuracy,
+            }
 
-                imputed_accuracy = run_lgbm(train_data, pd.DataFrame(tmp_imp_features, columns=SHARED_MARKERS),
-                                            tmp_imp_target)
+            print(protein_result)
 
-                # Prepare the results to append to file
-                protein_result = {
-                    "Biopsy": biopsy,
-                    "Protein": protein,
-                    "Original Silhouette Score": original_silhouette_score,
-                    "Imputed Silhouette Score": imp_silhouette_score,
-                    "ARI Score": ari,
-                    "AMI": ami,
-                    "Jaccard": jaccard,
-                    "Original CV Score": original_accuracy,
-                    "Imputed CV Score": imputed_accuracy,
-                }
-
-                print(protein_result)
-
-                results.append(protein_result)
+            results.append(protein_result)
 
         return results
 
@@ -199,29 +198,40 @@ def process_biopsy(biopsy, phenotype):
         return []
 
 
+def append_to_file(result):
+    """
+    Appends a single result as a new row to the CSV file.
+    """
+    df = pd.DataFrame([result])
+    df.to_csv(Path(save_folder, file_name), mode='a', header=not Path(save_folder, file_name).exists(),
+              index=False)
+
+
+def signal_handler(sig, frame):
+    print("KeyboardInterrupt received. Saving scores...")
+    sys.exit(0)
+
+
+# Attach the signal handler to gracefully save results on Ctrl+C
+signal.signal(signal.SIGINT, signal_handler)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--workers", "-w", type=int, default=1)
-    parser.add_argument("--iterations", "-i", type=int, default=1)
     args = parser.parse_args()
 
     workers: int = args.workers
-    iterations: int = args.iterations
 
     print(f"Using {workers} workers for parallel processing.")
-    print(f"Running {iterations} iterations for each biopsy.")
 
     phenotype = pd.read_csv("data/tumor_phenotypes.csv")
 
     # Remove CK7 from phenotype
     phenotype = phenotype.drop("CK7", axis=1)
-
     all_results = []
     with ProcessPoolExecutor(max_workers=workers) as executor:
         # Submit all biopsies for processing
-        # futures = {executor.submit(process_biopsy, biopsy, phenotype): biopsy for biopsy in BIOPSIES}
-        futures = {executor.submit(process_biopsy, biopsy, phenotype): biopsy for _ in range(iterations) for biopsy in
-                   BIOPSIES}
+        futures = {executor.submit(process_biopsy, biopsy, phenotype): biopsy for biopsy in BIOPSIES}
 
         try:
             for future in as_completed(futures):

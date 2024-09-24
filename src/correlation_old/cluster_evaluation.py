@@ -82,25 +82,3 @@ if __name__ == '__main__':
     # save
     results_df.to_csv(Path(save_folder, "cluster_metrics.csv"), index=False)
 
-    # # Plot ARI
-    # plt.figure(figsize=(10, 6))
-    # sns.barplot(data=results_df, x="Marker", y="ARI")
-    # plt.ylabel("Adjusted Rand Index")
-    # plt.xlabel("Marker")
-    # plt.title("Adjusted Rand Index for each marker")
-    # plt.xticks(rotation=45)
-    # plt.tight_layout()
-    # plt.show()
-    #
-    # # Plot Silhouette Scores
-    # plt.figure(figsize=(12, 6))
-    # sns.barplot(data=results_df.melt(id_vars=["Biopsy", "Marker"],
-    #                                  value_vars=["Silhouette Original", "Silhouette Imputed"],
-    #                                  var_name="Silhouette Type", value_name="Score"),
-    #             x="Marker", y="Score", hue="Silhouette Type")
-    # plt.ylabel("Silhouette Score")
-    # plt.xlabel("Marker")
-    # plt.title("Silhouette Scores for Original and Imputed Data")
-    # plt.xticks(rotation=45)
-    # plt.tight_layout()
-    # plt.show()

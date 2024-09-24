@@ -30,7 +30,6 @@ file_name = "patient_metrics.csv"
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
-# BIOPSIES = ["9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 save_folder = Path("results", "phenotypes")
 
 # List to collect scores and thread lock for thread safety
@@ -74,7 +73,6 @@ def load_train_data(biopsy: str, phenotype: pd.DataFrame):
             if patient in file.stem:
                 continue
 
-            print(f"Loading {file}")
             df = pd.read_csv(file)
             df = df[SHARED_MARKERS]
             df = ad.AnnData(df)
@@ -161,8 +159,15 @@ def process_biopsy(biopsy, phenotype):
                                                                label="phenotype", verbose=False)
 
         # fill na of phenotypes with Unknown
+
         original_test_data.obs["phenotype"] = original_test_data.obs["phenotype"].fillna("Unknown")
 
+        # Calculate silhouette score for original data
+        original_silhouette_score = silhouette_score(original_test_data.X, original_test_data.obs["phenotype"])
+
+        # compactness of original data
+        original_compactness = compute_cluster_compactness(original_test_data.X,
+                                                           original_test_data.obs["phenotype"])
         for protein in imp_data.columns:
             if protein not in SHARED_MARKERS:
                 continue
@@ -179,7 +184,7 @@ def process_biopsy(biopsy, phenotype):
             # Calculate silhouette scores (CPU-bound task)
             # You can calculate the silhouette score before and after imputation for each cell cluster.
             # This method will evaluate how well each cell belongs to its predicted phenotype cluster.
-            original_silhouette_score = silhouette_score(original_test_data.X, original_test_data.obs["phenotype"])
+
             imp_silhouette_score = silhouette_score(imp_ad.X, imp_ad.obs["phenotype"])
 
             # Calculate ARI between original and imputed phenotype calls
@@ -191,17 +196,13 @@ def process_biopsy(biopsy, phenotype):
             # For original data
             # You can check for compactness (intra-cluster distance) of the phenotype groups.
             # A decrease in intra-cluster variance after imputation might indicate improved phenotype resolution.
-            original_compactness = compute_cluster_compactness(original_test_data.X,
-                                                               original_test_data.obs["phenotype"])
 
             # For imputed data
             imputed_compactness = compute_cluster_compactness(imp_ad.X, imp_ad.obs["phenotype"])
-
+            # Calculate AMI between original and imputed phenotype calls
             ami = adjusted_mutual_info_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
-            print(f"Adjusted Mutual Information (NMI): {ami}")
-
+            # Calculate Jaccard between original and imputed phenotype calls
             jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
-            print(f"Jaccard Index: {jaccard}")
 
             # Calculate accuracy or other performance metrics
             original_accuracy = run_random_forest(train_data, original_test_data)
@@ -267,9 +268,6 @@ if __name__ == '__main__':
 
     # Remove CK7 from phenotype
     phenotype = phenotype.drop("CK7", axis=1)
-
-    process_biopsy("9_2_1", phenotype)
-    input()
 
     with ProcessPoolExecutor(max_workers=workers) as executor:  # Using ProcessPoolExecutor for CPU-bound tasks
         futures = [executor.submit(process_biopsy, biopsy, phenotype) for biopsy in BIOPSIES]

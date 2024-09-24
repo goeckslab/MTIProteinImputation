@@ -52,7 +52,7 @@ if __name__ == '__main__':
     ax14.set_ylabel("CK17")
 
     # add legend using Biopsies 9_2, 9_3, 9_14 and 9_15, with colors blue, green, yellow and red respectively
-    ax11.legend(["9_2", "9_3", "9_14", "9_15"], title="Biopsy", loc="upper center", bbox_to_anchor=(0.5, 1.4),
+    ax11.legend(["9 2", "9 3", "9 14", "9 15"], title="Biopsy", loc="upper center", bbox_to_anchor=(0.5, 1.4),
                 ncol=4)
 
     plt.tight_layout()
