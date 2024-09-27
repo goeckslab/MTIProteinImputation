@@ -58,46 +58,10 @@ def load_imputed_data(biopsy: str):
     return imp_treatment
 
 
-def load_train_data(biopsy: str, phenotype: pd.DataFrame):
-    try:
-        bxs = []
-        for file in Path("data", "bxs").glob("*.csv"):
-            patient = '_'.join(biopsy.split("_")[0:2])
-            if patient in file.stem:
-                continue
-
-            df = pd.read_csv(file)
-            df = df[SHARED_MARKERS]
-            df = ad.AnnData(df)
-            df.obs["imageid"] = file.stem
-            df = sm.pp.rescale(df, method="standard", verbose=False)
-            df = sm.tl.phenotype_cells(df, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
-
-            new_df = pd.DataFrame(df.X, columns=SHARED_MARKERS)
-            new_df["phenotype"] = df.obs["phenotype"].values
-            bxs.append(new_df)
-
-        df = pd.concat(bxs)
-
-        df.reset_index(drop=True, inplace=True)
-        return df
-    except Exception as e:
-        print(f"Error loading train data for biopsy {biopsy}: {e}")
-        sys.exit(0)
-
-
-def run_lgbm(train_data, test_features, test_target):
-    test_df = pd.DataFrame(test_features, columns=SHARED_MARKERS)
-    test_df["phenotype"] = test_target.values
-
-    # Setup the experiment
-    exp = ClassificationExperiment()
-    exp.setup(data=train_data, target="phenotype", verbose=False, normalize=True, fold=3)
-    clf = exp.create_model("lightgbm", verbose=False)
-    predictions = exp.predict_model(clf, data=test_df, verbose=False)
-
-    metrics = exp.pull()
-    return metrics["Accuracy"][0]
+# Joint bootstrap function that samples indices
+def bootstrap_sample_joint(data, n_samples=None):
+    indices = np.random.choice(data.shape[0], size=n_samples, replace=True)
+    return indices
 
 
 def process_biopsy(biopsy, phenotype):
@@ -105,8 +69,6 @@ def process_biopsy(biopsy, phenotype):
     try:
         print(f"Processing Biopsy: {biopsy}")
         # Ensure the output file does not exist, so the header is written only once
-
-        train_data = load_train_data(biopsy, phenotype)
 
         test_data = pd.read_csv(f"data/bxs/{biopsy}.csv")
         test_data = test_data[SHARED_MARKERS]
@@ -121,10 +83,6 @@ def process_biopsy(biopsy, phenotype):
         original_test_data: ad.AnnData = sm.tl.phenotype_cells(original_test_data, phenotype=phenotype, gate=0.5,
                                                                label="phenotype", verbose=False)
 
-        # fill na of phenotypes with Unknown
-
-        original_test_data.obs["phenotype"] = original_test_data.obs["phenotype"].fillna("Unknown")
-
         # Calculate silhouette score for original data
         original_silhouette_score = silhouette_score(original_test_data.X, original_test_data.obs["phenotype"])
 
@@ -132,32 +90,38 @@ def process_biopsy(biopsy, phenotype):
             if protein not in PROTEINS_OF_INTEREST:
                 continue
 
-            for i in range(30):
-                tmp_data = test_data.copy()
-                tmp_data[protein] = imp_data[protein]
-                imp_ad: ad.AnnData = ad.AnnData(tmp_data)
-                # Rescale data
-                imp_ad.obs["imageid"] = 1
-                imp_ad = sm.pp.rescale(imp_ad, method="standard", verbose=False)
+            tmp_data = test_data.copy()
+            tmp_data[protein] = imp_data[protein]
+            imp_ad: ad.AnnData = ad.AnnData(tmp_data)
+            # Rescale data
+            imp_ad.obs["imageid"] = 1
+            imp_ad = sm.pp.rescale(imp_ad, method="standard", verbose=False)
 
-                imp_ad = sm.tl.phenotype_cells(imp_ad, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
+            imp_ad = sm.tl.phenotype_cells(imp_ad, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
+
+            for i in range(30):
+                bootstrap_index = bootstrap_sample_joint(imp_ad.X, n_samples=imp_ad.X.shape[0])
+                # select bootstrap samples
+                bootstrap_original_data = original_test_data[bootstrap_index]
+                bootstrap_imp_data = imp_ad[bootstrap_index]
 
                 # Calculate silhouette scores (CPU-bound task)
                 # You can calculate the silhouette score before and after imputation for each cell cluster.
                 # This method will evaluate how well each cell belongs to its predicted phenotype cluster.
-
-                imp_silhouette_score = silhouette_score(imp_ad.X, imp_ad.obs["phenotype"])
+                imp_silhouette_score = silhouette_score(bootstrap_imp_data.X, bootstrap_imp_data.obs["phenotype"])
 
                 # Calculate ARI between original and imputed phenotype calls
                 # You can compare how stable the clustering assignments are before and after imputation by calculating the Adjusted Rand Index (ARI)
                 # between clusters from the original and imputed datasets.
                 # This will show how similar the phenotype assignments are between both datasets.
-                ari = adjusted_rand_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
+                ari = adjusted_rand_score(bootstrap_original_data.obs["phenotype"], bootstrap_imp_data.obs["phenotype"])
 
                 # Calculate AMI between original and imputed phenotype calls
-                ami = adjusted_mutual_info_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
+                ami = adjusted_mutual_info_score(bootstrap_original_data.obs["phenotype"],
+                                                 bootstrap_imp_data.obs["phenotype"])
                 # Calculate Jaccard between original and imputed phenotype calls
-                jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
+                jaccard = jaccard_score(bootstrap_original_data.obs["phenotype"], bootstrap_imp_data.obs["phenotype"],
+                                        average='macro')
 
                 # Prepare the results to append to file
                 protein_result = {
@@ -194,7 +158,6 @@ if __name__ == '__main__':
     print(f"Running {iterations} iterations for each biopsy.")
 
     phenotype = pd.read_csv("data/tumor_phenotypes.csv")
-
     # Remove CK7 from phenotype
     phenotype = phenotype.drop("CK7", axis=1)
 
