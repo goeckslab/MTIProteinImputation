@@ -155,9 +155,9 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame):
     return ax
 
 
-def plot_phenotype_cv(cv_scores: pd.DataFrame):
+def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame):
     hue_order = ["Original CV Score", "Imputed CV Score"]
-    ax = sns.barplot(data=cv_scores, x="Protein", y="Score", hue="CV", hue_order=hue_order)
+    ax = sns.barplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order)
     ax.set_ylabel("Phenotype Classifier Accuracy")
     ax.set_xlabel("Protein")
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
@@ -169,34 +169,6 @@ def plot_phenotype_cv(cv_scores: pd.DataFrame):
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
-
-    # Add statistical annotations
-    pairs = [
-        (("pRB", "Original CV Score"), ("pRB", "Imputed CV Score")),
-        (("CD45", "Original CV Score"), ("CD45", "Imputed CV Score")),
-        (("CK19", "Original CV Score"), ("CK19", "Imputed CV Score")),
-        (("Ki67", "Original CV Score"), ("Ki67", "Imputed CV Score")),
-        (("aSMA", "Original CV Score"), ("aSMA", "Imputed CV Score")),
-        (("Ecad", "Original CV Score"), ("Ecad", "Imputed CV Score")),
-        (("PR", "Original CV Score"), ("PR", "Imputed CV Score")),
-        (("CK14", "Original CV Score"), ("CK14", "Imputed CV Score")),
-        (("HER2", "Original CV Score"), ("HER2", "Imputed CV Score")),
-        (("AR", "Original CV Score"), ("AR", "Imputed CV Score")),
-        (("CK17", "Original CV Score"), ("CK17", "Imputed CV Score")),
-        (("p21", "Original CV Score"), ("p21", "Imputed CV Score")),
-        (("Vimentin", "Original CV Score"), ("Vimentin", "Imputed CV Score")),
-        (("pERK", "Original CV Score"), ("pERK", "Imputed CV Score")),
-        (("EGFR", "Original CV Score"), ("EGFR", "Imputed CV Score")),
-        (("ER", "Original CV Score"), ("ER", "Imputed CV Score")),
-    ]
-
-    order = SHARED_PROTEINS
-    annotator = Annotator(ax, pairs, data=cv_scores, x="Protein", y="Score", order=order, hue="CV",
-                          hue_order=hue_order)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
-                        comparisons_correction="Benjamini-Hochberg")
-
-    annotator.apply_and_annotate()
 
     return ax
 
@@ -322,11 +294,11 @@ if __name__ == '__main__':
     # sort the dataframe by the protein
     ari_scores = ari_scores.sort_values(by="Protein")
 
-    cv_scores = pd.melt(phenotype_scores, id_vars=["Biopsy", "Protein"],
-                        value_vars=["Original CV Score", "Imputed CV Score"],
-                        var_name="CV", value_name="Score")
+    jaccard_scores = pd.melt(phenotype_scores, id_vars=["Biopsy", "Protein"],
+                             value_vars=["Jaccard"],
+                             var_name="Jaccard", value_name="Score")
     # sort the dataframe by the protein
-    cv_scores = cv_scores.sort_values(by="Protein")
+    jaccard_scores = jaccard_scores.sort_values(by="Protein")
 
     # Create the figure with a grid specification
     fig = plt.figure(figsize=(17, 17), dpi=150)
@@ -367,7 +339,7 @@ if __name__ == '__main__':
     ax42 = fig.add_subplot(gspec[6:8, 2:])
     ax42.text(-0.05, 1.1, "f", transform=ax42.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax42 = plot_phenotype_cv(cv_scores)
+    ax42 = plot_phenotype_jaccard(jaccard_scores)
 
     plt.box(False)
 
