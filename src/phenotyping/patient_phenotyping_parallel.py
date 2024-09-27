@@ -23,12 +23,10 @@ warnings.simplefilter(action='ignore', category=ImplicitModificationWarning)
 # Constants
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                   'pERK', 'EGFR', 'ER']
+PROTEINS_OF_INTEREST = ["aSMA", "CD45", "CK19", "CK14", "CK17"]
 BIOPSIES = ["9_2_1", "9_2_2", "9_3_1", "9_3_2", "9_14_1", "9_14_2", "9_15_1", "9_15_2"]
 save_folder = Path("results", "phenotypes")
 file_name = "patient_metrics.csv"
-
-# List to collect scores and thread lock for thread safety
-lock = threading.Lock()
 
 # Create folder if it doesn't exist
 if not save_folder.exists():
@@ -131,49 +129,35 @@ def process_biopsy(biopsy, phenotype):
         original_silhouette_score = silhouette_score(original_test_data.X, original_test_data.obs["phenotype"])
 
         for protein in imp_data.columns:
-            if protein not in SHARED_MARKERS:
+            if protein not in PROTEINS_OF_INTEREST:
                 continue
 
-            tmp_data = test_data.copy()
-            tmp_data[protein] = imp_data[protein]
-            imp_ad: ad.AnnData = ad.AnnData(tmp_data)
-            # Rescale data
-            imp_ad.obs["imageid"] = 1
-            imp_ad = sm.pp.rescale(imp_ad, method="standard", verbose=False)
+            for i in range(30):
+                tmp_data = test_data.copy()
+                tmp_data[protein] = imp_data[protein]
+                imp_ad: ad.AnnData = ad.AnnData(tmp_data)
+                # Rescale data
+                imp_ad.obs["imageid"] = 1
+                imp_ad = sm.pp.rescale(imp_ad, method="standard", verbose=False)
 
-            imp_ad = sm.tl.phenotype_cells(imp_ad, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
+                imp_ad = sm.tl.phenotype_cells(imp_ad, phenotype=phenotype, gate=0.5, label="phenotype", verbose=False)
 
-            # Calculate silhouette scores (CPU-bound task)
-            # You can calculate the silhouette score before and after imputation for each cell cluster.
-            # This method will evaluate how well each cell belongs to its predicted phenotype cluster.
+                # Calculate silhouette scores (CPU-bound task)
+                # You can calculate the silhouette score before and after imputation for each cell cluster.
+                # This method will evaluate how well each cell belongs to its predicted phenotype cluster.
 
-            imp_silhouette_score = silhouette_score(imp_ad.X, imp_ad.obs["phenotype"])
+                imp_silhouette_score = silhouette_score(imp_ad.X, imp_ad.obs["phenotype"])
 
-            # Calculate ARI between original and imputed phenotype calls
-            # You can compare how stable the clustering assignments are before and after imputation by calculating the Adjusted Rand Index (ARI)
-            # between clusters from the original and imputed datasets.
-            # This will show how similar the phenotype assignments are between both datasets.
-            ari = adjusted_rand_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
+                # Calculate ARI between original and imputed phenotype calls
+                # You can compare how stable the clustering assignments are before and after imputation by calculating the Adjusted Rand Index (ARI)
+                # between clusters from the original and imputed datasets.
+                # This will show how similar the phenotype assignments are between both datasets.
+                ari = adjusted_rand_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
 
-            # Calculate AMI between original and imputed phenotype calls
-            ami = adjusted_mutual_info_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
-            # Calculate Jaccard between original and imputed phenotype calls
-            jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
-
-            for i in range(3):
-                # select 80% of the data for training and testing
-                tmp_train_data = train_data.sample(frac=0.8)
-                tmp_test_features = pd.DataFrame(original_test_data.X, columns=SHARED_MARKERS).sample(frac=0.8)
-                # select index of the test data and select the obs based on the index
-                tmp_test_target = original_test_data.obs["phenotype"].iloc[tmp_test_features.index]
-                original_accuracy = run_lgbm(train_data, pd.DataFrame(tmp_test_features, columns=SHARED_MARKERS),
-                                             tmp_test_target)
-
-                tmp_imp_features = pd.DataFrame(imp_ad.X, columns=SHARED_MARKERS).sample(frac=0.8)
-                tmp_imp_target = original_test_data.obs["phenotype"].iloc[tmp_imp_features.index]
-
-                imputed_accuracy = run_lgbm(train_data, pd.DataFrame(tmp_imp_features, columns=SHARED_MARKERS),
-                                            tmp_imp_target)
+                # Calculate AMI between original and imputed phenotype calls
+                ami = adjusted_mutual_info_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"])
+                # Calculate Jaccard between original and imputed phenotype calls
+                jaccard = jaccard_score(original_test_data.obs["phenotype"], imp_ad.obs["phenotype"], average='macro')
 
                 # Prepare the results to append to file
                 protein_result = {
@@ -184,8 +168,6 @@ def process_biopsy(biopsy, phenotype):
                     "ARI Score": ari,
                     "AMI": ami,
                     "Jaccard": jaccard,
-                    "Original CV Score": original_accuracy,
-                    "Imputed CV Score": imputed_accuracy,
                 }
 
                 print(protein_result)
