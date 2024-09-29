@@ -6,6 +6,7 @@ import seaborn as sns
 from pathlib import Path
 import sys
 from statannotations.Annotator import Annotator
+import matplotlib.colors as mcolors  # Proper import for rgb2hex
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -13,11 +14,12 @@ image_folder = Path("figures", "fig2")
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                    'pERK', 'EGFR', 'ER']
+PROTEINS_OF_INTEREST = ["aSMA", "CD45", "CK19", "CK14", "CK17"]
 phenotype_folder = Path("results", "phenotypes")
 
 
 # Function for creating the bar plot for Null vs EN models
-def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.Figure:
+def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.Axes:
     hue = "Model"
     ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, hue_order=["Null", "EN"],
                      palette={"EN": "lightblue", "Null": "red"}, ax=ax)
@@ -71,7 +73,7 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.
 
 
 # Function for creating the bar plot for EN vs LGBM models
-def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.Figure:
+def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.Axes:
     ax = sns.barplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
                      palette={"EN": "lightblue", "LGBM": "orange"}, ax=ax)
 
@@ -126,7 +128,7 @@ def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.
 # Function to plot ARI
 def plot_ari():
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
-    ax = sns.barplot(data=results, x="Marker", y="ARI", palette="Set2")
+    ax = sns.barplot(data=results, x="Marker", y="ARI", palette="tab20")
     ax.set_ylabel("Expression ARI Score")
     ax.set_xlabel("Protein")
 
@@ -138,14 +140,62 @@ def plot_ari():
     # rotate x-axis labels
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
-    return ax
+
+    # **Step 3: Extract Color Assignments**
+    color_assignments = []
+
+    # Get the list of marker labels from the x-axis tick labels
+    markers = [tick.get_text() for tick in ax.get_xticklabels()]
+
+    # Debug: Print number of patches and markers
+    print(f"Number of patches: {len(ax.patches)}")
+    print(f"Number of markers: {len(markers)}")
+
+    # Iterate over each patch (bar) and corresponding marker
+    for i, (patch, marker) in enumerate(zip(ax.patches, markers)):
+        # Check if patch is a Rectangle (bar)
+        if not isinstance(patch, plt.Rectangle):
+            print(f"Skipping non-rectangle patch at index {i}")
+            continue
+
+        # Get the height of the bar (ARI score)
+        height = patch.get_height()
+
+        # Get the face color of the bar (RGBA tuple)
+        facecolor = patch.get_facecolor()
+
+        # Convert RGBA to Hex for easier interpretation
+        facecolor_hex = mcolors.rgb2hex(facecolor)
+
+        # Append the information as a dictionary
+        color_assignments.append({
+            'Marker': marker,
+            'ARI': height,
+            'Color_RGBA': facecolor,
+            'Color_Hex': facecolor_hex
+        })
+
+    # Optionally, print or return the color assignments
+    for assignment in color_assignments:
+        print(f"Marker: {assignment['Marker']}, ARI: {assignment['ARI']}, "
+              f"Color (RGBA): {assignment['Color_RGBA']}, "
+              f"Color (Hex): {assignment['Color_Hex']}")
+
+    colors = {}
+    for assignment in color_assignments:
+        if assignment['Marker'] in PROTEINS_OF_INTEREST:
+            colors[assignment['Marker']] = assignment['Color_RGBA']
+
+    return ax, colors
 
 
-def plot_phenotype_ari(ari_scores: pd.DataFrame):
-    ax = sns.barplot(data=ari_scores, x="Protein", y="Score", palette="Set2")
+def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
+    ax = sns.barplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
     ax.set_ylabel("Phenotype ARI Score")
     ax.set_xlabel("Protein")
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+
+    ax.set_ylim(0, 1)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -155,16 +205,14 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame):
     return ax
 
 
-def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame):
+def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
     hue_order = ["Original CV Score", "Imputed CV Score"]
-    ax = sns.barplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order)
+    ax = sns.barplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order, palette=color_palette)
     ax.set_ylabel("Phenotype Classifier Accuracy")
     ax.set_xlabel("Protein")
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
-    # change legend handles to Origin and Imputed
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles[0:2], labels=["Original", "Imputed"], loc="lower center", ncol=2)
 
+    ax.set_ylim(0, 1)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
@@ -323,7 +371,7 @@ if __name__ == '__main__':
     ax31.text(-0.05, 1.1, "c", transform=ax31.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
 
-    ax31 = plot_ari()
+    ax31, color_palette = plot_ari()
 
     # Fourth bar plot (Silhouette)
     ax32 = fig.add_subplot(gspec[4:6, 2:])
@@ -334,12 +382,12 @@ if __name__ == '__main__':
     ax41 = fig.add_subplot(gspec[6:8, :2])
     ax41.text(-0.05, 1.1, "e", transform=ax41.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax41 = plot_phenotype_ari(ari_scores)
+    ax41 = plot_phenotype_ari(ari_scores, color_palette)
 
     ax42 = fig.add_subplot(gspec[6:8, 2:])
     ax42.text(-0.05, 1.1, "f", transform=ax42.transAxes,
               fontsize=12, fontweight='bold', va='top', ha='right')
-    ax42 = plot_phenotype_jaccard(jaccard_scores)
+    ax42 = plot_phenotype_jaccard(jaccard_scores, color_palette)
 
     plt.box(False)
 

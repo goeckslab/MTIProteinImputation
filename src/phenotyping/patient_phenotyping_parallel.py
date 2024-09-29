@@ -6,14 +6,11 @@ from anndata import ImplicitModificationWarning
 from sklearn.metrics import silhouette_score
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import warnings
-import signal
 import sys
-import threading
 from sklearn.metrics import adjusted_rand_score
 import numpy as np
 from scipy.spatial.distance import pdist
 import argparse
-from pycaret.classification import ClassificationExperiment
 from sklearn.metrics import adjusted_mutual_info_score, jaccard_score
 
 # Suppress warnings
