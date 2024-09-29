@@ -147,10 +147,6 @@ def plot_ari():
     # Get the list of marker labels from the x-axis tick labels
     markers = [tick.get_text() for tick in ax.get_xticklabels()]
 
-    # Debug: Print number of patches and markers
-    print(f"Number of patches: {len(ax.patches)}")
-    print(f"Number of markers: {len(markers)}")
-
     # Iterate over each patch (bar) and corresponding marker
     for i, (patch, marker) in enumerate(zip(ax.patches, markers)):
         # Check if patch is a Rectangle (bar)
@@ -174,12 +170,6 @@ def plot_ari():
             'Color_RGBA': facecolor,
             'Color_Hex': facecolor_hex
         })
-
-    # Optionally, print or return the color assignments
-    for assignment in color_assignments:
-        print(f"Marker: {assignment['Marker']}, ARI: {assignment['ARI']}, "
-              f"Color (RGBA): {assignment['Color_RGBA']}, "
-              f"Color (Hex): {assignment['Color_Hex']}")
 
     colors = {}
     for assignment in color_assignments:
@@ -208,7 +198,7 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
 def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
     hue_order = ["Original CV Score", "Imputed CV Score"]
     ax = sns.barplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order, palette=color_palette)
-    ax.set_ylabel("Phenotype Classifier Accuracy")
+    ax.set_ylabel("Phenotype Jaccard Score")
     ax.set_xlabel("Protein")
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
 
