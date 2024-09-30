@@ -5,6 +5,7 @@ import seaborn as sns
 from statannotations.Annotator import Annotator
 
 load_folder = Path("results", "phenotypes")
+save_folder = Path("figures", "supplements", "phenotypes")
 SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                    'pERK', 'EGFR', 'ER']
 PROTEINS_OF_INTEREST = ["aSMA", "CD45", "CK19", "CK14", "CK17"]
@@ -32,6 +33,8 @@ def load_imputed_data(biopsy: str):
 
 
 if __name__ == '__main__':
+    if not save_folder.exists():
+        save_folder.mkdir(parents=True)
     scores = pd.read_csv(Path(load_folder, "patient_metrics.csv"))
 
     # melt the dataframe into a new dataframe containing only the Original and Imputed silhouette scores
@@ -99,4 +102,4 @@ if __name__ == '__main__':
     axs[1].spines['bottom'].set_visible(False)
 
     plt.tight_layout()
-    plt.savefig(Path("figures", "supplements", "phenotype_scores.png"), dpi=150)
+    plt.savefig(Path(save_folder, "phenotype_scores.png"), dpi=150)

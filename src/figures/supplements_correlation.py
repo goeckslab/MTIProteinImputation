@@ -51,10 +51,10 @@ if __name__ == '__main__':
     print(mean_correlations)
 
     x = "Marker"
-    ax = sns.barplot(data=mean_correlations, x=x, y="Correlation")
+    ax = sns.barplot(data=mean_correlations, x=x, y="Correlation", palette="tab20")
     ax.set_ylabel("Correlation")
     ax.set_xlabel("Protein")
-    ax.set_title("Correlation between original and imputed data")
+    ax.set_title("Correlation between original and imputed protein expression")
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.savefig(Path(save_folder, "correlation_original_imputed.png"), dpi=300)
