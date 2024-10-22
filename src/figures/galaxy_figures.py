@@ -57,31 +57,33 @@ mask = imread(mask_fh)
 cmap = plt.get_cmap('viridis')
 cmap.set_under(color='black')
 
-# create a panel using the galaxy image on the right hand side, the original in the middle, and the imputed data on the left hand side
-fig, ax = plt.subplots(1, 3, figsize=(18, 6), gridspec_kw={'width_ratios': [1, 1, 1]})
+# Create a panel with consistent size for each image
+fig, ax = plt.subplots(1, 3, figsize=(18, 6), constrained_layout=True)
 
-# display the galaxy image
-ax[0].imshow(galaxy_image)
+# Ensure all images have the same aspect ratio
+aspect_ratio = galaxy_image.shape[1] / galaxy_image.shape[0]
+
+# Display the galaxy image with the same aspect ratio
+ax[0].imshow(galaxy_image, aspect='auto')
 ax[0].set_title('Galaxy Image')
-ax[0].axis('off')
+ax[0].set_xticks([])  # Remove x-axis ticks
+ax[0].set_yticks([])  # Remove y-axis ticks
 
-# Display the original expression
+# Display the original expression with consistent aspect ratio
 colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
-s1 = ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=0.000000001)
+s1 = ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
 fig.colorbar(s1, ax=ax[1], fraction=0.025, pad=0.04)
 ax[1].set_title('Original Expression')
-ax[1].axis('off')
+ax[1].set_xticks([])
+ax[1].set_yticks([])
 
-# Display the imputed expression
+# Display the imputed expression with consistent aspect ratio
 colored_mask_imputed = map_array(mask, np.array(df['CellID']), np.array(df['imputed']))
-s2 = ax[2].imshow(colored_mask_imputed, interpolation='none', cmap=cmap, vmin=0.000000001)
+s2 = ax[2].imshow(colored_mask_imputed, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
 fig.colorbar(s2, ax=ax[2], fraction=0.025, pad=0.04)
 ax[2].set_title('Imputed Expression')
-ax[2].axis('off')
-
-# Adjust layout
-plt.tight_layout(pad=2, h_pad=0.5, w_pad=0.5)
-fig.subplots_adjust(wspace=0.2)  # Adjust the spacing between plots
+ax[2].set_xticks([])
+ax[2].set_yticks([])
 
 # Save the figure
 fig.savefig(f'colorized_mask_{biopsy}_{protein}_panel.png', dpi=500)
