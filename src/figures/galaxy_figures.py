@@ -25,8 +25,8 @@ args = parser.parse_args()
 protein: str = args.protein
 biopsy: str = args.biopsy
 
-original_fh = Path(load_path, f"{biopsy}_{protein}_original.csv")
-imputed_fh = Path(load_path, f"{biopsy}_{protein}_imputed.csv")
+original_fh = Path(load_path,biopsy, f"{biopsy}_{protein}_original.csv")
+imputed_fh = Path(load_path,biopsy, f"{biopsy}_{protein}_imputed.csv")
 galaxy_image_path = Path(galaxy_image_path, f"{biopsy}_{protein.lower()}.png")
 
 
