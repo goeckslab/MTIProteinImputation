@@ -69,15 +69,14 @@ ax[0].set_title('Galaxy Image')
 ax[0].set_xticks([])  # Remove x-axis ticks
 ax[0].set_yticks([])  # Remove y-axis ticks
 
-# Display the original expression with consistent aspect ratio
+# Display the original expression without a colorbar
 colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
-s1 = ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
-fig.colorbar(s1, ax=ax[1], fraction=0.025, pad=0.04)
+ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
 ax[1].set_title('Original Expression')
 ax[1].set_xticks([])
 ax[1].set_yticks([])
 
-# Display the imputed expression with consistent aspect ratio
+# Display the imputed expression with a colorbar
 colored_mask_imputed = map_array(mask, np.array(df['CellID']), np.array(df['imputed']))
 s2 = ax[2].imshow(colored_mask_imputed, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
 fig.colorbar(s2, ax=ax[2], fraction=0.025, pad=0.04)
