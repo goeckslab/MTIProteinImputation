@@ -19,11 +19,13 @@ galaxy_image_path: Path = Path('/home/groups/OMSAtlas/Code/kirchgae/MTIProteinIm
 parser = ArgumentParser()
 parser.add_argument("--protein", "-p", type=str, required=True, help="The protein")
 parser.add_argument("--biopsy", "-b", type=str, required=True, help="The biopsy")
+parser.add_argument("--vmin", "-vmin", type=float, required=True)
 
 args = parser.parse_args()
 
 protein: str = args.protein
 biopsy: str = args.biopsy
+vmin: float = args.vmin
 
 original_fh = Path(load_path,biopsy, f"{biopsy}_{protein}_original.csv")
 imputed_fh = Path(load_path,biopsy, f"{biopsy}_{protein}_imputed.csv")
@@ -71,7 +73,7 @@ ax[0].set_yticks([])  # Remove y-axis ticks
 
 # Display the original expression without a colorbar
 colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
-ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
+ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=vmin, aspect='auto')
 ax[1].set_title('Original Expression')
 ax[1].set_xticks([])
 ax[1].set_yticks([])
