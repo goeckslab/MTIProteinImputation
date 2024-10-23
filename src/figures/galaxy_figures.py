@@ -87,4 +87,4 @@ ax[2].set_xticks([])
 ax[2].set_yticks([])
 
 # Save the figure
-fig.savefig(f'colorized_mask_{biopsy}_{protein}_panel.png', dpi=500)
+fig.savefig(Path("figures", "supplements","visualize_original_vs_imputed_cells", f'{biopsy}_{protein}_panel.png', dpi=500))
