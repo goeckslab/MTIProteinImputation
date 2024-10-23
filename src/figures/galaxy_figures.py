@@ -86,5 +86,9 @@ ax[2].set_title('Imputed Expression')
 ax[2].set_xticks([])
 ax[2].set_yticks([])
 
+save_path = Path("figures", "supplements","visualize_original_vs_imputed_cells")
+if not save_path.exists():
+    save_path.mkdir(parents=True)
+
 # Save the figure
-fig.savefig(Path("figures", "supplements","visualize_original_vs_imputed_cells", f'{biopsy}_{protein}_panel.png', dpi=500))
+fig.savefig(Path(save_path, f'{biopsy}_{protein}_panel.png', dpi=500))
