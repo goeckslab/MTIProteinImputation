@@ -98,7 +98,7 @@ ax[2].set_xticks([])
 ax[2].set_yticks([])
 
 # add title
-fig.suptitle(f'{' '.join(biopsy.split('_'))} - {protein}')
+fig.suptitle(f"{' '.join(biopsy.split('_'))} - {protein}")
 
 save_path = Path("figures", "supplements","visualize_original_vs_imputed_cells")
 if not save_path.exists():
