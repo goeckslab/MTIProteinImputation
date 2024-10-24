@@ -17,7 +17,7 @@ cell_masks = {
     "9_3_1": "/home/groups/OMSAtlas/Staging_Data/HTA9_3/HMS-SORGER/t-CycIF_Tumor_Panel/0000342289/level3/BEMS342289_Mesmer_mask.ome.tiff",
     "9_3_2": "/home/groups/OMSAtlas/Staging_Data/HTA9_3/HMS-SORGER/t-CycIF_Tumor_Panel/0000342281/level3/BEMS342281_Mesmer_mask.ome.tiff",
     "9_14_1": "/home/groups/OMSAtlas/Staging_Data/HTA9_14/HMS-SORGER/t-CycIF_Tumor_Panel/0000388815/level3/BEMS388815_Mesmer_mask.ome.tiff",
-    "9_14_2": "/home/groups/OMSAtlas/Staging_Data/HTA9_14/HMS-SORGER/t-CycIF_Tumor_Panel/0000388823/level3/BEMS38823_Mesmer_mask.ome.tiff",
+    "9_14_2": "/home/groups/OMSAtlas/Staging_Data/HTA9_14/HMS-SORGER/t-CycIF_Tumor_Panel/0000388823/level3/BEMS388823_Mesmer_mask.ome.tiff",
     "9_15_1": "/home/groups/OMSAtlas/Staging_Data/HTA9_15/HMS-SORGER/t-CycIF_Tumor_Panel/0000388807/level3/BEMS388807_Mesmer_mask.ome.tiff",
     "9_15_2": "/home/groups/OMSAtlas/Staging_Data/HTA9_15/HMS-SORGER/t-CycIF_Tumor_Panel/0000388799/level3/BEMS388799_Mesmer_mask.ome.tiff"
 }
