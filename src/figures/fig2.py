@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 from statannotations.Annotator import Annotator
 import matplotlib.colors as mcolors  # Proper import for rgb2hex
+import matplotlib.image as mpimg
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -340,44 +341,56 @@ if __name__ == '__main__':
 
     # Create the figure with a grid specification
     fig = plt.figure(figsize=(17, 17), dpi=150)
-    gspec = fig.add_gridspec(8, 4)
+    gspec = fig.add_gridspec(12, 4)  # Updated to 12 rows to accommodate the new plot
 
     # First bar plot (Null & EN)
     ax1 = fig.add_subplot(gspec[0:2, :])
-    ax1.text(-0.05, 1, "a", transform=ax1.transAxes,
+    ax1.text(-0.02, 1.2, "a", transform=ax1.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.05, y=0.25, fontsize=12)
+    ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.04, y=0.25, fontsize=12)
     ax1 = create_bar_plot_null_model(data=null_model_scores, metric="MAE", ax=ax1)
 
     # Second bar plot (EN & LGBM)
     ax2 = fig.add_subplot(gspec[2:4, :])
-    ax2.text(-0.05, 1, "b", transform=ax2.transAxes,
+    ax2.text(-0.02, 1.2, "b", transform=ax2.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.05, y=0.25, fontsize=12)
+    ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.04, y=0.25, fontsize=12)
     ax2 = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ax=ax2)
 
-    # Third bar plot (ARI)
-    ax31 = fig.add_subplot(gspec[4:6, :2])
-    ax31.text(-0.05, 1.1, "c", transform=ax31.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
+    # New plot: In Vivo & Original & Imputed Expression
+    ax3 = fig.add_subplot(gspec[4:6, :2])
+    ax3.text(-0.02, 1.1, "c", transform=ax3.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    img = mpimg.imread("figures/fig2/9_2_1_Vimentin_panel.png")
 
-    ax31, color_palette = plot_ari()
+    # Adjust the aspect ratio and extent to stretch the image
+    ax3.imshow(img, aspect='auto')  # Adjust the extent values to stretch
+    ax3.axis('off')
+    ax3.set_title('In Vivo & Original\n & Imputed Expression', rotation='vertical', x=-0.06, y=0.1, fontsize=12)
+
+    # Third bar plot (ARI)
+    ax4 = fig.add_subplot(gspec[6:8, :2])
+    ax4.text(-0.05, 1.1, "d", transform=ax4.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    ax4, color_palette = plot_ari()
 
     # Fourth bar plot (Silhouette)
-    ax32 = fig.add_subplot(gspec[4:6, 2:])
-    ax32.text(-0.05, 1.1, "d", transform=ax32.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax32 = plot_silhouette()
+    ax5 = fig.add_subplot(gspec[6:8, 2:])
+    ax5.text(-0.065, 1.1, "e", transform=ax5.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    ax5 = plot_silhouette()
 
-    ax41 = fig.add_subplot(gspec[6:8, :2])
-    ax41.text(-0.05, 1.1, "e", transform=ax41.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax41 = plot_phenotype_ari(ari_scores, color_palette)
+    # Fifth bar plot (Phenotype ARI)
+    ax6 = fig.add_subplot(gspec[8:10, :2])
+    ax6.text(-0.05, 1.1, "f", transform=ax6.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    ax6 = plot_phenotype_ari(ari_scores, color_palette)
 
-    ax42 = fig.add_subplot(gspec[6:8, 2:])
-    ax42.text(-0.05, 1.1, "f", transform=ax42.transAxes,
-              fontsize=12, fontweight='bold', va='top', ha='right')
-    ax42 = plot_phenotype_jaccard(jaccard_scores, color_palette)
+    # Sixth bar plot (Phenotype Jaccard)
+    ax7 = fig.add_subplot(gspec[8:10, 2:])
+    ax7.text(-0.065, 1.1, "g", transform=ax7.transAxes,
+             fontsize=12, fontweight='bold', va='top', ha='right')
+    ax7 = plot_phenotype_jaccard(jaccard_scores, color_palette)
 
     plt.box(False)
 
