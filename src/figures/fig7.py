@@ -193,6 +193,7 @@ if __name__ == '__main__':
     og_vs_imputed_scores = pd.concat(og_vs_imputed_scores)
     og_vs_imputed_scores = pd.concat([og_vs_imputed_scores] * 30)
     downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
+    b_panel = plt.imread(Path("figures", "fig7", "panel_b.png"))
 
     # Create new figure
     # Create the figure and outer GridSpec
@@ -213,22 +214,11 @@ if __name__ == '__main__':
     inner_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gspec[1], wspace=0.5)
 
     # Create a subplot in the first column of the nested GridSpec
-    ax4 = fig.add_subplot(inner_gs[0, :1])
+    ax4 = fig.add_subplot(inner_gs[0, :])
     ax4.text(0, 1.15, "b", transform=ax4.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax4.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
-    ax4 = create_predictive_tissue(pd.read_csv("data/bxs/9_2_1.csv"),
-                                   pd.read_csv("results/predictive_tissue/9_2/original_pre_matching_tiles.csv"),
-                                   x_start=7000, x_end=8500, y_start=4000, y_end=6000)
-
-    # Create a subplot in the first column of the nested GridSpec
-    ax5 = fig.add_subplot(inner_gs[0, 1:])
-    ax5.text(0, 1.15, "c", transform=ax5.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax5.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
-    ax5 = create_predictive_tissue(pd.read_csv("data/bxs/9_2_2.csv"),
-                                   pd.read_csv("results/predictive_tissue/9_2/original_post_matching_tiles.csv"),
-                                   x_start=6000, x_end=8000, y_start=7000, y_end=10000)
+    ax4.imshow(b_panel, aspect='auto')
 
     # Create a subplot in the third row of the outer GridSpec
     ax3 = fig.add_subplot(gspec[2])
