@@ -195,39 +195,31 @@ if __name__ == '__main__':
     downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
     b_panel = plt.imread(Path("figures", "fig7", "panel_b.png"))
 
-    # Create new figure
-    # Create the figure and outer GridSpec
-    fig = plt.figure(figsize=(10, 8), dpi=300)
-    gspec = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
+    # Create a new figure and outer GridSpec
+    fig = plt.figure(figsize=(12, 10), dpi=300)  # Adjusted figure size for better clarity
+    gspec = gridspec.GridSpec(3, 1, height_ratios=[1, 1.2, 1], hspace=0.4)  # Adjusted height ratios and spacing
 
+    # First row subplot
     ax1 = fig.add_subplot(gspec[0, :])
-    ax1.text(0, 1.15, "a", transform=ax1.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    plt.box(False)
-    ax1.set_title("Downstream Workflow", rotation='vertical', x=-0.05, y=0, fontsize=8)
+    ax1.text(-0.08, 1.05, "a", transform=ax1.transAxes,  # Aligned to the left
+             fontsize=12, fontweight='bold', va='top', ha='left')
     ax1.imshow(downstream_workflow, aspect='auto')
-    # remove y axis from ax1
-    ax1.set_yticks([])
-    ax1.set_xticks([])
+    ax1.axis('off')
 
-    # Create a nested GridSpec in the second row of the outer GridSpec
-    inner_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gspec[1], wspace=0.5)
+    # Second row subplot for Panel B
+    ax3 = fig.add_subplot(gspec[1, :])
+    ax3.text(-0.17, 1.05, "b", transform=ax3.transAxes,  # Aligned to the left
+             fontsize=12, fontweight='bold', va='top', ha='left')
+    ax3.imshow(b_panel, aspect='equal')  # Set aspect to 'equal' to avoid stretching
+    ax3.axis('off')
 
-    # Create a subplot in the first column of the nested GridSpec
-    ax4 = fig.add_subplot(inner_gs[0, :])
-    ax4.text(0, 1.15, "b", transform=ax4.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax4.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
-    ax4.imshow(b_panel, aspect='auto')
-
-    # Create a subplot in the third row of the outer GridSpec
+    # Third row subplot for accuracy scores
     ax3 = fig.add_subplot(gspec[2])
-    ax3.text(0, 1.15, "d", transform=ax3.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-
-    ax3.set_title('Original, Removed & Imputed\n Accuracy score', rotation='vertical', x=-0.06, y=-0.1, fontsize=8)
+    ax3.text(-0.08, 1.05, "c", transform=ax3.transAxes,  # Aligned to the left
+             fontsize=12, fontweight='bold', va='top', ha='left')
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
-
     plt.tight_layout()
+
+    # Save the figure
     plt.savefig(Path(image_folder, "fig7.png"), dpi=300)
     plt.savefig(Path(image_folder, "fig7.eps"), dpi=300)
