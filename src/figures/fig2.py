@@ -357,38 +357,65 @@ if __name__ == '__main__':
     ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.04, y=0.25, fontsize=12)
     ax2 = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ax=ax2)
 
-    # New plot: In Vivo & Original & Imputed Expression
-    ax3 = fig.add_subplot(gspec[4:6, :2])
-    ax3.text(-0.02, 1.1, "c", transform=ax3.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    img = mpimg.imread("figures/fig2/9_2_1_Vimentin_panel.png")
+    # New sub-grid: In Vivo & Original & Imputed Expression (three-panel images)
+    sub_gspec_c = gspec[4:6, :2].subgridspec(1, 3)  # 1 row, 3 columns within specified main grid area for label "c"
+    for i, img_path in enumerate(["figures/fig2/Vimentin_Galaxy.png", "figures/fig2/Vimentin_Original.png",
+                                  "figures/fig2/Vimentin_Imputed.png"]):
+        ax = fig.add_subplot(sub_gspec_c[0, i])
+        img = mpimg.imread(img_path)
+        ax.imshow(img, aspect='auto')
+        if i == 0:
+            ax.set_title("In Situ", fontsize=8)
+        elif i == 1:
+            ax.set_title("Original", fontsize=8)
+        elif i == 2:
+            ax.set_title("Imputed", fontsize=8)
+        ax.axis('off')  # Turn off axis for a clean display
 
-    # Adjust the aspect ratio and extent to stretch the image
-    ax3.imshow(img, aspect='auto')  # Adjust the extent values to stretch
-    ax3.axis('off')
-    ax3.set_title('In Vivo & Original\n & Imputed Expression', rotation='vertical', x=-0.06, y=0.1, fontsize=12)
+    # Add label "c" to the figure, aligned to the sub-grid
+    fig.text(0.015, 0.64, "c", fontsize=12, fontweight='bold', va='top', ha='right')
+
+    # Define the main grid with a narrower fourth column
+    sub_gspec_d = gspec[4:6, 2:].subgridspec(1, 4, width_ratios=[1, 1, 1, 0.2])  # Adjust width ratios as needed
+    for i, img_path in enumerate(
+            ["figures/fig2/PR_Galaxy.png", "figures/fig2/PR_Original.png", "figures/fig2/PR_Imputed.png",
+             "figures/fig2/heatmap.png"]):
+        ax = fig.add_subplot(sub_gspec_d[0, i])
+        img = mpimg.imread(img_path)
+        ax.imshow(img, aspect='auto')
+        # Set title for each image
+        if i == 0:
+            ax.set_title("In Situ", fontsize=8)
+        elif i == 1:
+            ax.set_title("Original", fontsize=8)
+        elif i == 2:
+            ax.set_title("Imputed", fontsize=8)
+        ax.axis('off')  # Turn off axis for a clean display
+
+    # Add label "d" to the figure, aligned to the sub-grid
+    fig.text(0.515, 0.64, "d", fontsize=12, fontweight='bold', va='top', ha='right')
 
     # Third bar plot (ARI)
     ax4 = fig.add_subplot(gspec[6:8, :2])
-    ax4.text(-0.05, 1.1, "d", transform=ax4.transAxes,
+    ax4.text(-0.05, 1.1, "e", transform=ax4.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax4, color_palette = plot_ari()
 
     # Fourth bar plot (Silhouette)
     ax5 = fig.add_subplot(gspec[6:8, 2:])
-    ax5.text(-0.065, 1.1, "e", transform=ax5.transAxes,
+    ax5.text(-0.065, 1.1, "f", transform=ax5.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax5 = plot_silhouette()
 
     # Fifth bar plot (Phenotype ARI)
     ax6 = fig.add_subplot(gspec[8:10, :2])
-    ax6.text(-0.05, 1.1, "f", transform=ax6.transAxes,
+    ax6.text(-0.05, 1.1, "g", transform=ax6.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax6 = plot_phenotype_ari(ari_scores, color_palette)
 
     # Sixth bar plot (Phenotype Jaccard)
     ax7 = fig.add_subplot(gspec[8:10, 2:])
-    ax7.text(-0.065, 1.1, "g", transform=ax7.transAxes,
+    ax7.text(-0.065, 1.1, "h", transform=ax7.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     ax7 = plot_phenotype_jaccard(jaccard_scores, color_palette)
 

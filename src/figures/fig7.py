@@ -147,27 +147,10 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
-    # change legend position and and add only 1 row
-    # ax.legend(prop={"size": 6}, loc='center', bbox_to_anchor=[0.82, 0.95], ncol=3)
 
-    # Extract handles and labels from the seaborn plot
-    # Get handles and labels for the legend
-    handles, labels = ax.get_legend_handles_labels()
-
-    # Split the legend into two parts: the first for "Original Score" and "Removed Score", and the second for "Imputed Score"
-    first_legend_handles = handles[:2]
-    first_legend_labels = labels[:2]
-    second_legend_handles = handles[2:]
-    second_legend_labels = labels[2:]
-
-    # Add the first legend to the plot (for "Original Score" and "Removed Score")
-    first_legend = ax.legend(first_legend_handles, first_legend_labels, loc='center', prop={"size": 6}, ncol=2,
-                             bbox_to_anchor=[0.55, 0.95])
-
-    # Add the second legend manually (for "Imputed Score")
-    ax.add_artist(first_legend)  # Keep the first legend on the plot
-    ax.legend(second_legend_handles, second_legend_labels, loc='center', prop={"size": 6}, ncol=1,
-              bbox_to_anchor=[0.92, 0.95])
+    # add legend
+    ax.legend(loc='center', bbox_to_anchor=[0.5, 0.95], ncol=3, prop={"size": 6})
+    ax.set_title('Accuracy score', rotation='vertical', x=-0.06, y=0.25, fontsize=10)
 
     # Remove box around the plot
     ax.spines['top'].set_visible(False)
