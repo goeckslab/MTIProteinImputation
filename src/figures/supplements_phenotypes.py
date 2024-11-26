@@ -51,6 +51,9 @@ if __name__ == '__main__':
     # sort the dataframe by the protein
     ami_scores = ami_scores.sort_values(by="Protein")
 
+    # calculate mean ami scores
+    print(f"Phenotype AMI: {ami_scores.groupby('Protein')['Score'].mean().mean()}")
+
     # plot bar plots of all scores
     fig, axs = plt.subplots(1, 2, figsize=(15, 8))
     sns.barplot(data=silhouette_scores, x="Protein", y="Score", hue="Silhouette", ax=axs[0])

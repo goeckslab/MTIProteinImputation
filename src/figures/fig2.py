@@ -129,6 +129,8 @@ def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.
 # Function to plot ARI
 def plot_ari():
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
+    # list mean of the results
+    print(f"ARI: {results.groupby('Marker').mean().mean()}")
     ax = sns.barplot(data=results, x="Marker", y="ARI", palette="tab20")
     ax.set_ylabel("Expression ARI Score")
     ax.set_xlabel("Protein")
@@ -181,6 +183,7 @@ def plot_ari():
 
 
 def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
+    print(f"Phenotype ARI: {ari_scores.groupby('Protein').mean().mean()}")
     ax = sns.barplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
     ax.set_ylabel("Phenotype ARI Score")
     ax.set_xlabel("Protein")
@@ -197,6 +200,7 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
 
 
 def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
+    print(f"Phenotype Jaccard: {jaccard_scores.groupby('Protein').mean().mean()}")
     hue_order = ["Original CV Score", "Imputed CV Score"]
     ax = sns.barplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order, palette=color_palette)
     ax.set_ylabel("Phenotype Jaccard Score")
@@ -214,8 +218,12 @@ def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
 
 def plot_silhouette():
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
-    # create 30 replicates of the data
-    results = pd.concat([results] * 30, ignore_index=True)
+    print(f"Silhouette: {results.groupby('Marker').mean().mean()}")
+    # calculate difference between Original and Imputed Silhouette score using Silhouette Original and Silhouette Imputed columsn
+    results["Difference"] = results["Silhouette Imputed"] - results["Silhouette Original"]
+    print("Silhouette Imputed improvement:")
+    print(results.groupby("Marker")["Difference"].mean().mean())
+
 
     melt = results.melt(id_vars=["Biopsy", "Marker"],
                         value_vars=["Silhouette Original", "Silhouette Imputed"],
@@ -374,6 +382,8 @@ if __name__ == '__main__':
 
     # Add label "c" to the figure, aligned to the sub-grid
     fig.text(0.015, 0.64, "c", fontsize=12, fontweight='bold', va='top', ha='right')
+    # add vertical title to the subgrid
+    fig.text(0.015, 0.58, "Vimentin", rotation='vertical', fontsize=12, va='center', ha='right')
 
     # Define the main grid with a narrower fourth column
     sub_gspec_d = gspec[4:6, 2:].subgridspec(1, 4, width_ratios=[1, 1, 1, 0.2])  # Adjust width ratios as needed
@@ -394,6 +404,8 @@ if __name__ == '__main__':
 
     # Add label "d" to the figure, aligned to the sub-grid
     fig.text(0.515, 0.64, "d", fontsize=12, fontweight='bold', va='top', ha='right')
+    # add vertical title to the subgrid
+    fig.text(0.515, 0.58, "PR", rotation='vertical', fontsize=12, va='center', ha='right')
 
     # Third bar plot (ARI)
     ax4 = fig.add_subplot(gspec[6:8, :2])

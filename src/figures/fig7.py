@@ -88,15 +88,15 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
 
     # rename Imputed Score to Imputed Data, Removed Score to Removed Data, Original Score to Original Data
     scores["Type"] = scores["Type"].replace({"Imputed Score": "Imputed Data", "Removed Score": "Removed Data",
-                                             "Original Score": "Original Data"})
+                                             "Original Score": "Ground Truth Data"})
 
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
-    hue_order = ["Original Data", "Removed Data", "Imputed Data"]
+    hue_order = ["Ground Truth Data", "Removed Data", "Imputed Data"]
     ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type",
                      hue_order=hue_order,
-                     palette={"Original Data": "yellow", "Imputed Data": "darkgreen", "Removed Data": "red"})
+                     palette={"Ground Truth Data": "yellow", "Imputed Data": "darkgreen", "Removed Data": "red"})
 
     ax.set_ylabel("")
     ax.set_xlabel("")
@@ -105,39 +105,39 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
              'pERK', 'EGFR', 'ER']
     pairs = [
-        (("pRB", "Original Data"), ("pRB", "Imputed Data")),
-        (("CD45", "Original Data"), ("CD45", "Imputed Data")),
-        (("CK19", "Original Data"), ("CK19", "Imputed Data")),
-        (("Ki67", "Original Data"), ("Ki67", "Imputed Data")),
-        (("aSMA", "Original Data"), ("aSMA", "Imputed Data")),
-        (("Ecad", "Original Data"), ("Ecad", "Imputed Data")),
-        (("PR", "Original Data"), ("PR", "Imputed Data")),
-        (("CK14", "Original Data"), ("CK14", "Imputed Data")),
-        (("HER2", "Original Data"), ("HER2", "Imputed Data")),
-        (("AR", "Original Data"), ("AR", "Imputed Data")),
-        (("CK17", "Original Data"), ("CK17", "Imputed Data")),
-        (("p21", "Original Data"), ("p21", "Imputed Data")),
-        (("Vimentin", "Original Data"), ("Vimentin", "Imputed Data")),
-        (("pERK", "Original Data"), ("pERK", "Imputed Data")),
-        (("EGFR", "Original Data"), ("EGFR", "Imputed Data")),
-        (("ER", "Original Data"), ("ER", "Imputed Data")),
+        (("pRB", "Ground Truth Data"), ("pRB", "Imputed Data")),
+        (("CD45", "Ground Truth Data"), ("CD45", "Imputed Data")),
+        (("CK19", "Ground Truth Data"), ("CK19", "Imputed Data")),
+        (("Ki67", "Ground Truth Data"), ("Ki67", "Imputed Data")),
+        (("aSMA", "Ground Truth Data"), ("aSMA", "Imputed Data")),
+        (("Ecad", "Ground Truth Data"), ("Ecad", "Imputed Data")),
+        (("PR", "Ground Truth Data"), ("PR", "Imputed Data")),
+        (("CK14", "Ground Truth Data"), ("CK14", "Imputed Data")),
+        (("HER2", "Ground Truth Data"), ("HER2", "Imputed Data")),
+        (("AR", "Ground Truth Data"), ("AR", "Imputed Data")),
+        (("CK17", "Ground Truth Data"), ("CK17", "Imputed Data")),
+        (("p21", "Ground Truth Data"), ("p21", "Imputed Data")),
+        (("Vimentin", "Ground Truth Data"), ("Vimentin", "Imputed Data")),
+        (("pERK", "Ground Truth Data"), ("pERK", "Imputed Data")),
+        (("EGFR", "Ground Truth Data"), ("EGFR", "Imputed Data")),
+        (("ER", "Ground Truth Data"), ("ER", "Imputed Data")),
 
-        (("pRB", "Original Data"), ("pRB", "Removed Data")),
-        (("CD45", "Original Data"), ("CD45", "Removed Data")),
-        (("CK19", "Original Data"), ("CK19", "Removed Data")),
-        (("Ki67", "Original Data"), ("Ki67", "Removed Data")),
-        (("aSMA", "Original Data"), ("aSMA", "Removed Data")),
-        (("Ecad", "Original Data"), ("Ecad", "Removed Data")),
-        (("PR", "Original Data"), ("PR", "Removed Data")),
-        (("CK14", "Original Data"), ("CK14", "Removed Data")),
-        (("HER2", "Original Data"), ("HER2", "Removed Data")),
-        (("AR", "Original Data"), ("AR", "Removed Data")),
-        (("CK17", "Original Data"), ("CK17", "Removed Data")),
-        (("p21", "Original Data"), ("p21", "Removed Data")),
-        (("Vimentin", "Original Data"), ("Vimentin", "Removed Data")),
-        (("pERK", "Original Data"), ("pERK", "Removed Data")),
-        (("EGFR", "Original Data"), ("EGFR", "Removed Data")),
-        (("ER", "Original Data"), ("ER", "Removed Data")),
+        (("pRB", "Ground Truth Data"), ("pRB", "Removed Data")),
+        (("CD45", "Ground Truth Data"), ("CD45", "Removed Data")),
+        (("CK19", "Ground Truth Data"), ("CK19", "Removed Data")),
+        (("Ki67", "Ground Truth Data"), ("Ki67", "Removed Data")),
+        (("aSMA", "Ground Truth Data"), ("aSMA", "Removed Data")),
+        (("Ecad", "Ground Truth Data"), ("Ecad", "Removed Data")),
+        (("PR", "Ground Truth Data"), ("PR", "Removed Data")),
+        (("CK14", "Ground Truth Data"), ("CK14", "Removed Data")),
+        (("HER2", "Ground Truth Data"), ("HER2", "Removed Data")),
+        (("AR", "Ground Truth Data"), ("AR", "Removed Data")),
+        (("CK17", "Ground Truth Data"), ("CK17", "Removed Data")),
+        (("p21", "Ground Truth Data"), ("p21", "Removed Data")),
+        (("Vimentin", "Ground Truth Data"), ("Vimentin", "Removed Data")),
+        (("pERK", "Ground Truth Data"), ("pERK", "Removed Data")),
+        (("EGFR", "Ground Truth Data"), ("EGFR", "Removed Data")),
+        (("ER", "Ground Truth Data"), ("ER", "Removed Data")),
 
     ]
 
