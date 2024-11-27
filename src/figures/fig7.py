@@ -93,6 +93,9 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
+    # calculate improvement for imputed vs ground truth data and calculate overall mean
+    print(f"Improvement: {scores[scores['Type'] == 'Imputed Data']['Score'].mean() - scores[scores['Type'] == 'Ground Truth Data']['Score'].mean()}")
+
     hue_order = ["Ground Truth Data", "Removed Data", "Imputed Data"]
     ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type",
                      hue_order=hue_order,
