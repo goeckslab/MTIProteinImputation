@@ -105,7 +105,13 @@ To run the Auto Encoder experiments, run the following script from the root dir:
 #### Step 2b.7: Run downstream classification analysis
 ```./src/classifier/run_downstream_classification.sh```
 
-##### Step 2b.8: Plotting
+#### Step 2b.8: Run downstream clustering analysis
+```python3 ./src/evaluation/cluster_evaluation.py```
+
+#### Step 2b.9: Run phenotype analysis
+```./src/phenotyping/run_experiments.sh```
+
+##### Step 2b.10: Plotting
 
 To create all figures and table as well as supplemental material, run the following script from the root dir:
 ```./src/figures/create_figures.sh```

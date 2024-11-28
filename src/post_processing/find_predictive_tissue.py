@@ -54,39 +54,39 @@ if __name__ == '__main__':
             print(f"Base data for {patient} does not exist. Aborting!")
             continue
 
-        imputed_correct_tiles = []
+        removed_correct_tiles = []
         original_correct_tiles = []
         for marker in SHARED_MARKERS:
             try:
                 load_path = Path("results", "classifier", "informative_tiles", "exp", patient, "0", "experiment_1",
                                  "predictions")
-                imputed_tiles = pd.read_csv(Path(load_path, f"{marker}_imputed_predictions.csv"))
-                imputed_tiles["Marker"] = marker
+                removed_tiles = pd.read_csv(Path(load_path, f"{marker}_removed_predictions.csv"))
+                removed_tiles["Marker"] = marker
 
                 original_tiles = pd.read_csv(Path(load_path, f"{marker}_original_predictions.csv"))
                 original_tiles["Marker"] = marker
 
                 # correctly predicted tiles
-                imputed_correct_tiles.append(
-                    imputed_tiles[imputed_tiles["prediction_label"] == imputed_tiles["Treatment"]])
+                removed_correct_tiles.append(
+                    removed_tiles[removed_tiles["prediction_label"] == removed_tiles["Treatment"]])
                 original_correct_tiles.append(
                     original_tiles[original_tiles["prediction_label"] == original_tiles["Treatment"]])
             except:
                 print(f"Data for {marker} for patient {patient} does not exist. Please run the downstream task first.")
                 sys.exit(1)
 
-        imputed_correct_tiles = pd.concat(imputed_correct_tiles)
+        removed_correct_tiles = pd.concat(removed_correct_tiles)
         original_correct_tiles = pd.concat(original_correct_tiles)
 
         # Find tiles with matching coordinates across all markers
-        imputed_matching_tiles = find_matching_tiles(imputed_correct_tiles)
+        removed_matching_tiles = find_matching_tiles(removed_correct_tiles)
         original_matching_tiles = find_matching_tiles(original_correct_tiles)
 
-        imputed_pre_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "PRE"]
-        imputed_post_matching_tiles = imputed_matching_tiles[imputed_matching_tiles["Treatment"] == "ON"]
+        removed_pre_matching_tiles = removed_matching_tiles[removed_matching_tiles["Treatment"] == "PRE"]
+        removed_post_matching_tiles = removed_matching_tiles[removed_matching_tiles["Treatment"] == "ON"]
 
-        imputed_post_matching_tiles.to_csv(Path(patient_data_save_path, "imputed_post_matching_tiles.csv"), index=False)
-        imputed_pre_matching_tiles.to_csv(Path(patient_data_save_path, "imputed_pre_matching_tiles.csv"), index=False)
+        removed_post_matching_tiles.to_csv(Path(patient_data_save_path, "removed_post_matching_tiles.csv"), index=False)
+        removed_pre_matching_tiles.to_csv(Path(patient_data_save_path, "removed_pre_matching_tiles.csv"), index=False)
 
         original_pre_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "PRE"]
         original_post_matching_tiles = original_matching_tiles[original_matching_tiles["Treatment"] == "ON"]
@@ -95,11 +95,11 @@ if __name__ == '__main__':
         original_post_matching_tiles.to_csv(Path(patient_data_save_path, "original_post_matching_tiles.csv"),
                                             index=False)
 
-        unique_imputed_tiles = imputed_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
+        unique_removed_tiles = removed_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
         unique_original_tiles = original_matching_tiles.drop_duplicates(subset=['x_start', 'x_end', 'y_start', 'y_end'])
 
         # save the matching tiles
-        unique_imputed_tiles.to_csv(Path(patient_data_save_path, "imputed_matching_tiles.csv"), index=False)
+        unique_removed_tiles.to_csv(Path(patient_data_save_path, "removed_matching_tiles.csv"), index=False)
         unique_original_tiles.to_csv(Path(patient_data_save_path, "original_matching_tiles.csv"), index=False)
 
         # plot the matching tiles on the original biopsies using matplotlib and seaborn
@@ -107,7 +107,7 @@ if __name__ == '__main__':
         sns.set(style="whitegrid")
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.scatterplot(data=pre_tx, x="X_centroid", y="Y_centroid", ax=ax[0])
-        for i, row in imputed_pre_matching_tiles.iterrows():
+        for i, row in removed_pre_matching_tiles.iterrows():
             x = row["x_start"]
             y = row["y_start"]
             width = row["x_end"] - row["x_start"]
@@ -115,7 +115,7 @@ if __name__ == '__main__':
             ax[0].add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none'))
 
         sns.scatterplot(data=post_tx, x="X_centroid", y="Y_centroid", ax=ax[1])
-        for i, row in imputed_post_matching_tiles.iterrows():
+        for i, row in removed_post_matching_tiles.iterrows():
             x = row["x_start"]
             y = row["y_start"]
             width = row["x_end"] - row["x_start"]
@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
         plt.suptitle(f"Correctly classified tiles over all markers for patient {patient}")
         plt.tight_layout()
-        plt.savefig(Path(patient_figure_save_path, f"imputed_matching_tiles.png"), dpi=300)
+        plt.savefig(Path(patient_figure_save_path, f"removed_matching_tiles.png"), dpi=300)
         plt.close('all')
 
         sns.set(style="whitegrid")

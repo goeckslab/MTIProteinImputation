@@ -1,0 +1,6 @@
+,,aSMA,CD45,CK19,CK14,CK17,CK7
+all,Immune,,pos,,,,
+all,Stroma (aSMA+),pos,,,,,
+all,Neoplastic Epithelial,,,anypos,anypos,anypos,anypos
+Neoplastic Epithelial,Basal,,,,anypos,anypos,
+Neoplastic Epithelial,Luminal,,,anypos,,,anypos

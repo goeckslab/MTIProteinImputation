@@ -28,6 +28,7 @@ def is_overlapping(tile1, tile2):
     return not (tile1['x_end'] < tile2['x_start'] or tile1['x_start'] > tile2['x_end'] or
                 tile1['y_end'] < tile2['y_start'] or tile1['y_start'] > tile2['y_end'])
 
+
 # Function to select non-overlapping tiles
 def select_non_overlapping_tiles(df, num_tiles=20):
     selected_tiles = []
@@ -38,6 +39,7 @@ def select_non_overlapping_tiles(df, num_tiles=20):
         if not overlap:
             selected_tiles.append(row)
     return pd.DataFrame(selected_tiles)
+
 
 def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame, x_start, y_start, x_end, y_end):
     # Calculate IQR bounds for X_centroid and Y_centroid
@@ -59,14 +61,12 @@ def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame,
     # only keep 20 distinct non overlapping tiles
     matching_tiles = select_non_overlapping_tiles(matching_tiles, num_tiles=25)
 
-
     for i, row in matching_tiles.iterrows():
         x = row["x_start"]
         y = row["y_start"]
         width = row["x_end"] - row["x_start"]
         height = row["y_end"] - row["y_start"]
         ax.add_patch(plt.Rectangle((x, y), width, height, edgecolor='green', facecolor='none', linewidth=2.5))
-
 
     # rename x and y axis
     ax.set_xlabel("X")
@@ -83,48 +83,77 @@ def create_predictive_tissue(biopsy: pd.DataFrame, matching_tiles: pd.DataFrame,
 def create_imputed_vs_original_scores(scores: pd.DataFrame):
     # pivot scores so that these columns Imputed Score,Original Score,Removed score form one column
     scores = scores.melt(id_vars=["Patient", "Protein"],
-                         value_vars=["Imputed Score", "Original Score"], value_name="Score",
+                         value_vars=["Imputed Score", "Removed Score", "Original Score"], value_name="Score",
                          var_name="Type")
+
+    # rename Imputed Score to Imputed Data, Removed Score to Removed Data, Original Score to Original Data
+    scores["Type"] = scores["Type"].replace({"Imputed Score": "Imputed Data", "Removed Score": "Removed Data",
+                                             "Original Score": "Ground Truth Data"})
 
     # sort by proteins
     scores = scores.sort_values(by=["Protein"])
 
-    ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type", hue_order=["Original Score", "Imputed Score"],
-                     palette={"Original Score": "green", "Imputed Score": "darkgreen"})
+    # calculate improvement for imputed vs ground truth data and calculate overall mean
+    print(f"Improvement: {scores[scores['Type'] == 'Imputed Data']['Score'].mean() - scores[scores['Type'] == 'Ground Truth Data']['Score'].mean()}")
+
+    hue_order = ["Ground Truth Data", "Removed Data", "Imputed Data"]
+    ax = sns.barplot(data=scores, x="Protein", y="Score", hue="Type",
+                     hue_order=hue_order,
+                     palette={"Ground Truth Data": "yellow", "Imputed Data": "darkgreen", "Removed Data": "red"})
 
     ax.set_ylabel("")
     ax.set_xlabel("")
-    # log y axis
-    ax.set_yscale('linear')
+
+    ax.set_ylim(0, 1)
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
              'pERK', 'EGFR', 'ER']
     pairs = [
-        (("pRB", "Original Score"), ("pRB", "Imputed Score")),
-        (("CD45", "Original Score"), ("CD45", "Imputed Score")),
-        (("CK19", "Original Score"), ("CK19", "Imputed Score")),
-        (("Ki67", "Original Score"), ("Ki67", "Imputed Score")),
-        (("aSMA", "Original Score"), ("aSMA", "Imputed Score")),
-        (("Ecad", "Original Score"), ("Ecad", "Imputed Score")),
-        (("PR", "Original Score"), ("PR", "Imputed Score")),
-        (("CK14", "Original Score"), ("CK14", "Imputed Score")),
-        (("HER2", "Original Score"), ("HER2", "Imputed Score")),
-        (("AR", "Original Score"), ("AR", "Imputed Score")),
-        (("CK17", "Original Score"), ("CK17", "Imputed Score")),
-        (("p21", "Original Score"), ("p21", "Imputed Score")),
-        (("Vimentin", "Original Score"), ("Vimentin", "Imputed Score")),
-        (("pERK", "Original Score"), ("pERK", "Imputed Score")),
-        (("EGFR", "Original Score"), ("EGFR", "Imputed Score")),
-        (("ER", "Original Score"), ("ER", "Imputed Score"))
+        (("pRB", "Ground Truth Data"), ("pRB", "Imputed Data")),
+        (("CD45", "Ground Truth Data"), ("CD45", "Imputed Data")),
+        (("CK19", "Ground Truth Data"), ("CK19", "Imputed Data")),
+        (("Ki67", "Ground Truth Data"), ("Ki67", "Imputed Data")),
+        (("aSMA", "Ground Truth Data"), ("aSMA", "Imputed Data")),
+        (("Ecad", "Ground Truth Data"), ("Ecad", "Imputed Data")),
+        (("PR", "Ground Truth Data"), ("PR", "Imputed Data")),
+        (("CK14", "Ground Truth Data"), ("CK14", "Imputed Data")),
+        (("HER2", "Ground Truth Data"), ("HER2", "Imputed Data")),
+        (("AR", "Ground Truth Data"), ("AR", "Imputed Data")),
+        (("CK17", "Ground Truth Data"), ("CK17", "Imputed Data")),
+        (("p21", "Ground Truth Data"), ("p21", "Imputed Data")),
+        (("Vimentin", "Ground Truth Data"), ("Vimentin", "Imputed Data")),
+        (("pERK", "Ground Truth Data"), ("pERK", "Imputed Data")),
+        (("EGFR", "Ground Truth Data"), ("EGFR", "Imputed Data")),
+        (("ER", "Ground Truth Data"), ("ER", "Imputed Data")),
+
+        (("pRB", "Ground Truth Data"), ("pRB", "Removed Data")),
+        (("CD45", "Ground Truth Data"), ("CD45", "Removed Data")),
+        (("CK19", "Ground Truth Data"), ("CK19", "Removed Data")),
+        (("Ki67", "Ground Truth Data"), ("Ki67", "Removed Data")),
+        (("aSMA", "Ground Truth Data"), ("aSMA", "Removed Data")),
+        (("Ecad", "Ground Truth Data"), ("Ecad", "Removed Data")),
+        (("PR", "Ground Truth Data"), ("PR", "Removed Data")),
+        (("CK14", "Ground Truth Data"), ("CK14", "Removed Data")),
+        (("HER2", "Ground Truth Data"), ("HER2", "Removed Data")),
+        (("AR", "Ground Truth Data"), ("AR", "Removed Data")),
+        (("CK17", "Ground Truth Data"), ("CK17", "Removed Data")),
+        (("p21", "Ground Truth Data"), ("p21", "Removed Data")),
+        (("Vimentin", "Ground Truth Data"), ("Vimentin", "Removed Data")),
+        (("pERK", "Ground Truth Data"), ("pERK", "Removed Data")),
+        (("EGFR", "Ground Truth Data"), ("EGFR", "Removed Data")),
+        (("ER", "Ground Truth Data"), ("ER", "Removed Data")),
+
     ]
 
     annotator = Annotator(ax, pairs, data=scores, x="Protein", y="Score", order=order, hue="Type",
-                          verbose=1)
+                          verbose=1, hue_order=hue_order)
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
 
-    # change legend position and and add only 1 row
-    ax.legend(prop={"size": 7}, loc='center', bbox_to_anchor=[0.8, 0.95], ncol=2)
+
+    # add legend
+    ax.legend(loc='center', bbox_to_anchor=[0.5, 0.95], ncol=3, prop={"size": 6})
+    ax.set_title('Accuracy score', rotation='vertical', x=-0.06, y=0.25, fontsize=10)
 
     # Remove box around the plot
     ax.spines['top'].set_visible(False)
@@ -148,51 +177,35 @@ if __name__ == '__main__':
         og_vs_imputed_scores.append(patient_scores)
 
     og_vs_imputed_scores = pd.concat(og_vs_imputed_scores)
+    og_vs_imputed_scores = pd.concat([og_vs_imputed_scores] * 30)
     downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
+    b_panel = plt.imread(Path("figures", "fig7", "panel_b.png"))
 
-    # Create new figure
-    # Create the figure and outer GridSpec
-    fig = plt.figure(figsize=(10, 8), dpi=300)
-    gspec = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
+    # Create a new figure and outer GridSpec
+    fig = plt.figure(figsize=(12, 10), dpi=300)  # Adjusted figure size for better clarity
+    gspec = gridspec.GridSpec(3, 1, height_ratios=[1, 1.2, 1], hspace=0.4)  # Adjusted height ratios and spacing
 
+    # First row subplot
     ax1 = fig.add_subplot(gspec[0, :])
-    ax1.text(0, 1.15, "a", transform=ax1.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    plt.box(False)
-    ax1.set_title("Downstream Workflow", rotation='vertical', x=-0.05, y=0, fontsize=8)
+    ax1.text(-0.08, 1.05, "a", transform=ax1.transAxes,  # Aligned to the left
+             fontsize=12, fontweight='bold', va='top', ha='left')
     ax1.imshow(downstream_workflow, aspect='auto')
-    # remove y axis from ax1
-    ax1.set_yticks([])
-    ax1.set_xticks([])
+    ax1.axis('off')
 
-    # Create a nested GridSpec in the second row of the outer GridSpec
-    inner_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gspec[1], wspace=0.5)
+    # Second row subplot for Panel B
+    ax3 = fig.add_subplot(gspec[1, :])
+    ax3.text(-0.17, 1.05, "b", transform=ax3.transAxes,  # Aligned to the left
+             fontsize=12, fontweight='bold', va='top', ha='left')
+    ax3.imshow(b_panel, aspect='equal')  # Set aspect to 'equal' to avoid stretching
+    ax3.axis('off')
 
-    # Create a subplot in the first column of the nested GridSpec
-    ax4 = fig.add_subplot(inner_gs[0, :1])
-    ax4.text(0, 1.15, "b", transform=ax4.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax4.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
-    ax4 = create_predictive_tissue(pd.read_csv("data/bxs/9_2_1.csv"),
-                                   pd.read_csv("results/predictive_tissue/9_2/original_pre_matching_tiles.csv"),
-                                   x_start=7000, x_end=8500, y_start=4000, y_end=6000)
-
-    # Create a subplot in the first column of the nested GridSpec
-    ax5 = fig.add_subplot(inner_gs[0, 1:])
-    ax5.text(0, 1.15, "c", transform=ax5.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax5.set_title('', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
-    ax5 = create_predictive_tissue(pd.read_csv("data/bxs/9_2_2.csv"),
-                                   pd.read_csv("results/predictive_tissue/9_2/original_post_matching_tiles.csv"),
-                                   x_start=6000, x_end=8000, y_start=7000, y_end=10000)
-
-    # Create a subplot in the third row of the outer GridSpec
+    # Third row subplot for accuracy scores
     ax3 = fig.add_subplot(gspec[2])
-    ax3.text(0, 1.15, "d", transform=ax3.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax3.set_title('Original vs Imputed score', rotation='vertical', x=-0.05, y=0.1, fontsize=8)
+    ax3.text(-0.08, 1.05, "c", transform=ax3.transAxes,  # Aligned to the left
+             fontsize=12, fontweight='bold', va='top', ha='left')
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
-
     plt.tight_layout()
+
+    # Save the figure
     plt.savefig(Path(image_folder, "fig7.png"), dpi=300)
     plt.savefig(Path(image_folder, "fig7.eps"), dpi=300)

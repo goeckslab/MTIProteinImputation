@@ -27,32 +27,6 @@ def clean_column_names(df: pd.DataFrame):
     return df
 
 
-def load_imputed_data() -> dict:
-    imputed_data = {}
-    for patient in PATIENTS:
-        pre_treatment_path = Path("results", "imputed_data", "ae", "single", mode, patient, f"{radius}",
-                                  "pre_treatment.csv")
-        on_treatment_path = Path("results", "imputed_data", "ae", "single", mode, patient, f"{radius}",
-                                 "on_treatment.csv")
-
-        if not pre_treatment_path.exists() or not on_treatment_path.exists():
-            print(f"Pre or on treatment path for patient {patient} does not exist.")
-            print(f"Path: {pre_treatment_path}")
-            print(f"Path: {on_treatment_path}")
-            sys.exit(1)
-
-        # load files
-        pre_treatment = pd.read_csv(pre_treatment_path)
-        pre_treatment = pre_treatment[SHARED_MARKERS]
-        imputed_data[f"{patient}_1"] = pre_treatment
-
-        on_treatment = pd.read_csv(on_treatment_path)
-        on_treatment = on_treatment[SHARED_MARKERS]
-        imputed_data[f"{patient}_2"] = on_treatment
-
-    assert len(imputed_data) == 8, f"Imputed data should have 8 biopsies, had {len(imputed_data)}"
-    return imputed_data
-
 
 def load_train_data(base_path: Path, patient: str) -> {}:
     train_data_sets = {}
@@ -82,21 +56,6 @@ def load_train_data(base_path: Path, patient: str) -> {}:
 
     assert len(train_data_sets) == 6, f"There should be 6 train datasets, loaded {len(train_data_sets)}"
     return train_data_sets
-
-
-def get_non_confident(predicted_data: pd.DataFrame, remove_marker: str = None):
-    # get all cells with prediction scores between 0.3 and 0.7
-    confident_cells = predicted_data[
-        (predicted_data["prediction_score"] >= 0.4) & (predicted_data["prediction_score"] <= 0.6)]
-
-    # get all high confident cells
-    # confident_cells = predicted_data[predicted_data["prediction_score"] >= 0.8]
-    if remove_marker:
-        # remove the marker from SHARED_MARKER list
-        rem_markers = [marker for marker in SHARED_MARKERS if marker != remove_marker]
-        return confident_cells[rem_markers]
-
-    return confident_cells[SHARED_MARKERS]
 
 
 def get_tile_coordinates(df, tile_size, amount_of_tiles, x_col='X_centroid',
@@ -227,8 +186,7 @@ if __name__ == '__main__':
     loaded_train_data_sets: {} = load_train_data(Path("data", "bxs"), patient)
     # load test data sets
     loaded_test_data_sets: {} = load_test_data()
-    # load imputed data
-    loaded_imputed_data: {} = load_imputed_data()
+
 
     scores = []
 
@@ -283,68 +241,54 @@ if __name__ == '__main__':
                 continue
             print(f"Running protein {target_protein}...")
 
-            imp_train_sets = {}
-            imp_test_sets = {}
+            removed_train_sets = {}
+            removed_test_sets = {}
 
-            # replace the target protein with the imputed proteins value by train patients
+            # remove the target protein
             for biopsy in loaded_train_data_sets.keys():
                 train_data = loaded_train_data_sets[biopsy].copy()
-                imp_train_data = loaded_imputed_data[biopsy].copy()
-                # replace target protein with imputed data using the indexes of the subset
-                train_data.loc[:, target_protein] = imp_train_data.loc[:, target_protein]
 
-                #  assert that target protein is not in the original data
-                assert not train_data[target_protein].equals(
-                    loaded_train_data_sets[biopsy][
-                        target_protein]), "Target protein train data is equal to original data"
+                # remove target protein
+                train_data.drop(columns=[target_protein], inplace=True)
 
-                # assert that except of the target protein the data is the same
-                assert train_data.drop(columns=[target_protein]).equals(
-                    loaded_train_data_sets[biopsy].drop(
-                        columns=[target_protein])), "Data is not the same except for the target protein"
+                #  assert that target protein removed
+                assert target_protein not in train_data.columns, f"Target protein {target_protein} is not removed"
 
-                imp_train_sets[biopsy] = train_data
+
+                removed_train_sets[biopsy] = train_data
 
             for biopsy in loaded_test_data_sets.keys():
                 test_data = loaded_test_data_sets[biopsy].copy()
-                imp_test_data = loaded_imputed_data[biopsy].copy()
-                test_data.loc[:, target_protein] = imp_test_data.loc[:, target_protein]
+                test_data.drop(columns=[target_protein], inplace=True)
 
-                # assert that target proteins of subtest data is different compared to test_data_set
-                assert not test_data[target_protein].equals(
-                    loaded_test_data_sets[biopsy][target_protein]), "Target protein test data is equal to original data"
+                # assert that target protein is removed
+                assert target_protein not in test_data.columns, f"Target protein {target_protein} is not removed"
+                removed_test_sets[biopsy] = test_data
 
-                # assert that except of the target protein the data is the same
-                assert test_data.drop(columns=[target_protein]).equals(
-                    loaded_test_data_sets[biopsy].drop(
-                        columns=[target_protein])), "Data is not the same except for the target protein"
+            removed_tile_train_sets = {}
+            removed_tile_test_sets = {}
 
-                imp_test_sets[biopsy] = test_data
+            for biopsy in removed_train_sets.keys():
+                removed_tile_train_sets[biopsy] = calculate_tile_features(tiles=tile_train_sets[biopsy],
+                                                                      data=removed_train_sets[biopsy])
 
-            imp_tile_train_sets = {}
-            imp_tile_test_sets = {}
-
-            for biopsy in imp_train_sets.keys():
-                imp_tile_train_sets[biopsy] = calculate_tile_features(tiles=tile_train_sets[biopsy],
-                                                                      data=imp_train_sets[biopsy])
-
-            for biopsy in imp_test_sets.keys():
-                imp_tile_test_sets[biopsy] = calculate_tile_features(tiles=tile_test_sets[biopsy],
-                                                                     data=imp_test_sets[biopsy])
+            for biopsy in removed_test_sets.keys():
+                removed_tile_test_sets[biopsy] = calculate_tile_features(tiles=tile_test_sets[biopsy],
+                                                                     data=removed_test_sets[biopsy])
 
             og_tile_train_set = pd.concat(og_tile_train_sets.values())
             og_tile_test_set = pd.concat(og_tile_test_sets.values())
 
-            imp_tile_train_set = pd.concat(imp_tile_train_sets.values())
-            imp_tile_test_set = pd.concat(imp_tile_test_sets.values())
+            removed_tile_train_set = pd.concat(removed_tile_train_sets.values())
+            removed_tile_test_set = pd.concat(removed_tile_test_sets.values())
 
             # reset the index
             og_tile_train_set.reset_index(drop=True, inplace=True)
             og_tile_test_set.reset_index(drop=True, inplace=True)
-            imp_tile_train_set.reset_index(drop=True, inplace=True)
-            imp_tile_test_set.reset_index(drop=True, inplace=True)
+            removed_tile_train_set.reset_index(drop=True, inplace=True)
+            removed_tile_test_set.reset_index(drop=True, inplace=True)
 
-            imp_tile_test_spatial_data = imp_tile_test_set[["x_start", "x_end", "y_start", "y_end"]]
+            imp_tile_test_spatial_data = removed_tile_test_set[["x_start", "x_end", "y_start", "y_end"]]
             og_tile_test_spatial_data = og_tile_test_set[["x_start", "x_end", "y_start", "y_end"]]
 
             assert imp_tile_test_spatial_data.equals(og_tile_test_spatial_data), "Spatial data is not the same"
@@ -352,8 +296,8 @@ if __name__ == '__main__':
             test_set_spatial_data = imp_tile_test_spatial_data.copy()
 
             # remove from the data the spatial information
-            imp_tile_train_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
-            imp_tile_test_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
+            removed_tile_train_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
+            removed_tile_test_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
             og_tile_train_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
             og_tile_test_set.drop(columns=["x_start", "x_end", "y_start", "y_end"], inplace=True)
 
@@ -367,38 +311,37 @@ if __name__ == '__main__':
             og_predictions = og_experiment.predict_model(og_best, data=og_tile_test_set, verbose=False)
 
             imp_experiment = ClassificationExperiment()
-            imp_experiment.setup(data=imp_tile_train_set, target="Treatment", index=True,
+            imp_experiment.setup(data=removed_tile_train_set, target="Treatment", index=True,
                                  normalize=True, normalize_method="minmax", verbose=False, fold=10, fold_shuffle=True)
             imp_classifier = imp_experiment.create_model("lightgbm", verbose=False)
             imp_best = imp_experiment.compare_models([imp_classifier], verbose=False)
 
-            imp_predictions = imp_experiment.predict_model(imp_best, data=imp_tile_test_set,
+            removed_predictions = imp_experiment.predict_model(imp_best, data=removed_tile_test_set,
                                                            verbose=False)
 
-            imp_results = imp_experiment.pull()
+            removed_results = imp_experiment.pull()
             # pull the score from the model
-            imp_score = imp_results["Accuracy"].values[0]
+            removed_score = removed_results["Accuracy"].values[0]
 
-            imp_predictions = imp_predictions[["Treatment", "prediction_label", "prediction_score", "cell_count"]]
             og_predictions = og_predictions[["Treatment", "prediction_label", "prediction_score", "cell_count"]]
-
-            # combine the predictions, the truth treatment with the spatial coordinates of each tile based on the sets
-            imp_predictions["x_start"] = imp_tile_test_spatial_data["x_start"]
-            imp_predictions["x_end"] = imp_tile_test_spatial_data["x_end"]
-            imp_predictions["y_start"] = imp_tile_test_spatial_data["y_start"]
-            imp_predictions["y_end"] = imp_tile_test_spatial_data["y_end"]
+            removed_predictions = removed_predictions[["Treatment", "prediction_label", "prediction_score", "cell_count"]]
 
             og_predictions["x_start"] = og_tile_test_spatial_data["x_start"]
             og_predictions["x_end"] = og_tile_test_spatial_data["x_end"]
             og_predictions["y_start"] = og_tile_test_spatial_data["y_start"]
             og_predictions["y_end"] = og_tile_test_spatial_data["y_end"]
 
+            removed_predictions["x_start"] = test_set_spatial_data["x_start"]
+            removed_predictions["x_end"] = test_set_spatial_data["x_end"]
+            removed_predictions["y_start"] = test_set_spatial_data["y_start"]
+            removed_predictions["y_end"] = test_set_spatial_data["y_end"]
+
             prediction_folder = Path(iteration_save_folder, "predictions")
             if not prediction_folder.exists():
                 prediction_folder.mkdir(parents=True)
 
-            # save the predictions
-            imp_predictions.to_csv(Path(prediction_folder, f"{target_protein}_imputed_predictions.csv"),
-                                   index=False)
             og_predictions.to_csv(Path(prediction_folder, f"{target_protein}_original_predictions.csv"),
                                   index=False)
+
+            removed_predictions.to_csv(Path(prediction_folder, f"{target_protein}_removed_predictions.csv"),
+                                       index=False)
