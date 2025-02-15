@@ -128,3 +128,7 @@ protein abundance levels in multiplex tissue imaging data using machine learning
 information can improve imputation performance. We compare three different machine learning methods: Elastic Net,
 Light Gradient Boosting Machines, and Autoencoders. While all three methods perform well, Autoencoders offer the
 ability to impute multiple proteins at once, providing a distinct advantage over the other two methods.
+
+
+## Citation
+[![DOI](https://zenodo.org/badge/697920693.svg)](https://doi.org/10.5281/zenodo.14876654)
