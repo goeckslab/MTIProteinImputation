@@ -9,151 +9,112 @@ import os, logging
 from typing import List
 from statannotations.Annotator import Annotator
 
-# logging_path = Path("src", "figures", "fig5.log")
-# logging.root.handlers = []
-# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',
-#                    handlers=[
-#                        logging.FileHandler(logging_path),
-#                        logging.StreamHandler()
-#                    ])
-
 image_folder = Path("figures", "fig5")
-
 
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List):
     color_palette = {"0 µm": "grey", "15 µm": "magenta", "30 µm": "purple", "60 µm": "green", "90 µm": "yellow",
                      "120 µm": "red"}
-
     hue = "FE"
     hue_order = microns
-    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
 
-    # Optional: Set title and remove axis labels if needed
+    # Remove axis labels
     ax.set_ylabel("")
     ax.set_xlabel("")
 
-    # remove legend from fig
+    # Remove the legend from the default location and reposition it
+    # (The current legend call places it at [0.125, 0.9]; we leave it as is.)
     ax.legend(bbox_to_anchor=[0.125, 0.9], loc='center', fontsize=7, ncol=2)
 
     # Remove box around the plot
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    for spine in ['top', 'right', 'left', 'bottom']:
+        ax.spines[spine].set_visible(False)
 
-    # Customize this list to specify which x-ticks should have arrows
-    ticks_with_arrows = ['AR', 'EGFR', 'ER', 'EGFR', 'Ecad', 'CK14', 'PR', 'CK19']
-
-    x_labels = ax.get_xticklabels()
-
-    for label in x_labels:
-        label.set_fontsize(8)
-        if label.get_text() in ticks_with_arrows:
-            label.set_fontweight('bold')
-            # Get the position of the label
-            x_pos = label.get_position()[0]
-            y_pos = label.get_position()[1]
-
-            if len(label.get_text()) == 2:
-                # Draw the underline
-                ax.text(x_pos, y_pos - 0.06, '___', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
-                        transform=ax.get_xaxis_transform())
-            elif len(label.get_text()) == 3:
-                # Draw the underline
-                ax.text(x_pos, y_pos - 0.06, '____', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
-                        transform=ax.get_xaxis_transform())
-            else:
-                # Draw the underline
-                ax.text(x_pos, y_pos - 0.06, '_____', fontsize=label.get_fontsize() * 1.2, ha='center', va='top',
-                        transform=ax.get_xaxis_transform())
-
+    # Build statistical pairs (comparing each FE value vs. "0 µm" for each marker)
     pairs = []
     for micron in microns:
         if micron == "0 µm":
             continue
-        # Create pairs of (micron, 0 µm) for each marker
         for marker in data["Marker"].unique():
             pairs.append(((marker, micron), (marker, "0 µm")))
 
     try:
-        order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21',
-                 'Vimentin', 'pERK', 'EGFR', 'ER']
-
-        annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=hue_order,
-                              hide_non_significant=True)
+        order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2',
+                 'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER']
+        annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order,
+                              hue=hue, hue_order=hue_order, hide_non_significant=True)
         annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                             comparisons_correction="Benjamini-Hochberg")
         annotator.apply_and_annotate()
-
-    except:
+    except Exception as e:
         logging.error(pairs)
         logging.error(data["FE"].unique())
-        raise
+        raise e
 
     return ax
 
-
 if __name__ == '__main__':
+    plt.rcParams['font.family'] = 'Times New Roman'
+    plt.rcParams['font.size'] = 12
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
 
-    # if logging_path.exists():
-    #    os.remove(logging_path)
-
+    # Define spatial categories and convert them to strings with µm
     spatial_categories = [0, 30, 60]
-    # create a new list using the inputs
-    spatial_categories_strings = [f"{spatial_category} µm" for spatial_category in spatial_categories]
+    spatial_categories_strings = [f"{cat} µm" for cat in spatial_categories]
 
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
-
-    # select only the scores for the 0 µm, 15 µm, 60 µm, 120 µm
     lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin(spatial_categories)]
-
-    # select exp scores
     lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
-
-    # only select non hp scores
     lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
-
-    # Add µm to the FE column
     lgbm_scores["FE"] = lgbm_scores["FE"].astype(str) + " µm"
     lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], spatial_categories_strings)
-
-    # update 23 to 15, 92 to 60 and 184 to 120
     lgbm_scores["FE"] = lgbm_scores["FE"].cat.rename_categories(spatial_categories_strings)
-
-    # sort by marker and FE
     lgbm_scores.sort_values(by=["Marker", "FE"], inplace=True)
 
-    # load image from image folder
+    # Load the spatial information image (Panel a)
     spatial_information_image = plt.imread(Path(image_folder, "panel_a.png"))
 
     dpi = 300
-    cm = 1 / 2.54  # centimeters in inches
-    # Create new figure
-    fig = plt.figure(figsize=(18.5 * cm, 12 * cm), dpi=dpi)
+    # Create a new figure with a gridspec
+    fig = plt.figure(figsize=(12, 9), dpi=dpi)
     gspec = fig.add_gridspec(2, 3)
 
+    # --- Panel a ---
     ax1 = fig.add_subplot(gspec[0, :2])
-    # remove box from ax1
-    plt.box(False)
-    # remove ticks from ax1
+    # Remove box and ticks
     ax1.set_xticks([])
     ax1.set_yticks([])
-    ax1.text(-0.05, 1, "a", transform=ax1.transAxes,
-             fontsize=7, fontweight='bold', va='top', ha='right')
-    # show spatial information image
+    for spine in ax1.spines.values():
+        spine.set_visible(False)
+    # Display the image
     ax1.imshow(spatial_information_image, aspect='auto')
 
+    # --- Panel b ---
     ax2 = fig.add_subplot(gspec[1, :])
-    ax2.set_title('LGBM 0 µm, 30 µm and 60 µm', rotation='vertical', x=-0.07, y=0, fontsize=7)
-    ax2.text(-0.05, 1.2, "b", transform=ax2.transAxes,
-             fontsize=7, fontweight='bold', va='top', ha='right')
-    # remove box from ax3
-    plt.box(False)
+    # Create the boxen plot (this sets its own title, but we'll override it)
     ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
                             microns=spatial_categories_strings)
 
     plt.tight_layout()
-    plt.savefig(Path(image_folder, "fig5.png"), dpi=300, bbox_inches='tight')
-    plt.savefig(Path(image_folder, "fig5.eps"), dpi=300, bbox_inches='tight', format='eps')
+
+    # --- Now add panel labels and title using fig.text() so they align vertically ---
+    # Define a fixed x-coordinate for labels (vertical alignment)
+    label_x = -0.02
+
+    # Get positions from each axis (in figure coordinates)
+    pos_a = ax1.get_position()
+    pos_b = ax2.get_position()
+
+    # Place panel label "a" for Panel a
+    fig.text(label_x, pos_a.y1, "a", ha='left', va='bottom', fontsize=12)
+    # Place panel label "b" for Panel b
+    fig.text(label_x, pos_b.y1, "b", ha='left', va='bottom', fontsize=12)
+    # Place the title for Panel b below its top, aligned with the same x coordinate.
+    # Adjust the vertical offset (here, 0.03 below pos_b.y1) as needed.
+    fig.text(label_x, pos_b.y1 - 0.03, "LGBM 0 µm, 30 µm and 60 µm", ha='left', va='top',
+             rotation='vertical', fontsize=12)
+
+    # Save the figure
+    fig.savefig(Path(image_folder, "fig5.png"), dpi=dpi, bbox_inches='tight')
+    fig.savefig(Path(image_folder, "fig5.eps"), dpi=dpi, bbox_inches='tight', format='eps')
