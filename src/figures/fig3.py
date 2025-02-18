@@ -202,7 +202,7 @@ if __name__ == '__main__':
     # Panel b: AE MAE
     ax2 = fig.add_subplot(gspec[3:5, :])
     ax2.set_title('AE MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
-    ax2 = create_bar_plot_ae_ae_m(data=combined_ae_scores, metric="MAE", ylim=[0.0, 0.3])
+    ax2 = create_bar_plot_ae_ae_m(data=combined_ae_scores, metric="MAE", ylim=[0.0, 0.6])
     for spine in ax2.spines.values():
         spine.set_visible(False)
 
