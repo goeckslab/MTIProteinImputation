@@ -5,6 +5,8 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 import sys
+
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from statannotations.Annotator import Annotator
 import matplotlib.colors as mcolors  # Proper import for rgb2hex
 import matplotlib.image as mpimg
@@ -15,25 +17,44 @@ image_folder = Path("figures", "fig2")
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
                    'pERK', 'EGFR', 'ER']
+
+SHARED_PROTEINS_COLOR_PALETTE = {
+    'pRB': '#1f77b4',
+    'CD45': '#ff7f0e',
+    'CK19': '#2ca02c',
+    'Ki67': '#d62728',
+    'aSMA': '#9467bd',
+    'Ecad': '#8c564b',
+    'PR': '#e377c2',
+    'CK14': '#7f7f7f',
+    'HER2': '#bcbd22',
+    'AR': '#17becf',
+    'CK17': '#1f77b4',
+    'p21': '#ff7f0e',
+    'Vimentin': '#2ca02c',
+    'pERK': '#d62728',
+    'EGFR': '#9467bd',
+    'ER': '#8c564b'
+}
 PROTEINS_OF_INTEREST = ["aSMA", "CD45", "CK19", "CK14", "CK17"]
+
 phenotype_folder = Path("results", "phenotypes")
 
 
 # Function for creating the bar plot for Null vs EN models
 def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.Axes:
     hue = "Model"
-    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, hue_order=["Null", "EN"],
-                     palette={"EN": "lightblue", "Null": "red"}, ax=ax)
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, hue_order=["Null", "EN"],
+                       palette={"EN": "lightblue", "Null": "red"}, ax=ax, showfliers=True)
 
-    ax.set_ylim(0, 0.6)
+    # scale between 0 and 1
+    data[metric] = MinMaxScaler().fit_transform(data[metric].values.reshape(-1, 1))
+
+    ax.set_ylim(0, 1.1)
     ax.set_xlabel("Protein")
-    ax.tick_params(axis='both', which='major', labelsize=8)
+    ax.set_ylabel("")
+    # ax.tick_params(axis='both', which='major', labelsize=8)
     ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
-
-    for label in ax.get_xticklabels():
-        if label.get_text() == 'Mean':
-            label.set_fontstyle('italic')
-            label.set_fontweight('bold')
 
     ax.set_xticklabels(
         ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()])
@@ -75,18 +96,14 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.
 
 # Function for creating the bar plot for EN vs LGBM models
 def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.Axes:
-    ax = sns.barplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
-                     palette={"EN": "lightblue", "LGBM": "orange"}, ax=ax)
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
+                       palette={"EN": "lightblue", "LGBM": "orange"}, ax=ax)
 
     ax.set_ylim(0, 0.6)
     ax.set_xlabel("Protein")
-    ax.tick_params(axis='both', which='major', labelsize=8)
+    ax.set_ylabel("")
+    #ax.tick_params(axis='both', which='major', labelsize=8)
     ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
-
-    for label in ax.get_xticklabels():
-        if label.get_text() == 'Mean':
-            label.set_fontstyle('italic')
-            label.set_fontweight('bold')
 
     ax.set_xticklabels(
         ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()])
@@ -127,11 +144,11 @@ def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.
 
 
 # Function to plot ARI
-def plot_ari():
+def plot_ari(color_palette: dict):
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
     # list mean of the results
     print(f"ARI: {results.groupby('Marker').mean().mean()}")
-    ax = sns.barplot(data=results, x="Marker", y="ARI", palette="tab20")
+    ax = sns.boxenplot(data=results, x="Marker", y="ARI", palette=color_palette)
     ax.set_ylabel("Expression ARI Score")
     ax.set_xlabel("Protein")
 
@@ -144,50 +161,16 @@ def plot_ari():
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
 
-    # **Step 3: Extract Color Assignments**
-    color_assignments = []
-
-    # Get the list of marker labels from the x-axis tick labels
-    markers = [tick.get_text() for tick in ax.get_xticklabels()]
-
-    # Iterate over each patch (bar) and corresponding marker
-    for i, (patch, marker) in enumerate(zip(ax.patches, markers)):
-        # Check if patch is a Rectangle (bar)
-        if not isinstance(patch, plt.Rectangle):
-            print(f"Skipping non-rectangle patch at index {i}")
-            continue
-
-        # Get the height of the bar (ARI score)
-        height = patch.get_height()
-
-        # Get the face color of the bar (RGBA tuple)
-        facecolor = patch.get_facecolor()
-
-        # Convert RGBA to Hex for easier interpretation
-        facecolor_hex = mcolors.rgb2hex(facecolor)
-
-        # Append the information as a dictionary
-        color_assignments.append({
-            'Marker': marker,
-            'ARI': height,
-            'Color_RGBA': facecolor,
-            'Color_Hex': facecolor_hex
-        })
-
-    colors = {}
-    for assignment in color_assignments:
-        if assignment['Marker'] in PROTEINS_OF_INTEREST:
-            colors[assignment['Marker']] = assignment['Color_RGBA']
-
-    return ax, colors
+    return ax
 
 
 def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
     print(f"Phenotype ARI: {ari_scores.groupby('Protein').mean().mean()}")
-    ax = sns.barplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
+
+    ax = sns.boxenplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
     ax.set_ylabel("Phenotype ARI Score")
     ax.set_xlabel("Protein")
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    # ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
 
     ax.set_ylim(0, 1)
 
@@ -202,10 +185,10 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
 def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
     print(f"Phenotype Jaccard: {jaccard_scores.groupby('Protein').mean().mean()}")
     hue_order = ["Original CV Score", "Imputed CV Score"]
-    ax = sns.barplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order, palette=color_palette)
+    ax = sns.boxenplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order, palette=color_palette)
     ax.set_ylabel("Phenotype Jaccard Score")
     ax.set_xlabel("Protein")
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    # ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
 
     ax.set_ylim(0, 1)
     ax.spines['top'].set_visible(False)
@@ -224,7 +207,6 @@ def plot_silhouette():
     print("Silhouette Imputed improvement:")
     print(results.groupby("Marker")["Difference"].mean().mean())
 
-
     melt = results.melt(id_vars=["Biopsy", "Marker"],
                         value_vars=["Silhouette Original", "Silhouette Imputed"],
                         var_name="Silhouette Type", value_name="Score")
@@ -232,7 +214,7 @@ def plot_silhouette():
     # rename value Silhouette Original to Original and Silhoutte Imputed to Imputed
     melt["Silhouette Type"] = melt["Silhouette Type"].replace(
         {"Silhouette Original": "Original", "Silhouette Imputed": "Imputed"})
-    ax = sns.barplot(data=melt, x="Marker", y="Score", hue="Silhouette Type")
+    ax = sns.boxenplot(data=melt, x="Marker", y="Score", hue="Silhouette Type", showfliers=False, palette='Greys')
     ax.set_ylabel("Expression Silhouette Score")
     ax.set_xlabel("Protein")
 
@@ -279,6 +261,10 @@ def plot_silhouette():
 
 
 if __name__ == '__main__':
+    # set plt font Times New Roman
+    plt.rcParams['font.family'] = 'Times New Roman'
+    plt.rcParams['font.size'] = 12
+
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
 
@@ -353,16 +339,16 @@ if __name__ == '__main__':
 
     # First bar plot (Null & EN)
     ax1 = fig.add_subplot(gspec[0:2, :])
-    ax1.text(-0.02, 1.2, "a", transform=ax1.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.04, y=0.25, fontsize=12)
+    ax1.text(-0.03, 1.2, "a", transform=ax1.transAxes,
+             fontsize=12,  va='top', ha='right')
+    ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.03, y=0.25, fontsize=12)
     ax1 = create_bar_plot_null_model(data=null_model_scores, metric="MAE", ax=ax1)
 
     # Second bar plot (EN & LGBM)
     ax2 = fig.add_subplot(gspec[2:4, :])
-    ax2.text(-0.02, 1.2, "b", transform=ax2.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.04, y=0.25, fontsize=12)
+    ax2.text(-0.03, 1.23, "b", transform=ax2.transAxes,
+             fontsize=12,  va='top', ha='right')
+    ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.03, y=0.25, fontsize=12)
     ax2 = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ax=ax2)
 
     # New sub-grid: In Vivo & Original & Imputed Expression (three-panel images)
@@ -371,17 +357,18 @@ if __name__ == '__main__':
                                   "figures/fig2/Vimentin_Imputed.png"]):
         ax = fig.add_subplot(sub_gspec_c[0, i])
         img = mpimg.imread(img_path)
+        img = np.clip(img * 2.5, 0, 1)
         ax.imshow(img, aspect='auto')
         if i == 0:
-            ax.set_title("In Situ", fontsize=8)
+            ax.set_title("In Situ", fontsize=12)
         elif i == 1:
-            ax.set_title("Original", fontsize=8)
+            ax.set_title("Original", fontsize=12)
         elif i == 2:
-            ax.set_title("Imputed", fontsize=8)
+            ax.set_title("Imputed", fontsize=12)
         ax.axis('off')  # Turn off axis for a clean display
 
     # Add label "c" to the figure, aligned to the sub-grid
-    fig.text(0.015, 0.64, "c", fontsize=12, fontweight='bold', va='top', ha='right')
+    fig.text(0.015, 0.64, "c", fontsize=12, va='top', ha='right')
     # add vertical title to the subgrid
     fig.text(0.015, 0.58, "Vimentin", rotation='vertical', fontsize=12, va='center', ha='right')
 
@@ -392,44 +379,45 @@ if __name__ == '__main__':
              "figures/fig2/heatmap.png"]):
         ax = fig.add_subplot(sub_gspec_d[0, i])
         img = mpimg.imread(img_path)
+        img = np.clip(img * 1.5, 0, 1)
         ax.imshow(img, aspect='auto')
         # Set title for each image
         if i == 0:
-            ax.set_title("In Situ", fontsize=8)
+            ax.set_title("In Situ", fontsize=12)
         elif i == 1:
-            ax.set_title("Original", fontsize=8)
+            ax.set_title("Original", fontsize=12)
         elif i == 2:
-            ax.set_title("Imputed", fontsize=8)
+            ax.set_title("Imputed", fontsize=12)
         ax.axis('off')  # Turn off axis for a clean display
 
     # Add label "d" to the figure, aligned to the sub-grid
-    fig.text(0.515, 0.64, "d", fontsize=12, fontweight='bold', va='top', ha='right')
+    fig.text(0.515, 0.64, "d", fontsize=12, va='top', ha='right')
     # add vertical title to the subgrid
     fig.text(0.515, 0.58, "PR", rotation='vertical', fontsize=12, va='center', ha='right')
 
     # Third bar plot (ARI)
     ax4 = fig.add_subplot(gspec[6:8, :2])
-    ax4.text(-0.05, 1.1, "e", transform=ax4.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax4, color_palette = plot_ari()
+    ax4.text(-0.05, 1.25, "e", transform=ax4.transAxes,
+             fontsize=12, va='top', ha='right')
+    ax4 = plot_ari(color_palette=SHARED_PROTEINS_COLOR_PALETTE)
 
     # Fourth bar plot (Silhouette)
     ax5 = fig.add_subplot(gspec[6:8, 2:])
-    ax5.text(-0.065, 1.1, "f", transform=ax5.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
+    ax5.text(-0.065, 1.25, "f", transform=ax5.transAxes,
+             fontsize=12, va='top', ha='right')
     ax5 = plot_silhouette()
 
     # Fifth bar plot (Phenotype ARI)
     ax6 = fig.add_subplot(gspec[8:10, :2])
-    ax6.text(-0.05, 1.1, "g", transform=ax6.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax6 = plot_phenotype_ari(ari_scores, color_palette)
+    ax6.text(-0.05, 1.15, "g", transform=ax6.transAxes,
+             fontsize=12, va='top', ha='right')
+    ax6 = plot_phenotype_ari(ari_scores, SHARED_PROTEINS_COLOR_PALETTE)
 
     # Sixth bar plot (Phenotype Jaccard)
     ax7 = fig.add_subplot(gspec[8:10, 2:])
-    ax7.text(-0.065, 1.1, "h", transform=ax7.transAxes,
-             fontsize=12, fontweight='bold', va='top', ha='right')
-    ax7 = plot_phenotype_jaccard(jaccard_scores, color_palette)
+    ax7.text(-0.065, 1.15, "h", transform=ax7.transAxes,
+             fontsize=12, va='top', ha='right')
+    ax7 = plot_phenotype_jaccard(jaccard_scores, SHARED_PROTEINS_COLOR_PALETTE)
 
     plt.box(False)
 
