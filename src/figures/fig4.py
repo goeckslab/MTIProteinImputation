@@ -14,7 +14,7 @@ image_folder = Path("figures", "fig4")
 def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: []) -> plt.Figure:
     hue = "Model"
     x = "Marker"
-    ax = sns.barplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
+    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
                        palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
 
     # plt.title(title)
@@ -53,6 +53,8 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: []) -> plt.Figure:
 
 
 if __name__ == '__main__':
+    plt.rcParams['font.family'] = 'Times New Roman'
+    plt.rcParams['font.size'] = 12
     dpi = 300
     if not image_folder.exists():
         image_folder.mkdir(parents=True)
@@ -91,7 +93,7 @@ if __name__ == '__main__':
     ax1 = fig.add_subplot(gspec[:, :])
     #ax1.text(0, 1.15, "b", transform=ax1.transAxes,
     #         fontsize=12, fontweight='bold', va='top', ha='right')
-    ax1.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3, fontsize=8)
+    ax1.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3)
     ax1 = create_boxen_plot(network_scores, "MAE", [0, 1])
     # set ax2 tit
 
