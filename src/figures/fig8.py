@@ -37,6 +37,9 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     ax.set_ylim(0, 1)
     order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14',
              'HER2', 'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER']
+
+    # rote
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
     pairs = [
         (("pRB", "Ground Truth Data"), ("pRB", "Imputed Data")),
         (("CD45", "Ground Truth Data"), ("CD45", "Imputed Data")),

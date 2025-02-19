@@ -5,10 +5,8 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 import sys
-
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 from statannotations.Annotator import Annotator
-import matplotlib.colors as mcolors  # Proper import for rgb2hex
 import matplotlib.image as mpimg
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -195,7 +193,7 @@ if __name__ == '__main__':
     combined_en_lgbm_scores = pd.concat([en_scores, lgbm_scores])
 
     # Create the figure and sub-grids for panels a, b, c, d using a 4-row gridspec
-    fig = plt.figure(figsize=(8.27, 11.69), dpi=150)
+    fig = plt.figure(figsize=(8, 11), dpi=150)
     gs = fig.add_gridspec(4, 1, hspace=0.8)  # 4 rows, one for each panel
 
     # Panel a (label "a"): Null vs EN MAE (occupies row 0)
@@ -229,7 +227,7 @@ if __name__ == '__main__':
     fig.text(0.535, 0.3, "Vimentin", rotation='horizontal', va='center', ha='right')
 
     # Panel d (label "d"): PR images (occupies row 3)
-    sub_gs_d = gs[3, 0].subgridspec(1, 4, width_ratios=[3, 3, 3, 1], wspace=0.3)
+    sub_gs_d = gs[3, 0].subgridspec(1, 4, width_ratios=[2, 2, 2, 0.5], wspace=0.3)
     ax_d_left = None
     for i, img_path in enumerate(["figures/fig2/PR_Galaxy.png", "figures/fig2/PR_Original.png",
                                   "figures/fig2/PR_Imputed.png", "figures/fig2/heatmap.png"]):
