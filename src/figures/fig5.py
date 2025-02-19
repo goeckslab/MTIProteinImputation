@@ -23,7 +23,6 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List
     ax.set_xlabel("")
 
     # Remove the legend from the default location and reposition it
-    # (The current legend call places it at [0.125, 0.9]; we leave it as is.)
     ax.legend(bbox_to_anchor=[0.125, 0.9], loc='center', fontsize=7, ncol=2)
 
     # Remove box around the plot
@@ -76,8 +75,9 @@ if __name__ == '__main__':
     spatial_information_image = plt.imread(Path(image_folder, "panel_a.png"))
 
     dpi = 300
-    # Create a new figure with a gridspec
-    fig = plt.figure(figsize=(12, 9), dpi=dpi)
+    # Create a new figure with a gridspec.
+    # Here, we choose a figure size of 8" x 9", which is smaller than A4.
+    fig = plt.figure(figsize=(8, 9), dpi=dpi)
     gspec = fig.add_gridspec(2, 3)
 
     # --- Panel a ---
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     # --- Panel b ---
     ax2 = fig.add_subplot(gspec[1, :])
-    # Create the boxen plot (this sets its own title, but we'll override it)
+    # Create the boxen plot
     ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
                             microns=spatial_categories_strings)
 
@@ -111,7 +111,6 @@ if __name__ == '__main__':
     # Place panel label "b" for Panel b
     fig.text(label_x, pos_b.y1, "b", ha='left', va='bottom', fontsize=12)
     # Place the title for Panel b below its top, aligned with the same x coordinate.
-    # Adjust the vertical offset (here, 0.03 below pos_b.y1) as needed.
     fig.text(label_x, pos_b.y1 - 0.03, "LGBM 0 µm, 30 µm and 60 µm", ha='left', va='top',
              rotation='vertical', fontsize=12)
 
