@@ -44,7 +44,8 @@ def plot_ari(color_palette: dict):
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
     print(f"ARI: {results.groupby('Marker').mean().mean()}")
     ax = sns.boxenplot(data=results, x="Marker", y="ARI", palette=color_palette)
-    ax.set_ylabel("Expression ARI Score", x=-1)
+    ax.set_ylabel("Expression ARI Score")
+    ax.yaxis.set_label_coords(-0.07, 0.5)
     ax.set_xlabel("Protein")
     for spine in ['top', 'right', 'left', 'bottom']:
         ax.spines[spine].set_visible(False)
@@ -56,6 +57,7 @@ def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
     print(f"Phenotype ARI: {ari_scores.groupby('Protein').mean().mean()}")
     ax = sns.boxenplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
     ax.set_ylabel("Phenotype ARI Score")
+    ax.yaxis.set_label_coords(-0.18, 0.5)
     ax.set_xlabel("Protein")
     ax.set_ylim(0,1)
     for spine in ['top', 'right', 'left', 'bottom']:
@@ -170,7 +172,7 @@ if __name__ == '__main__':
     fig.text(0.05, 0.87, "a", ha='left', va='bottom', fontsize=12)
     fig.text(0.05, 0.62, "b", ha='left', va='bottom', fontsize=12)
     fig.text(0.05, 0.30, "c", ha='left', va='bottom', fontsize=12)
-    fig.text(0.51, 0.30, "d", ha='left', va='bottom', fontsize=12)
+    fig.text(0.50, 0.30, "d", ha='left', va='bottom', fontsize=12)
 
     # Save the figure (ensuring it does not exceed A4 dimensions)
     plt.savefig(Path(image_folder, "fig3.png"), dpi=dpi, bbox_inches='tight')
