@@ -16,9 +16,11 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     scores = scores.melt(id_vars=["Patient", "Protein"],
                          value_vars=["Imputed Score", "Removed Score", "Original Score"],
                          value_name="Score", var_name="Type")
-    scores["Type"] = scores["Type"].replace({"Imputed Score": "Imputed Data",
-                                             "Removed Score": "Removed Data",
-                                             "Original Score": "Ground Truth Data"})
+    scores["Type"] = scores["Type"].replace({
+        "Imputed Score": "Imputed Data",
+        "Removed Score": "Removed Data",
+        "Original Score": "Ground Truth Data"
+    })
     scores = scores.sort_values(by=["Protein"])
     imputed_mean = scores[scores['Type'] == 'Imputed Data']['Score'].mean()
     ground_truth_mean = scores[scores['Type'] == 'Ground Truth Data']['Score'].mean()
@@ -74,7 +76,7 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
-    ax.legend(loc='lower center', bbox_to_anchor=(0.72, -0.03), ncol=3, prop={"size": 6})
+    ax.legend(loc='lower center', bbox_to_anchor=(0.72, 0.03), ncol=3, prop={"size": 6})
     ax.set_title('Accuracy score', rotation='vertical', x=-0.06, y=0.25, fontsize=12)
     for spine in ["top", "right", "left", "bottom"]:
         ax.spines[spine].set_visible(False)
@@ -93,14 +95,16 @@ if __name__ == '__main__':
         patient_scores["Patient"] = patient
         og_vs_imputed_scores.append(patient_scores)
     og_vs_imputed_scores = pd.concat(og_vs_imputed_scores)
+    # Repeat scores to mimic sample size (if needed)
     og_vs_imputed_scores = pd.concat([og_vs_imputed_scores] * 30)
 
     # Load images for panels a and b
     downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
     b_panel = plt.imread(Path("figures", "fig7", "panel_b.png"))
 
-    # Create figure using constrained_layout to reduce whitespace
-    fig = plt.figure(figsize=(12, 10), dpi=dpi, constrained_layout=True)
+    # Create figure using constrained_layout to reduce whitespace.
+    # Figure size is set to 8″ x 10″, which is within A4 limits.
+    fig = plt.figure(figsize=(8, 10), dpi=dpi, constrained_layout=True)
     gs = fig.add_gridspec(3, 1, height_ratios=[1, 1.2, 1], hspace=0.3)
 
     # Panel a: Downstream workflow image
@@ -117,11 +121,12 @@ if __name__ == '__main__':
     ax3 = fig.add_subplot(gs[2, :])
     ax3 = create_imputed_vs_original_scores(og_vs_imputed_scores)
 
-    # Add panel labels using fig.text() with fontsize 12
+    # Add panel labels using fig.text() with fontsize 12.
+    # Here we align the labels vertically using fixed positions.
     fig.text(0, ax1.get_position().y1 + 0.08, "a", ha='left', va='bottom')
     fig.text(0, ax2.get_position().y1 + 0.08, "b", ha='left', va='bottom')
     fig.text(0, ax3.get_position().y1 + 0.01, "c", ha='left', va='bottom')
 
-    # Save the figure with minimal whitespace
+    # Save the figure with minimal whitespace.
     fig.savefig(Path(image_folder, "fig7.png"), dpi=dpi, bbox_inches='tight', transparent=False)
     fig.savefig(Path(image_folder, "fig7.eps"), dpi=dpi, bbox_inches='tight', format='eps', transparent=False)
