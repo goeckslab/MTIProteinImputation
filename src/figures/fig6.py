@@ -140,7 +140,8 @@ if __name__ == '__main__':
     all_scores["Mode"] = all_scores["Mode"].replace({"EXP": "AP"})
 
     dpi = 300
-    fig = plt.figure(figsize=(10, 7), dpi=dpi)
+    # Create a figure that fits within A4. Here we use 8" x 7", which is smaller than 8.27" x 11.69".
+    fig = plt.figure(figsize=(8, 7), dpi=dpi)
     gspec = fig.add_gridspec(3, 3)
 
     # Panel a: AE
@@ -150,23 +151,21 @@ if __name__ == '__main__':
                            legend_position=(0.5, -0.25),
                            ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB", "EGFR", "CK17", "aSMA",
                                               "p21", "Vimentin"])
-
     # Panel b: AE M
     ax_b = fig.add_subplot(gspec[1, :])
     ax_b = create_bar_plot(data=ae_m_scores, metric="MAE", ylim=[0, 0.5],
                            microns=spatial_categories_strings, model="AE M",
                            legend_position=(0.5, -0.25),
                            ticks_with_arrows=["AR", "CK14", "CK19", "ER", "Ecad", "PR", "pRB", "CK17", "EGFR", "aSMA"])
-
     # Panel c: Performance by Mode
     ax_c = fig.add_subplot(gspec[2, :])
     ax_c = create_bar_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.5],
                                         microns=spatial_categories_strings)
 
     plt.tight_layout()
-    fig.canvas.draw()  # Force a draw so that positions are updated
+    fig.canvas.draw()  # Force update of positions
 
-    # Now adjust legends manually after layout
+    # Adjust legends manually after layout
     for ax in [ax_a, ax_b]:
         leg = ax.get_legend()
         if leg is not None:
@@ -175,8 +174,8 @@ if __name__ == '__main__':
     if leg_c is not None:
         leg_c.set_bbox_to_anchor((0.5, -0.5))
 
-    # --- Now add panel labels and vertical titles using fig.text() ---
-    # Fixed x-coordinate for vertical alignment
+    # --- Add panel labels and vertical titles using fig.text() ---
+    # Use a fixed x-coordinate for vertical alignment
     label_x = 0
     pos_a = ax_a.get_position()
     pos_b = ax_b.get_position()
