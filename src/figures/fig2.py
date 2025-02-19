@@ -15,8 +15,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 image_folder = Path("figures", "fig2")
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
-SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
-                   'pERK', 'EGFR', 'ER']
+SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14',
+                   'HER2', 'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER']
 
 SHARED_PROTEINS_COLOR_PALETTE = {
     'pRB': '#1f77b4',
@@ -41,29 +41,31 @@ PROTEINS_OF_INTEREST = ["aSMA", "CD45", "CK19", "CK14", "CK17"]
 phenotype_folder = Path("results", "phenotypes")
 
 
-# Function for creating the bar plot for Null vs EN models
+# Function for creating the bar plot for Null vs EN models (Panel a)
 def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.Axes:
     hue = "Model"
     ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, hue_order=["Null", "EN"],
                        palette={"EN": "lightblue", "Null": "red"}, ax=ax, showfliers=True)
 
-    # scale between 0 and 1
+    # Scale between 0 and 1
     data[metric] = MinMaxScaler().fit_transform(data[metric].values.reshape(-1, 1))
-
     ax.set_ylim(0, 1.1)
-    ax.set_xlabel("Protein")
+    ax.set_xlabel("")
     ax.set_ylabel("")
     ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
 
     ax.set_xticklabels(
-        ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()])
+        ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()]
+    )
 
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    # rotate x-axis labels
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(45)
 
-    # Add statistical annotations
+    for spine in ['top', 'right', 'left', 'bottom']:
+        ax.spines[spine].set_visible(False)
+
+    # Statistical annotations
     pairs = [
         (("pRB", "Null"), ("pRB", "EN")),
         (("CD45", "Null"), ("CD45", "EN")),
@@ -85,7 +87,8 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.
     ]
 
     order = SHARED_PROTEINS + ["Mean"]
-    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue=hue, hue_order=["Null", "EN"])
+    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order,
+                          hue=hue, hue_order=["Null", "EN"])
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
@@ -93,25 +96,26 @@ def create_bar_plot_null_model(data: pd.DataFrame, metric: str, ax=None) -> plt.
     return ax
 
 
-# Function for creating the bar plot for EN vs LGBM models
+# Function for creating the bar plot for EN vs LGBM models (Panel b)
 def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.Axes:
     ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Network", hue_order=["EN", "LGBM"],
                        palette={"EN": "lightblue", "LGBM": "orange"}, ax=ax)
-
     ax.set_ylim(0, 0.6)
-    ax.set_xlabel("Protein")
+    ax.set_xlabel("")
     ax.set_ylabel("")
     ax.legend(bbox_to_anchor=[0.6, 0.85], loc='center', ncol=2)
-
     ax.set_xticklabels(
-        ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()])
+        ['Mean\nof all\nproteins' if x.get_text() == 'Mean' else x.get_text() for x in ax.get_xticklabels()]
+    )
 
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    # rotate x-axis labels
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(45)
 
-    # Add statistical annotations
+    for spine in ['top', 'right', 'left', 'bottom']:
+        ax.spines[spine].set_visible(False)
+
+    # Statistical annotations
     pairs = [
         (("pRB", "EN"), ("pRB", "LGBM")),
         (("CD45", "EN"), ("CD45", "LGBM")),
@@ -132,8 +136,8 @@ def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.
         (("Mean", "EN"), ("Mean", "LGBM"))
     ]
     order = SHARED_PROTEINS + ["Mean"]
-    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order, hue="Network",
-                          hue_order=["EN", "LGBM"])
+    annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order,
+                          hue="Network", hue_order=["EN", "LGBM"])
     annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
@@ -141,111 +145,7 @@ def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.
     return ax
 
 
-# Function to plot ARI
-def plot_ari(color_palette: dict):
-    results = pd.read_csv("results/evaluation/cluster_metrics.csv")
-    print(f"ARI: {results.groupby('Marker').mean().mean()}")
-    ax = sns.boxenplot(data=results, x="Marker", y="ARI", palette=color_palette)
-    ax.set_ylabel("Expression ARI Score")
-    ax.set_xlabel("Protein")
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-
-    for tick in ax.get_xticklabels():
-        tick.set_rotation(45)
-
-    return ax
-
-
-def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
-    print(f"Phenotype ARI: {ari_scores.groupby('Protein').mean().mean()}")
-    ax = sns.boxenplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
-    ax.set_ylabel("Phenotype ARI Score")
-    ax.set_xlabel("Protein")
-    ax.set_ylim(0, 1)
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-
-    return ax
-
-
-def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
-    print(f"Phenotype Jaccard: {jaccard_scores.groupby('Protein').mean().mean()}")
-    hue_order = ["Original CV Score", "Imputed CV Score"]
-    ax = sns.boxenplot(data=jaccard_scores, x="Protein", y="Score", hue_order=hue_order, palette=color_palette)
-    ax.set_ylabel("Phenotype Jaccard Score")
-    ax.set_xlabel("Protein")
-    ax.set_ylim(0, 1)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-
-    return ax
-
-
-def plot_silhouette():
-    results = pd.read_csv("results/evaluation/cluster_metrics.csv")
-    print(f"Silhouette: {results.groupby('Marker').mean().mean()}")
-    results["Difference"] = results["Silhouette Imputed"] - results["Silhouette Original"]
-    print("Silhouette Imputed improvement:")
-    print(results.groupby("Marker")["Difference"].mean().mean())
-
-    melt = results.melt(id_vars=["Biopsy", "Marker"],
-                        value_vars=["Silhouette Original", "Silhouette Imputed"],
-                        var_name="Silhouette Type", value_name="Score")
-
-    melt["Silhouette Type"] = melt["Silhouette Type"].replace(
-        {"Silhouette Original": "Original", "Silhouette Imputed": "Imputed"})
-    ax = sns.boxenplot(data=melt, x="Marker", y="Score", hue="Silhouette Type", showfliers=False, palette='Greys')
-    ax.set_ylabel("Expression Silhouette Score")
-    ax.set_xlabel("Protein")
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-
-    ax.legend(bbox_to_anchor=[0.4, 0.97], loc='center', ncol=2, fontsize=8)
-
-    for tick in ax.get_xticklabels():
-        tick.set_rotation(45)
-
-    pairs = [
-        (("pRB", "Original"), ("pRB", "Imputed")),
-        (("CD45", "Original"), ("CD45", "Imputed")),
-        (("CK19", "Original"), ("CK19", "Imputed")),
-        (("Ki67", "Original"), ("Ki67", "Imputed")),
-        (("aSMA", "Original"), ("aSMA", "Imputed")),
-        (("Ecad", "Original"), ("Ecad", "Imputed")),
-        (("PR", "Original"), ("PR", "Imputed")),
-        (("CK14", "Original"), ("CK14", "Imputed")),
-        (("HER2", "Original"), ("HER2", "Imputed")),
-        (("AR", "Original"), ("AR", "Imputed")),
-        (("CK17", "Original"), ("CK17", "Imputed")),
-        (("p21", "Original"), ("p21", "Imputed")),
-        (("Vimentin", "Original"), ("Vimentin", "Imputed")),
-        (("pERK", "Original"), ("pERK", "Imputed")),
-        (("EGFR", "Original"), ("EGFR", "Imputed")),
-        (("ER", "Original"), ("ER", "Imputed")),
-    ]
-
-    order = SHARED_PROTEINS
-    annotator = Annotator(ax, pairs, data=melt, x="Marker", y="Score", order=order, hue="Silhouette Type",
-                          hue_order=["Original", "Imputed"])
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
-                        comparisons_correction="Benjamini-Hochberg")
-    annotator.apply_and_annotate()
-
-    return ax
-
-
+# === Main Script ===
 if __name__ == '__main__':
     plt.rcParams['font.family'] = 'Times New Roman'
     plt.rcParams['font.size'] = 12
@@ -253,11 +153,11 @@ if __name__ == '__main__':
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
 
-    # === Data Loading and Processing (unchanged) ===
-    null_model_scores = pd.read_csv(f"results/scores/null_model/scores.csv")
+    # Data Loading and Processing (unchanged)
+    null_model_scores = pd.read_csv("results/scores/null_model/scores.csv")
     null_model_scores = null_model_scores.rename(columns={"Protein": "Marker"})
     null_model_scores["MAE"] = (null_model_scores["MAE"] - null_model_scores["MAE"].min()) / (
-            null_model_scores["MAE"].max() - null_model_scores["MAE"].min())
+        null_model_scores["MAE"].max() - null_model_scores["MAE"].min())
 
     lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
     lgbm_scores = lgbm_scores[lgbm_scores["FE"] == 0]
@@ -294,105 +194,72 @@ if __name__ == '__main__':
 
     combined_en_lgbm_scores = pd.concat([en_scores, lgbm_scores])
 
-    phenotype_scores = pd.read_csv(Path(phenotype_folder, "patient_metrics.csv"))
-    phenotype_scores = phenotype_scores.sort_values(by="Protein")
+    # Create the figure and sub-grids for panels a, b, c, d using a 4-row gridspec
+    fig = plt.figure(figsize=(8.27, 11.69), dpi=150)
+    gs = fig.add_gridspec(4, 1, hspace=0.8)  # 4 rows, one for each panel
 
-    ari_scores = pd.melt(phenotype_scores, id_vars=["Biopsy", "Protein"],
-                         value_vars=["ARI Score"],
-                         var_name="ARI", value_name="Score")
-    ari_scores = ari_scores.sort_values(by="Protein")
+    # Panel a (label "a"): Null vs EN MAE (occupies row 0)
+    ax_a = fig.add_subplot(gs[0, 0])
+    ax_a.set_title('Null & EN MAE', rotation='vertical', x=-0.07, y=0)
+    ax_a = create_bar_plot_null_model(data=null_model_scores, metric="MAE", ax=ax_a)
 
-    jaccard_scores = pd.melt(phenotype_scores, id_vars=["Biopsy", "Protein"],
-                             value_vars=["Jaccard"],
-                             var_name="Jaccard", value_name="Score")
-    jaccard_scores = jaccard_scores.sort_values(by="Protein")
+    # Panel b (label "b"): EN vs LGBM MAE (occupies row 1)
+    ax_b = fig.add_subplot(gs[1, 0])
+    ax_b.set_title('EN & LGBM MAE', rotation='vertical', x=-0.07, y=-0.2)
+    ax_b = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ax=ax_b)
 
-    # === Create the figure and sub-grids ===
-    fig = plt.figure(figsize=(17, 17), dpi=150)
-    gspec = fig.add_gridspec(12, 4)
-
-    # --- Group 1 panels (labels a, b, c, e, g) ---
-    ax1 = fig.add_subplot(gspec[0:2, :])
-    ax1.set_title('Null & EN MAE', rotation='vertical', x=-0.03, y=0.25, fontsize=12)
-    ax1 = create_bar_plot_null_model(data=null_model_scores, metric="MAE", ax=ax1)
-
-    ax2 = fig.add_subplot(gspec[2:4, :])
-    ax2.set_title('EN & LGBM MAE', rotation='vertical', x=-0.03, y=0.25, fontsize=12)
-    ax2 = create_bar_plot_en_vs_lgbm(data=combined_en_lgbm_scores, metric="MAE", ax=ax2)
-
-    # Panel c: Vimentin images sub-grid
-    sub_gspec_c = gspec[4:6, :2].subgridspec(1, 3)
-    # Use the left-most subplot of panel c for label placement
+    # Panel c (label "c"): Vimentin images (occupies row 2)
+    sub_gs_c = gs[2, 0].subgridspec(1, 3, wspace=0.3)
     ax_c_left = None
     for i, img_path in enumerate(["figures/fig2/Vimentin_Galaxy.png",
                                   "figures/fig2/Vimentin_Original.png",
                                   "figures/fig2/Vimentin_Imputed.png"]):
-        ax = fig.add_subplot(sub_gspec_c[0, i])
+        ax = fig.add_subplot(sub_gs_c[0, i])
         img = mpimg.imread(img_path)
         img = np.clip(img * 2.5, 0, 1)
         ax.imshow(img, aspect='auto')
         if i == 0:
-            ax.set_title("In Situ", fontsize=12)
-            ax_c_left = ax  # save for label "c"
+            ax.set_title("In Situ")
+            ax_c_left = ax  # for panel label "c"
         elif i == 1:
-            ax.set_title("Original", fontsize=12)
+            ax.set_title("Original")
         elif i == 2:
-            ax.set_title("Imputed", fontsize=12)
+            ax.set_title("Imputed")
         ax.axis('off')
-    # (Optional vertical text for Vimentin)
-    fig.text(0.015, 0.58, "Vimentin", rotation='vertical', fontsize=12, va='center', ha='right')
+    fig.text(0.535, 0.3, "Vimentin", rotation='horizontal', va='center', ha='right')
 
-    ax4 = fig.add_subplot(gspec[6:8, :2])
-    ax4 = plot_ari(color_palette=SHARED_PROTEINS_COLOR_PALETTE)
-
-    ax6 = fig.add_subplot(gspec[8:10, :2])
-    ax6 = plot_phenotype_ari(ari_scores, SHARED_PROTEINS_COLOR_PALETTE)
-
-    # --- Group 2 panels (labels d, f) ---
-    sub_gspec_d = gspec[4:6, 2:].subgridspec(1, 4, width_ratios=[1, 1, 1, 0.2])
+    # Panel d (label "d"): PR images (occupies row 3)
+    sub_gs_d = gs[3, 0].subgridspec(1, 4, width_ratios=[3, 3, 3, 1], wspace=0.3)
     ax_d_left = None
-    for i, img_path in enumerate(
-            ["figures/fig2/PR_Galaxy.png", "figures/fig2/PR_Original.png", "figures/fig2/PR_Imputed.png",
-             "figures/fig2/heatmap.png"]):
-        ax = fig.add_subplot(sub_gspec_d[0, i])
+    for i, img_path in enumerate(["figures/fig2/PR_Galaxy.png", "figures/fig2/PR_Original.png",
+                                  "figures/fig2/PR_Imputed.png", "figures/fig2/heatmap.png"]):
+        ax = fig.add_subplot(sub_gs_d[0, i])
         img = mpimg.imread(img_path)
         img = np.clip(img * 1.5, 0, 1)
         ax.imshow(img, aspect='auto')
         if i == 0:
-            ax.set_title("In Situ", fontsize=12)
-            ax_d_left = ax  # save for label "d"
+            ax.set_title("In Situ")
+            ax_d_left = ax  # for panel label "d"
         elif i == 1:
-            ax.set_title("Original", fontsize=12)
+            ax.set_title("Original")
         elif i == 2:
-            ax.set_title("Imputed", fontsize=12)
+            ax.set_title("Imputed")
         ax.axis('off')
-    fig.text(0.515, 0.58, "PR", rotation='vertical', fontsize=12, va='center', ha='right')
-
-    ax5 = fig.add_subplot(gspec[6:8, 2:])
-    ax5 = plot_silhouette()
-
-    ax7 = fig.add_subplot(gspec[8:10, 2:])
-    ax7 = plot_phenotype_jaccard(jaccard_scores, SHARED_PROTEINS_COLOR_PALETTE)
+    fig.text(0.515, 0.27, "PR", rotation='horizontal',va='center', ha='right')
 
     plt.box(False)
-
-    # Apply tight layout so that axes positions are finalized
     plt.tight_layout()
 
-    # For group 1 panels (a, b, c, e, g), we use a fixed x coordinate (e.g. 0.01)
-    label_x_left = 0.01
-    y_offset = 0.01  # adjust this value as needed
-    for label, ax in zip(['a', 'b', 'c', 'e', 'g'], [ax1, ax2, ax_c_left, ax4, ax6]):
+    # Add panel labels using fixed x coordinates
+    label_x_left = 0.06
+    for label, ax in zip(['a', 'b', 'c'], [ax_a, ax_b, ax_c_left]):
         pos = ax.get_position()
-        fig.text(label_x_left, pos.y1 + y_offset, label, ha='left', va='bottom', fontsize=12)
+        fig.text(label_x_left, pos.y1 + 0.01, label, ha='left', va='bottom')
 
-    # For group 2 panels (d, f, h), use a fixed x coordinate (e.g. 0.51)
-    label_x_right = 0.51
-    for label, ax in zip(['d', 'f', 'h'], [ax_d_left, ax5, ax7]):
-        pos = ax.get_position()
-        fig.text(label_x_right, pos.y1 + y_offset, label, ha='right', va='bottom', fontsize=12)
+    label_x_right = 0.06
+    pos = ax_d_left.get_position()
+    fig.text(label_x_right, pos.y1 + 0.01, "d", ha='left', va='bottom')
 
-    # Save the figure
     plt.savefig(Path(image_folder, "fig2.png"), dpi=300, bbox_inches='tight')
     plt.savefig(Path(image_folder, "fig2.eps"), dpi=300, bbox_inches='tight', format='eps')
     sys.exit()
