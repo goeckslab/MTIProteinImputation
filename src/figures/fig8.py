@@ -99,8 +99,8 @@ if __name__ == '__main__':
     og_vs_imputed_scores = pd.concat([og_vs_imputed_scores] * 30)
 
     # Load images for panels a and b
-    downstream_workflow = plt.imread(Path("figures", "fig7", "downstream.png"))
-    b_panel = plt.imread(Path("figures", "fig7", "panel_b.png"))
+    downstream_workflow = plt.imread(Path("figures", "fig8", "downstream.png"))
+    b_panel = plt.imread(Path("figures", "fig8", "panel_b.png"))
 
     # Create figure using constrained_layout to reduce whitespace.
     # Figure size is set to 8″ x 10″, which is within A4 limits.
