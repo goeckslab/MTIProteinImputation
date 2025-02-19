@@ -24,6 +24,9 @@ def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.
     ax.set_ylabel("")
     ax.set_xlabel("")
 
+    # retote x labels
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
     # Set y axis limits
     ax.set_ylim(ylim[0], ylim[1])
 
@@ -36,8 +39,8 @@ def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.
     for spine in ["top", "right", "left", "bottom"]:
         ax.spines[spine].set_visible(False)
 
-    # Place legend at the bottom center (outside the plot) with one column so each entry is on a separate row
-    ax.legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, -0.3), borderaxespad=0)
+    # Place legend at the bottom center (outside the plot)
+    ax.legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, -0.6), borderaxespad=0)
 
     # Statistical annotations
     pairs = [
@@ -138,7 +141,7 @@ if __name__ == '__main__':
         (ae_scores["Replace Value"] == "mean") &
         (ae_scores["Noise"] == 0) &
         (ae_scores["HP"] == 0)
-        ]
+    ]
     ae_scores.sort_values(by=["Marker"], inplace=True)
 
     ae_m_scores = ae_m_scores[
@@ -146,7 +149,7 @@ if __name__ == '__main__':
         (ae_m_scores["Replace Value"] == "mean") &
         (ae_m_scores["Noise"] == 0) &
         (ae_m_scores["HP"] == 0)
-        ]
+    ]
     ae_m_scores.sort_values(by=["Marker"], inplace=True)
     ae_m_scores["Mode"] = ae_m_scores["Mode"].replace({"EXP": "AP"})
 
@@ -186,8 +189,9 @@ if __name__ == '__main__':
     # ------------------
     # Figure Creation
     # ------------------
-    # Create a figure using constrained layout and a gridspec with extra spacing
-    fig = plt.figure(figsize=(10, 10), dpi=300, constrained_layout=True)
+    # Set figure size to A4 dimensions in inches: ~8.27 x 11.69
+    fig = plt.figure(figsize=(8, 9), dpi=300, constrained_layout=True)
+    # Adjust gridspec: 7 rows x 3 columns with modified spacing to fit the A4 page
     gspec = fig.add_gridspec(7, 3, wspace=0.3, hspace=0.5)
 
     # Panel a: AE Workflow image
@@ -213,21 +217,17 @@ if __name__ == '__main__':
     for spine in ax3.spines.values():
         spine.set_visible(False)
 
-    # Adjust overall margins if needed
-    plt.subplots_adjust(left=0.1, right=0.9, top=0.95, bottom=0.07)
+    # --- Fixed label positions ---
+    # Instead of computing the label x from each axis,
+    # Manually set y positions for each label so that they line up vertically.
+    # Adjust these y coordinates as needed to match your design.
+    label_y_positions = {'a': 0.95, 'b': 0.66, 'c': 0.3}
+    label_x_positions = {'a': 0, 'b': 0, 'c': 0}
 
-    # --- Now add panel labels in figure coordinates ---
-    # All labels use a fixed x coordinate to align vertically.
-    label_x = 0  # fixed x position
-    y_offset = 0.01  # vertical offset for fine tuning
-    for label, ax in zip(['a', 'b', 'c'], [ax1, ax2, ax3]):
-        if label == 'a' or label == 'b':
-            print(label)
-            y_offset = 0.1
-        pos = ax.get_position()
-        fig.text(label_x, pos.y1 + y_offset, label, ha='left', va='bottom', fontsize=12)
+    for label, pos  in zip(label_y_positions.keys(), label_x_positions.keys()):
+        fig.text(label_x_positions[pos], label_y_positions[label], label, ha='left', va='bottom', fontsize=12)
 
-    # Save the figure
+    # Save the figure ensuring it fits on an A4 page
     fig.savefig(Path(image_folder, "fig3.png"), dpi=300, bbox_inches='tight')
     fig.savefig(Path(image_folder, "fig3.eps"), dpi=300, bbox_inches='tight', format='eps')
     sys.exit()
