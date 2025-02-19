@@ -1,46 +1,113 @@
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
+import sys
+from typing import List
 from statannotations.Annotator import Annotator
-
-PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
-SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2',
-                  'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER']
 
 image_folder = Path("figures", "fig4")
 
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: list) -> plt.Figure:
-    hue = "Model"
-    x = "Marker"
-    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
-                       palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
+def create_bar_plot_ae_ae_m(data: pd.DataFrame, metric: str, ylim: List) -> plt.Axes:
+    hue = "Network"
+    hue_order = ["AE", "AE M"]
+    ax = sns.boxenplot(
+        data=data, x="Marker", y=metric, hue=hue, hue_order=hue_order,
+        palette={"AE": "grey", "AE M": "darkgrey"}
+    )
 
     # Remove axis labels
     ax.set_ylabel("")
     ax.set_xlabel("")
-    # Reduce tick label font size
-    ax.tick_params(axis='both', which='major', labelsize=8)
 
-    # Remove plot spines for a cleaner look
-    for spine in ['top', 'right', 'left', 'bottom']:
+    # retote x labels
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+    # Set y axis limits
+    ax.set_ylim(ylim[0], ylim[1])
+
+    # Customize the x-axis tick labels
+    new_labels = ["Mean of\nall proteins" if label.get_text() == 'Mean' else label.get_text()
+                  for label in ax.get_xticklabels()]
+    ax.set_xticklabels(new_labels)
+
+    # Remove spines
+    for spine in ["top", "right", "left", "bottom"]:
         ax.spines[spine].set_visible(False)
 
-    # Add statistical annotations
-    pairs = []
-    for marker in data["Marker"].unique():
-        pairs.append(((marker, "LGBM"), (marker, "AE")))
-        pairs.append(((marker, "EN"), (marker, "LGBM")))
-        pairs.append(((marker, "EN"), (marker, "AE")))
+    # Place legend at the bottom center (outside the plot)
+    ax.legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, -0.6), borderaxespad=0)
 
-    annotator = Annotator(ax, pairs, data=data, x=x, y=metric, hue=hue, verbose=1)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
-                        comparisons_correction="Benjamini-Hochberg")
+    # Statistical annotations
+    pairs = [
+        (("pRB", "AE"), ("pRB", "AE M")),
+        (("CD45", "AE"), ("CD45", "AE M")),
+        (("CK19", "AE"), ("CK19", "AE M")),
+        (("Ki67", "AE"), ("Ki67", "AE M")),
+        (("aSMA", "AE"), ("aSMA", "AE M")),
+        (("Ecad", "AE"), ("Ecad", "AE M")),
+        (("PR", "AE"), ("PR", "AE M")),
+        (("CK14", "AE"), ("CK14", "AE M")),
+        (("HER2", "AE"), ("HER2", "AE M")),
+        (("AR", "AE"), ("AR", "AE M")),
+        (("CK17", "AE"), ("CK17", "AE M")),
+        (("p21", "AE"), ("p21", "AE M")),
+        (("Vimentin", "AE"), ("Vimentin", "AE M")),
+        (("pERK", "AE"), ("pERK", "AE M")),
+        (("EGFR", "AE"), ("EGFR", "AE M")),
+        (("ER", "AE"), ("ER", "AE M")),
+        (("Mean", "AE"), ("Mean", "AE M")),
+    ]
+    order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2',
+             'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER', "Mean"]
+    annotator = Annotator(
+        ax, pairs, data=data, x="Marker", y=metric, order=order,
+        hue=hue, hue_order=hue_order, verbose=1
+    )
+    annotator.configure(
+        test='Mann-Whitney', text_format='star', loc='outside',
+        comparisons_correction="Benjamini-Hochberg"
+    )
     annotator.apply_and_annotate()
 
-    # Adjust legend: one row, placed in the upper right corner
-    ax.legend(loc='upper center', ncol=2)
+    return ax
+
+
+def create_bar_plot_by_mode_only(data: pd.DataFrame, metric: str, ylim: List) -> plt.Axes:
+    hue = "Network"
+    x = "Mode"
+    hue_order = ["LGBM", "EN", "AE", "AE M"]
+    ax = sns.boxenplot(
+        data=data, x=x, y=metric, hue=hue,
+        palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey",
+                 "AE M": "darkgrey", "AE ALL": "lightgrey"}
+    )
+    plt.ylabel("")
+    plt.xlabel("")
+    plt.ylim(ylim[0], ylim[1])
+    plt.box(False)
+    plt.legend(prop={"size": 7}, loc='upper center')
+
+    pairs = [
+        (("AP", "LGBM"), ("AP", "EN")),
+        (("AP", "LGBM"), ("AP", "AE")),
+        (("AP", "LGBM"), ("AP", "AE M")),
+        (("AP", "AE"), ("AP", "AE M")),
+    ]
+
+    annotator = Annotator(
+        ax, pairs, data=data, x=x, y=metric, hue=hue,
+        hue_order=hue_order, verbose=1
+    )
+    annotator.configure(
+        test='Mann-Whitney', text_format='star', loc='outside',
+        comparisons_correction="Benjamini-Hochberg"
+    )
+    annotator.apply_and_annotate()
 
     return ax
 
@@ -48,42 +115,119 @@ def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: list) -> plt.Figure
 if __name__ == '__main__':
     plt.rcParams['font.family'] = 'Times New Roman'
     plt.rcParams['font.size'] = 12
-    dpi = 300
 
     if not image_folder.exists():
-        image_folder.mkdir(parents=True)
+        image_folder.mkdir(parents=True, exist_ok=True)
 
-    # Load and process scores for each model
-    ae_scores = pd.read_csv(Path("results", "tma", "ae_scores.csv"))
-    ae_scores = ae_scores[ae_scores["Marker"].isin(SHARED_MARKERS)]
-    ae_scores = ae_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
-    # Scale MAE between 0 and 1
-    ae_scores["MAE"] = (ae_scores["MAE"] - ae_scores["MAE"].min()) / (ae_scores["MAE"].max() - ae_scores["MAE"].min())
+    # Load AE workflow image
+    ae_workflow = plt.imread(Path("figures", "fig4", "ae_workflow.png"))
 
-    en_scores = pd.read_csv(Path("results", "tma", "en_scores.csv"))
-    en_scores = en_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
-    en_scores["MAE"] = (en_scores["MAE"] - en_scores["MAE"].min()) / (en_scores["MAE"].max() - en_scores["MAE"].min())
+    # ------------------
+    # Score Generation
+    # ------------------
+    lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
+    lgbm_scores = lgbm_scores[(lgbm_scores["FE"] == 0) & (lgbm_scores["HP"] == 0)]
+    lgbm_scores["Mode"] = lgbm_scores["Mode"].replace({"EXP": "AP"})
 
-    lgbm_scores = pd.read_csv(Path("results", "tma", "lgbm_scores.csv"))
-    lgbm_scores = lgbm_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
-    lgbm_scores["MAE"] = (lgbm_scores["MAE"] - lgbm_scores["MAE"].min()) / (lgbm_scores["MAE"].max() - lgbm_scores["MAE"].min())
+    en_scores = pd.read_csv(Path("results", "scores", "en", "scores.csv"))
+    en_scores = en_scores[en_scores["FE"] == 0]
+    en_scores["Mode"] = en_scores["Mode"].replace({"EXP": "AP"})
 
-    # Concatenate all network scores
-    network_scores = pd.concat([ae_scores, en_scores, lgbm_scores])
-    network_scores = network_scores[network_scores["Marker"].isin(SHARED_MARKERS)]
+    ae_scores = pd.read_csv(Path("results", "scores", "ae", "scores.csv"))
+    ae_m_scores = pd.read_csv(Path("results", "scores", "ae_m", "scores.csv"))
+    ae_scores["Mode"] = ae_scores["Mode"].replace({"EXP": "AP"})
+    ae_scores = ae_scores[
+        (ae_scores["FE"] == 0) &
+        (ae_scores["Replace Value"] == "mean") &
+        (ae_scores["Noise"] == 0) &
+        (ae_scores["HP"] == 0)
+    ]
+    ae_scores.sort_values(by=["Marker"], inplace=True)
 
-    # (Optional) Assert that AE and EN share the same markers
-    assert set(ae_scores["Marker"].unique()) == set(en_scores["Marker"].unique())
+    ae_m_scores = ae_m_scores[
+        (ae_m_scores["FE"] == 0) &
+        (ae_m_scores["Replace Value"] == "mean") &
+        (ae_m_scores["Noise"] == 0) &
+        (ae_m_scores["HP"] == 0)
+    ]
+    ae_m_scores.sort_values(by=["Marker"], inplace=True)
+    ae_m_scores["Mode"] = ae_m_scores["Mode"].replace({"EXP": "AP"})
 
-    # Create a figure that is smaller than or equal to A4.
-    # Here we choose 7" x 10", which is within the A4 bounds of 8.27" x 11.69"
-    fig = plt.figure(figsize=(8, 6), dpi=dpi)
-    gspec = fig.add_gridspec(1, 1)
+    # Calculate mean performance for AE
+    ae_mean = ae_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    ae_mean = ae_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    ae_mean["Marker"] = "Mean"
+    ae_mean["FE"] = 0
+    ae_mean["HP"] = 0
+    ae_mean["Network"] = "AE"
+    ae_scores = ae_scores.append(ae_mean, ignore_index=True)
 
-    ax1 = fig.add_subplot(gspec[:, :])
-    ax1.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3, fontsize=12)
-    ax1 = create_boxen_plot(network_scores, "MAE", [0, 1])
+    # Calculate mean performance for AE M
+    ae_m_mean = ae_m_scores.groupby(["Marker", "Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    ae_m_mean = ae_m_mean.groupby(["Mode", "Biopsy"]).mean(numeric_only=True).reset_index()
+    ae_m_mean["Marker"] = "Mean"
+    ae_m_mean["FE"] = 0
+    ae_m_mean["HP"] = 0
+    ae_m_mean["Network"] = "AE M"
+    ae_m_scores = ae_m_scores.append(ae_m_mean, ignore_index=True)
 
-    plt.tight_layout()
-    plt.savefig(Path(image_folder, "fig4.png"), dpi=dpi, bbox_inches='tight')
-    plt.savefig(Path(image_folder, "fig4.eps"), dpi=dpi, bbox_inches='tight', format='eps')
+    # Assertions to ensure FE is 0
+    assert (lgbm_scores["FE"] == 0).all(), "FE column should only contain 0 for lgbm_scores"
+    assert (ae_m_scores["FE"] == 0).all(), "FE column should only contain 0 for ae_m_scores"
+    assert (ae_scores["FE"] == 0).all(), "FE column should only contain 0 for ae_scores"
+
+    ae_scores = ae_scores[ae_scores["Mode"] == "AP"]
+    ae_m_scores = ae_m_scores[ae_m_scores["Mode"] == "AP"]
+    lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "AP"]
+    en_scores = en_scores[en_scores["Mode"] == "AP"]
+
+    combined_ae_scores = pd.concat([ae_scores, ae_m_scores], axis=0)
+    all_scores = pd.concat([lgbm_scores, en_scores, ae_scores, ae_m_scores], axis=0)
+    all_scores.drop(columns=["HP", "Experiment", "Noise", "Replace Value", "Hyper"], inplace=True)
+    all_scores["Mode"] = all_scores["Mode"].replace({"EXP": "AP"})
+
+    # ------------------
+    # Figure Creation
+    # ------------------
+    # Set figure size to A4 dimensions in inches: ~8.27 x 11.69
+    fig = plt.figure(figsize=(8, 9), dpi=300, constrained_layout=True)
+    # Adjust gridspec: 7 rows x 3 columns with modified spacing to fit the A4 page
+    gspec = fig.add_gridspec(7, 3, wspace=0.3, hspace=0.5)
+
+    # Panel a: AE Workflow image
+    ax1 = fig.add_subplot(gspec[:3, :])
+    ax1.set_title("AE Workflow", rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax1.imshow(ae_workflow, aspect='auto')
+    ax1.set_yticks([])
+    ax1.set_xticks([])
+    for spine in ax1.spines.values():
+        spine.set_visible(False)
+
+    # Panel b: AE MAE
+    ax2 = fig.add_subplot(gspec[3:5, :])
+    ax2.set_title('AE MAE', rotation='vertical', x=-0.05, y=0, fontsize=12)
+    ax2 = create_bar_plot_ae_ae_m(data=combined_ae_scores, metric="MAE", ylim=[0.0, 0.6])
+    for spine in ax2.spines.values():
+        spine.set_visible(False)
+
+    # Panel c: Performance by Mode
+    ax3 = fig.add_subplot(gspec[5:7, :2])
+    ax3.set_title('Performance', rotation='vertical', x=-0.08, y=0, fontsize=12)
+    ax3 = create_bar_plot_by_mode_only(data=all_scores, metric="MAE", ylim=[0.0, 0.3])
+    for spine in ax3.spines.values():
+        spine.set_visible(False)
+
+    # --- Fixed label positions ---
+    # Instead of computing the label x from each axis,
+    # Manually set y positions for each label so that they line up vertically.
+    # Adjust these y coordinates as needed to match your design.
+    label_y_positions = {'a': 0.95, 'b': 0.66, 'c': 0.3}
+    label_x_positions = {'a': 0, 'b': 0, 'c': 0}
+
+    for label, pos  in zip(label_y_positions.keys(), label_x_positions.keys()):
+        fig.text(label_x_positions[pos], label_y_positions[label], label, ha='left', va='bottom', fontsize=12)
+
+    # Save the figure ensuring it fits on an A4 page
+    fig.savefig(Path(image_folder, "fig4.png"), dpi=300, bbox_inches='tight')
+    fig.savefig(Path(image_folder, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')
+    sys.exit()

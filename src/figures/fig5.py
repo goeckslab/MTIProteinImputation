@@ -1,119 +1,89 @@
-import warnings
-
-warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
-import os, logging
-from typing import List
 from statannotations.Annotator import Annotator
+
+PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
+SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2',
+                  'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER']
 
 image_folder = Path("figures", "fig5")
 
-def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List):
-    color_palette = {"0 µm": "grey", "15 µm": "magenta", "30 µm": "purple", "60 µm": "green", "90 µm": "yellow",
-                     "120 µm": "red"}
-    hue = "FE"
-    hue_order = microns
-    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
+
+def create_boxen_plot(data: pd.DataFrame, metric: str, ylim: list) -> plt.Figure:
+    hue = "Model"
+    x = "Marker"
+    ax = sns.boxenplot(data=data, x=x, y=metric, hue=hue, hue_order=["EN", "LGBM", "AE"],
+                       palette={"EN": "lightblue", "LGBM": "orange", "AE": "grey", "AE M": "darkgrey"})
 
     # Remove axis labels
     ax.set_ylabel("")
     ax.set_xlabel("")
+    # Reduce tick label font size
+    ax.tick_params(axis='both', which='major', labelsize=8)
 
-    # Remove the legend from the default location and reposition it
-    ax.legend(bbox_to_anchor=[0.125, 0.9], loc='center', fontsize=7, ncol=2)
-
-    # Remove box around the plot
+    # Remove plot spines for a cleaner look
     for spine in ['top', 'right', 'left', 'bottom']:
         ax.spines[spine].set_visible(False)
 
-    # Build statistical pairs (comparing each FE value vs. "0 µm" for each marker)
+    # Add statistical annotations
     pairs = []
-    for micron in microns:
-        if micron == "0 µm":
-            continue
-        for marker in data["Marker"].unique():
-            pairs.append(((marker, micron), (marker, "0 µm")))
+    for marker in data["Marker"].unique():
+        pairs.append(((marker, "LGBM"), (marker, "AE")))
+        pairs.append(((marker, "EN"), (marker, "LGBM")))
+        pairs.append(((marker, "EN"), (marker, "AE")))
 
-    try:
-        order = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2',
-                 'AR', 'CK17', 'p21', 'Vimentin', 'pERK', 'EGFR', 'ER']
-        annotator = Annotator(ax, pairs, data=data, x="Marker", y=metric, order=order,
-                              hue=hue, hue_order=hue_order, hide_non_significant=True)
-        annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
-                            comparisons_correction="Benjamini-Hochberg")
-        annotator.apply_and_annotate()
-    except Exception as e:
-        logging.error(pairs)
-        logging.error(data["FE"].unique())
-        raise e
+    annotator = Annotator(ax, pairs, data=data, x=x, y=metric, hue=hue, verbose=1)
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
+                        comparisons_correction="Benjamini-Hochberg")
+    annotator.apply_and_annotate()
+
+    # Adjust legend: one row, placed in the upper right corner
+    ax.legend(loc='upper center', ncol=2)
 
     return ax
+
 
 if __name__ == '__main__':
     plt.rcParams['font.family'] = 'Times New Roman'
     plt.rcParams['font.size'] = 12
-    if not image_folder.exists():
-        image_folder.mkdir(parents=True, exist_ok=True)
-
-    # Define spatial categories and convert them to strings with µm
-    spatial_categories = [0, 30, 60]
-    spatial_categories_strings = [f"{cat} µm" for cat in spatial_categories]
-
-    lgbm_scores = pd.read_csv(Path("results", "scores", "lgbm", "scores.csv"))
-    lgbm_scores = lgbm_scores[lgbm_scores["FE"].isin(spatial_categories)]
-    lgbm_scores = lgbm_scores[lgbm_scores["Mode"] == "EXP"]
-    lgbm_scores = lgbm_scores[lgbm_scores["HP"] == 0]
-    lgbm_scores["FE"] = lgbm_scores["FE"].astype(str) + " µm"
-    lgbm_scores["FE"] = pd.Categorical(lgbm_scores['FE'], spatial_categories_strings)
-    lgbm_scores["FE"] = lgbm_scores["FE"].cat.rename_categories(spatial_categories_strings)
-    lgbm_scores.sort_values(by=["Marker", "FE"], inplace=True)
-
-    # Load the spatial information image (Panel a)
-    spatial_information_image = plt.imread(Path(image_folder, "panel_a.png"))
-
     dpi = 300
-    # Create a new figure with a gridspec.
-    # Here, we choose a figure size of 8" x 9", which is smaller than A4.
-    fig = plt.figure(figsize=(8, 9), dpi=dpi)
-    gspec = fig.add_gridspec(2, 3)
 
-    # --- Panel a ---
-    ax1 = fig.add_subplot(gspec[0, :2])
-    # Remove box and ticks
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    for spine in ax1.spines.values():
-        spine.set_visible(False)
-    # Display the image
-    ax1.imshow(spatial_information_image, aspect='auto')
+    if not image_folder.exists():
+        image_folder.mkdir(parents=True)
 
-    # --- Panel b ---
-    ax2 = fig.add_subplot(gspec[1, :])
-    # Create the boxen plot
-    ax2 = create_boxen_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
-                            microns=spatial_categories_strings)
+    # Load and process scores for each model
+    ae_scores = pd.read_csv(Path("results", "tma", "ae_scores.csv"))
+    ae_scores = ae_scores[ae_scores["Marker"].isin(SHARED_MARKERS)]
+    ae_scores = ae_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    # Scale MAE between 0 and 1
+    ae_scores["MAE"] = (ae_scores["MAE"] - ae_scores["MAE"].min()) / (ae_scores["MAE"].max() - ae_scores["MAE"].min())
+
+    en_scores = pd.read_csv(Path("results", "tma", "en_scores.csv"))
+    en_scores = en_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    en_scores["MAE"] = (en_scores["MAE"] - en_scores["MAE"].min()) / (en_scores["MAE"].max() - en_scores["MAE"].min())
+
+    lgbm_scores = pd.read_csv(Path("results", "tma", "lgbm_scores.csv"))
+    lgbm_scores = lgbm_scores[["Biopsy", "Patient", "Marker", "MAE", "Model"]]
+    lgbm_scores["MAE"] = (lgbm_scores["MAE"] - lgbm_scores["MAE"].min()) / (lgbm_scores["MAE"].max() - lgbm_scores["MAE"].min())
+
+    # Concatenate all network scores
+    network_scores = pd.concat([ae_scores, en_scores, lgbm_scores])
+    network_scores = network_scores[network_scores["Marker"].isin(SHARED_MARKERS)]
+
+    # (Optional) Assert that AE and EN share the same markers
+    assert set(ae_scores["Marker"].unique()) == set(en_scores["Marker"].unique())
+
+    # Create a figure that is smaller than or equal to A4.
+    # Here we choose 7" x 10", which is within the A4 bounds of 8.27" x 11.69"
+    fig = plt.figure(figsize=(8, 6), dpi=dpi)
+    gspec = fig.add_gridspec(1, 1)
+
+    ax1 = fig.add_subplot(gspec[:, :])
+    ax1.set_title('EN vs LGBM vs AE MAE', rotation='vertical', x=-0.05, y=0.3, fontsize=12)
+    ax1 = create_boxen_plot(network_scores, "MAE", [0, 1])
 
     plt.tight_layout()
-
-    # --- Now add panel labels and title using fig.text() so they align vertically ---
-    # Define a fixed x-coordinate for labels (vertical alignment)
-    label_x = -0.02
-
-    # Get positions from each axis (in figure coordinates)
-    pos_a = ax1.get_position()
-    pos_b = ax2.get_position()
-
-    # Place panel label "a" for Panel a
-    fig.text(label_x, pos_a.y1, "a", ha='left', va='bottom', fontsize=12)
-    # Place panel label "b" for Panel b
-    fig.text(label_x, pos_b.y1, "b", ha='left', va='bottom', fontsize=12)
-    # Place the title for Panel b below its top, aligned with the same x coordinate.
-    fig.text(label_x, pos_b.y1 - 0.03, "LGBM 0 µm, 30 µm and 60 µm", ha='left', va='top',
-             rotation='vertical', fontsize=12)
-
-    # Save the figure
-    fig.savefig(Path(image_folder, "fig5.png"), dpi=dpi, bbox_inches='tight')
-    fig.savefig(Path(image_folder, "fig5.eps"), dpi=dpi, bbox_inches='tight', format='eps')
+    plt.savefig(Path(image_folder, "fig5.png"), dpi=dpi, bbox_inches='tight')
+    plt.savefig(Path(image_folder, "fig5.eps"), dpi=dpi, bbox_inches='tight', format='eps')
