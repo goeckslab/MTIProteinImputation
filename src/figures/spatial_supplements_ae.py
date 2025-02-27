@@ -69,7 +69,7 @@ def create_bar_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List, 
                      "120 µm": "red"}
     hue = "FE"
     hue_order = microns
-    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
 
     ax.set_ylabel("")
     ax.set_xlabel("")
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     # remove box from ax3
     plt.box(False)
 
-    ax1 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.3],
+    ax1 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.6],
                             microns=spatial_categories_strings, model="AE", legend_position=[0.15, 0.9])
 
     ae_scores, spatial_categories_strings = load_scores([0, 60, 90])
@@ -178,7 +178,7 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax4
     plt.box(False)
-    ax2 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.3],
+    ax2 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.6],
                             microns=spatial_categories_strings, model="AE M", legend_position=[0.15, 0.9])
 
     ae_scores, spatial_categories_strings = load_scores([0, 120])
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     ax3.text(x=-0.01, y=1.3, s="c", transform=ax3.transAxes,
              fontsize=12, fontweight='bold', va='top', ha='right')
     plt.box(False)
-    ax3 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.3],
+    ax3 = create_bar_plot(data=ae_scores, metric="MAE", ylim=[0, 0.6],
                             microns=spatial_categories_strings, model="AE M", legend_position=[0.15, 0.9])
 
     plt.tight_layout()

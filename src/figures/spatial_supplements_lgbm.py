@@ -18,13 +18,13 @@ def create_bar_plot(data: pd.DataFrame, metric: str, ylim: List, microns: List):
 
     hue = "FE"
     hue_order = microns
-    ax = sns.barplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue=hue, palette=color_palette)
 
     # Optional: Set title and remove axis labels if needed
     ax.set_ylabel("")
     ax.set_xlabel("")
     # set ylim
-    ax.set_ylim(0, 0.3)
+    ax.set_ylim(0, 0.5)
 
     # remove legend from fig
     ax.legend(bbox_to_anchor=[0.15, 0.9], loc='center', fontsize=7, ncol=3)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax3
     plt.box(False)
-    ax1 = create_bar_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
+    ax1 = create_bar_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.6],
                             microns=spatial_categories_strings)
 
     spatial_categories = [0, 60, 90]
@@ -119,7 +119,7 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax3
     plt.box(False)
-    ax2 = create_bar_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
+    ax2 = create_bar_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.6],
                             microns=spatial_categories_strings)
 
     plt.tight_layout()
@@ -134,7 +134,7 @@ if __name__ == '__main__':
              fontsize=12, fontweight='bold', va='top', ha='right')
     # remove box from ax3
     plt.box(False)
-    ax3 = create_bar_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.5],
+    ax3 = create_bar_plot(data=lgbm_scores, metric="MAE", ylim=[0, 0.6],
                             microns=spatial_categories_strings)
 
     plt.tight_layout()

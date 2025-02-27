@@ -56,15 +56,16 @@ if __name__ == '__main__':
 
     # plot bar plots of all scores
     fig, axs = plt.subplots(1, 2, figsize=(15, 8))
-    sns.barplot(data=silhouette_scores, x="Protein", y="Score", hue="Silhouette", ax=axs[0])
+    sns.boxenplot(data=silhouette_scores, x="Protein", y="Score", hue="Silhouette", ax=axs[0])
     axs[0].set_ylabel("Silhouette Score")
     axs[0].set_xlabel("Protein")
-    axs[0].set_title("Silhouette Scores for Original and Imputed Data")
+    axs[0].set_title("Silhouette Scores for Original and Imputed Data", y=0.98)
     axs[0].set_xticklabels(axs[0].get_xticklabels(), rotation=45)
+
 
     # change legend handles
     handles, labels = axs[0].get_legend_handles_labels()
-    axs[0].legend(handles=handles[0:], labels=["Original", "Imputed"], loc="upper center", bbox_to_anchor=(0.5, 0.92),
+    axs[0].legend(handles=handles[0:], labels=["Original", "Imputed"], loc="lower center", bbox_to_anchor=(0.5, 0.02),
                   ncol=2)
 
     # remove boxes
@@ -86,15 +87,15 @@ if __name__ == '__main__':
     hue_order = ["Original Silhouette Score", "Imputed Silhouette Score"]
     annotator = Annotator(axs[0], pairs, data=silhouette_scores, x="Protein", y="Score", order=order, hue="Silhouette",
                           hue_order=hue_order)
-    annotator.configure(test='Mann-Whitney', text_format='star', loc='inside',
+    annotator.configure(test='Mann-Whitney', text_format='star', loc='outside',
                         comparisons_correction="Benjamini-Hochberg")
 
     annotator.apply_and_annotate()
 
-    sns.barplot(data=ami_scores, x="Protein", y="Score", ax=axs[1], palette=COLOR_PALETTE)
+    sns.boxenplot(data=ami_scores, x="Protein", y="Score", ax=axs[1], palette=COLOR_PALETTE)
     axs[1].set_ylabel("AMI Score")
     axs[1].set_xlabel("Protein")
-    axs[1].set_title("AMI Scores for Original and Imputed Data")
+    axs[1].set_title("AMI Scores for Original and Imputed Data", y=0.98)
     axs[1].set_xticklabels(axs[1].get_xticklabels(), rotation=45)
     axs[1].set_ylim(0, 1)
 

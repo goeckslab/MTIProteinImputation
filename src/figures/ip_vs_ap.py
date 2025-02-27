@@ -18,14 +18,14 @@ PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 def create_bar_plot(data: pd.DataFrame, metric: str) -> plt.Figure:
     # select only the shared proteins
     data = data[data["Marker"].isin(SHARED_PROTEINS)]
-    ax = sns.barplot(data=data, x="Marker", y=metric, hue="Mode", hue_order=["IP", "AP"],
+    ax = sns.boxenplot(data=data, x="Marker", y=metric, hue="Mode", hue_order=["IP", "AP"],
                      palette={"IP": "gold", "AP": "lime"})
 
     # remove y axis label
     plt.ylabel("")
     plt.xlabel("")
     # plt.legend(loc='upper center')
-    plt.ylim(0, 0.3)
+    plt.ylim(0, 0.4)
     ax.set_yticks([0.1, 0.2, 0.3])
 
     # reduce font size of x and y ticks

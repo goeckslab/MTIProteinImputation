@@ -51,10 +51,14 @@ if __name__ == '__main__':
     mean_correlations = pd.DataFrame(correlations.groupby("Marker")["Correlation"].mean()).reset_index()
     print(mean_correlations.mean())
 
+
     x = "Marker"
     ax = sns.barplot(data=mean_correlations, x=x, y="Correlation", palette="tab20")
+    # add underyling datapoints
+    sns.stripplot(data=correlations, x=x, y="Correlation", color="black", size=3, alpha=0.5)
     ax.set_ylabel("Correlation")
     ax.set_xlabel("Protein")
+    ax.set_ylim(0, 1)
     ax.set_title("Correlation between original and imputed protein expression")
     plt.xticks(rotation=45)
     plt.tight_layout()
