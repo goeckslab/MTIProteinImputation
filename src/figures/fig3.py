@@ -1,16 +1,12 @@
 import warnings
-import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
 import sys
-
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from statannotations.Annotator import Annotator
-import matplotlib.image as mpimg
 import matplotlib.ticker as mticker
-
+from helper import extract_boxplot_statistics_no_hue, extract_boxplot_statistics
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -39,10 +35,16 @@ SHARED_PROTEINS_COLOR_PALETTE = {
 }
 phenotype_folder = Path("results", "phenotypes")
 
+
 # --- Panel plotting functions ---
 def plot_ari(color_palette: dict):
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
+
+    stats = extract_boxplot_statistics_no_hue(results, "ARI", group_by="Marker")
+
     print(f"ARI: {results.groupby('Marker').mean().mean()}")
+    print("Boxenplot ARI statistics:")
+    print(stats)
     ax = sns.boxenplot(data=results, x="Marker", y="ARI", palette=color_palette)
     ax.set_ylabel("Expression ARI Score")
     ax.yaxis.set_label_coords(-0.07, 0.5)
@@ -53,16 +55,18 @@ def plot_ari(color_palette: dict):
         tick.set_rotation(45)
     return ax
 
+
 def plot_phenotype_ari(ari_scores: pd.DataFrame, color_palette: dict):
     print(f"Phenotype ARI: {ari_scores.groupby('Protein').mean().mean()}")
     ax = sns.boxenplot(data=ari_scores, x="Protein", y="Score", palette=color_palette)
     ax.set_ylabel("Phenotype ARI Score")
     ax.yaxis.set_label_coords(-0.18, 0.5)
     ax.set_xlabel("Protein")
-    ax.set_ylim(0,1)
+    ax.set_ylim(0, 1)
     for spine in ['top', 'right', 'left', 'bottom']:
         ax.spines[spine].set_visible(False)
     return ax
+
 
 def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
     print(f"Phenotype Jaccard: {jaccard_scores.groupby('Protein').mean().mean()}")
@@ -71,10 +75,11 @@ def plot_phenotype_jaccard(jaccard_scores: pd.DataFrame, color_palette: dict):
                        palette=color_palette)
     ax.set_ylabel("Phenotype Jaccard Score")
     ax.set_xlabel("Protein")
-    ax.set_ylim(0,1)
+    ax.set_ylim(0, 1)
     for spine in ['top', 'right', 'left', 'bottom']:
         ax.spines[spine].set_visible(False)
     return ax
+
 
 def plot_silhouette():
     results = pd.read_csv("results/evaluation/cluster_metrics.csv")
@@ -82,11 +87,17 @@ def plot_silhouette():
     results["Difference"] = results["Silhouette Imputed"] - results["Silhouette Original"]
     print("Silhouette Imputed improvement:")
     print(results.groupby("Marker")["Difference"].mean().mean())
+
     melt = results.melt(id_vars=["Biopsy", "Marker"],
                         value_vars=["Silhouette Original", "Silhouette Imputed"],
                         var_name="Silhouette Type", value_name="Score")
     melt["Silhouette Type"] = melt["Silhouette Type"].replace(
         {"Silhouette Original": "Original", "Silhouette Imputed": "Imputed"})
+
+    print("Boxenplot Silhouette statistics:")
+    stats = extract_boxplot_statistics(melt, metric="Score", group_by="Marker", hue="Silhouette Type")
+    print(stats)
+
     ax = sns.boxenplot(data=melt, x="Marker", y="Score", hue="Silhouette Type",
                        showfliers=False, palette='Greys')
     ax.set_ylabel("Expression Silhouette Score")
@@ -96,7 +107,6 @@ def plot_silhouette():
     ax.legend(bbox_to_anchor=[0.4, 0.97], loc='center', ncol=2, fontsize=8)
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
-
 
     pairs = [
         (("pRB", "Original"), ("pRB", "Imputed")),
@@ -123,6 +133,7 @@ def plot_silhouette():
                         comparisons_correction="Benjamini-Hochberg")
     annotator.apply_and_annotate()
     return ax
+
 
 # --- Main Script ---
 if __name__ == '__main__':
@@ -177,4 +188,13 @@ if __name__ == '__main__':
     # Save the figure (ensuring it does not exceed A4 dimensions)
     plt.savefig(Path(image_folder, "fig3.png"), dpi=dpi, bbox_inches='tight')
     plt.savefig(Path(image_folder, "fig3.eps"), dpi=dpi, bbox_inches='tight', format='eps')
+
+    print("Phenotype ARI scores")
+    ari_stats = extract_boxplot_statistics_no_hue(data=ari_scores, metric="Score", group_by="Protein")
+    print(ari_stats)
+
+    print("Phenotype Jaccard scores")
+    jaccard_stats = extract_boxplot_statistics_no_hue(data=jaccard_scores, metric="Score", group_by="Protein")
+    print(jaccard_stats)
+
     sys.exit()

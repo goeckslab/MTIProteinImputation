@@ -1,5 +1,4 @@
 import warnings
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -8,6 +7,7 @@ from pathlib import Path
 import os, logging
 from typing import List
 from statannotations.Annotator import Annotator
+from helper import extract_boxplot_statistics
 
 image_folder = Path("figures", "supplements", "spatial_supplements")
 
@@ -93,6 +93,8 @@ if __name__ == '__main__':
     if not image_folder.exists():
         image_folder.mkdir(parents=True, exist_ok=True)
 
+
+    all_data = []
     dpi = 300
     # Create new figure
     fig = plt.figure(figsize=(10, 7), dpi=dpi)
@@ -100,6 +102,7 @@ if __name__ == '__main__':
 
     spatial_categories = [0, 15, 30]
     lgbm_scores, spatial_categories_strings = load_data(spatial_categories)
+    all_data.append(lgbm_scores)
 
     ax1 = fig.add_subplot(gspec[0, :])
     ax1.set_title('LGBM 0 µm, 15 µm and 30 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
@@ -112,6 +115,7 @@ if __name__ == '__main__':
 
     spatial_categories = [0, 60, 90]
     lgbm_scores, spatial_categories_strings = load_data(spatial_categories)
+    all_data.append(lgbm_scores)
 
     ax2 = fig.add_subplot(gspec[1, :])
     ax2.set_title('LGBM 0 µm, 60 µm and 90 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
@@ -127,6 +131,7 @@ if __name__ == '__main__':
 
     spatial_categories = [0, 120]
     lgbm_scores, spatial_categories_strings = load_data(spatial_categories)
+    all_data.append(lgbm_scores)
 
     ax3 = fig.add_subplot(gspec[2, :])
     ax3.set_title('LGBM 0 µm and 120 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
@@ -139,3 +144,7 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     plt.savefig(Path(image_folder, "lgbm_spatial.png"), dpi=300, bbox_inches='tight')
+
+    all_data = pd.concat(all_data)
+    stats = extract_boxplot_statistics(data=all_data, metric="MAE", group_by="Marker", hue="FE")
+    #stats.to_csv( "supplements_lgbm_spatial.csv", index=False)

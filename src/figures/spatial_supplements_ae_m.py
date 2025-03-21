@@ -1,5 +1,4 @@
 import warnings
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +8,7 @@ from pathlib import Path
 from typing import List
 from statannotations.Annotator import Annotator
 import logging
+from helper import extract_boxplot_statistics
 
 image_folder = Path("figures", "supplements", "spatial_supplements")
 
@@ -103,7 +103,10 @@ if __name__ == '__main__':
 
     dpi = 300
 
+    all_scores = []
+
     ae_scores, spatial_categories_strings = load_scores([0, 15, 30])
+    all_scores.append(ae_scores)
 
     # Create new figure
     fig = plt.figure(figsize=(10, 7), dpi=dpi)
@@ -120,6 +123,7 @@ if __name__ == '__main__':
                             microns=spatial_categories_strings, model="AE", legend_position=[0.15, 0.9])
 
     ae_scores, spatial_categories_strings = load_scores([0, 60, 90])
+    all_scores.append(ae_scores)
 
     ax2 = fig.add_subplot(gspec[1, :])
     ax2.set_title('AE M 0 µm, 60 µm and 90 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
@@ -131,6 +135,7 @@ if __name__ == '__main__':
                             microns=spatial_categories_strings, model="AE M", legend_position=[0.15, 0.9])
 
     ae_scores, spatial_categories_strings = load_scores([0, 120])
+    all_scores.append(ae_scores)
 
     ax3 = fig.add_subplot(gspec[2, :])
     ax3.set_title('AE M 0 µm and 120 µm', rotation='vertical', x=-0.05, y=0, fontsize=8)
@@ -143,3 +148,7 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     plt.savefig(Path(image_folder, "ae_m_spatial.png"), dpi=300, bbox_inches='tight')
+
+    all_scores = pd.concat(all_scores)
+    stats = extract_boxplot_statistics(data=all_scores, metric="MAE", group_by="Marker", hue="FE")
+    stats.to_csv( "supplements_ae_m_spatial.csv", index=False)

@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
 from statannotations.Annotator import Annotator
+from helper import extract_boxplot_statistics, extract_boxplot_statistics_no_hue
 
 load_folder = Path("results", "phenotypes")
 save_folder = Path("figures", "supplements", "phenotypes")
@@ -107,3 +108,11 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     plt.savefig(Path(save_folder, "phenotype_scores.png"), dpi=150)
+
+    silhouette_score_stats = extract_boxplot_statistics(data=silhouette_scores, metric="Score", group_by="Protein",
+                                                        hue="Silhouette")
+
+    ami_score_stats = extract_boxplot_statistics_no_hue(data=ami_scores, metric="Score", group_by="Protein")
+
+    silhouette_score_stats.to_csv( "SupFig6_silhouette_scores.csv", index=False)
+    ami_score_stats.to_csv("SupFig6_ami_scores.csv", index=False)

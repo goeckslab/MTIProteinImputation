@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 from statannotations.Annotator import Annotator
+from helper import extract_boxplot_statistics
 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2',
@@ -87,3 +88,7 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.savefig(Path(image_folder, "fig5.png"), dpi=dpi, bbox_inches='tight')
     plt.savefig(Path(image_folder, "fig5.eps"), dpi=dpi, bbox_inches='tight', format='eps')
+
+    stats = extract_boxplot_statistics(data=network_scores, metric="MAE", group_by="Marker", hue="Model")
+    print(stats)
+    #stats.to_csv(Path( "fig5.csv"),index=False)

@@ -1,5 +1,4 @@
 import warnings
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +7,7 @@ import seaborn as sns
 from pathlib import Path
 import sys
 from statannotations.Annotator import Annotator
+from helper import extract_boxplot_statistics
 
 image_folder = Path("figures", "supplements", "ip_vs_ap")
 SHARED_PROTEINS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14', 'HER2', 'AR', 'CK17', 'p21', 'Vimentin',
@@ -159,4 +159,14 @@ if __name__ == '__main__':
 
     plt.savefig(Path(image_folder, "ip_vs_ap.png"), dpi=300, bbox_inches='tight')
     plt.savefig(Path(image_folder, "ip_vs_ap.eps"), dpi=300, bbox_inches='tight', format='eps')
+
+
+    panel_a_stats = extract_boxplot_statistics(data=en_scores, metric="MAE", group_by="Marker", hue="Mode")
+    panel_b_stats = extract_boxplot_statistics(data=lgbm_scores, metric="MAE", group_by="Marker", hue="Mode")
+    panel_c_stats = extract_boxplot_statistics(data=ae_scores, metric="MAE", group_by="Marker", hue="Mode")
+
+    #anel_a_stats.to_csv("SupFig4a.csv", index=False)
+    #panel_b_stats.to_csv("SupFig4b.csv", index=False)
+    #panel_c_stats.to_csv("SupFig4c.csv", index=False)
+
     sys.exit()

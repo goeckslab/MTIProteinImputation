@@ -8,6 +8,7 @@ import sys
 from sklearn.preprocessing import MinMaxScaler
 from statannotations.Annotator import Annotator
 import matplotlib.image as mpimg
+from helper import extract_boxplot_statistics
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -143,6 +144,10 @@ def create_bar_plot_en_vs_lgbm(data: pd.DataFrame, metric: str, ax=None) -> plt.
     return ax
 
 
+
+
+
+
 # === Main Script ===
 if __name__ == '__main__':
     plt.rcParams['font.family'] = 'Times New Roman'
@@ -260,4 +265,13 @@ if __name__ == '__main__':
 
     plt.savefig(Path(image_folder, "fig2.png"), dpi=300, bbox_inches='tight')
     plt.savefig(Path(image_folder, "fig2.eps"), dpi=300, bbox_inches='tight', format='eps')
+
+    # Extract statistics for Panel a (Null vs EN)
+    panel_a_stats = extract_boxplot_statistics(null_model_scores, metric="MAE", hue="Model")
+
+    # Extract statistics for Panel b (EN vs LGBM)
+    panel_b_stats = extract_boxplot_statistics(combined_en_lgbm_scores, metric="MAE", hue="Network")
+
+    print(panel_a_stats)
+    print(panel_b_stats)
     sys.exit()

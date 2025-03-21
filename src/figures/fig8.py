@@ -3,8 +3,7 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 from statannotations.Annotator import Annotator
-import matplotlib.gridspec as gridspec
-import numpy as np
+from helper import extract_boxplot_statistics
 
 PATIENTS = ["9_2", "9_3", "9_14", "9_15"]
 SHARED_MARKERS = ['pRB', 'CD45', 'CK19', 'Ki67', 'aSMA', 'Ecad', 'PR', 'CK14',
@@ -27,6 +26,11 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     improvement = imputed_mean - ground_truth_mean
     print(f"Improvement: {improvement}")
     hue_order = ["Ground Truth Data", "Removed Data", "Imputed Data"]
+
+    stats = extract_boxplot_statistics(data=scores, metric="Score", group_by="Protein", hue="Type")
+    print(stats)
+    stats.to_csv(Path("fig8.csv"), index=False)
+
     ax = sns.boxenplot(data=scores, x="Protein", y="Score", hue="Type",
                        hue_order=hue_order,
                        palette={"Ground Truth Data": "yellow",
@@ -133,3 +137,4 @@ if __name__ == '__main__':
     # Save the figure with minimal whitespace.
     fig.savefig(Path(image_folder, "fig8.png"), dpi=dpi, bbox_inches='tight', transparent=False)
     fig.savefig(Path(image_folder, "fig8.eps"), dpi=dpi, bbox_inches='tight', format='eps', transparent=False)
+

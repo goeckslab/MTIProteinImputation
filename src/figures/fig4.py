@@ -1,5 +1,4 @@
 import warnings
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -8,6 +7,7 @@ from pathlib import Path
 import sys
 from typing import List
 from statannotations.Annotator import Annotator
+from helper import extract_boxplot_statistics_no_hue, extract_boxplot_statistics
 
 image_folder = Path("figures", "fig4")
 
@@ -230,4 +230,14 @@ if __name__ == '__main__':
     # Save the figure ensuring it fits on an A4 page
     fig.savefig(Path(image_folder, "fig4.png"), dpi=300, bbox_inches='tight')
     fig.savefig(Path(image_folder, "fig4.eps"), dpi=300, bbox_inches='tight', format='eps')
+
+    ae_m_stats = extract_boxplot_statistics(data=combined_ae_scores, metric="MAE", group_by="Marker",hue="Network")
+    print("AE M Statistics")
+    print(ae_m_stats)
+
+    all_scores_stats = extract_boxplot_statistics(data=all_scores, metric="MAE", group_by="Marker", hue="Network")
+    print("All Scores Statistics")
+    print(all_scores_stats)
+    #all_scores_stats.to_csv("all_scores_stats.csv", index=False)
+
     sys.exit()
