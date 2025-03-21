@@ -150,11 +150,11 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(8, 11), dpi=dpi)
     gs_main = fig.add_gridspec(3, 1, hspace=0.6)
 
-    # Panel e: ARI plot (Row 0, full width)
+    # Panel a: ARI plot (Row 0, full width)
     ax_a = fig.add_subplot(gs_main[0, 0])
     ax_a = plot_ari(SHARED_PROTEINS_COLOR_PALETTE)
 
-    # Panel f: Silhouette plot (Row 1, full width)
+    # Panel b: Silhouette plot (Row 1, full width)
     ax_b = fig.add_subplot(gs_main[1, 0])
     ax_b = plot_silhouette()
     ax_b.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.2f'))

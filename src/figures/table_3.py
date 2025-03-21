@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 from pathlib import Path
@@ -56,8 +57,8 @@ def load_lgbm_scores() -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    microns = [0, 15, 60, 120]
-    categories = ["0 µm", "15 µm", "60 µm", "120 µm"]
+    microns = [0, 15, 30, 60, 90, 120]
+    categories = ["0 µm", "15 µm", "30 µm", "60 µm", "90 µm", "120 µm"]
 
     ae_scores = load_ae_scores(True)
     ae_m_scores = load_ae_scores(False)
