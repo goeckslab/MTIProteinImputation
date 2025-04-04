@@ -81,7 +81,7 @@ if __name__ == '__main__':
     gspec = fig.add_gridspec(2, 3)
 
     # --- Panel a ---
-    ax1 = fig.add_subplot(gspec[0, :2])
+    ax1 = fig.add_subplot(gspec[0, :])
     # Remove box and ticks
     ax1.set_xticks([])
     ax1.set_yticks([])
