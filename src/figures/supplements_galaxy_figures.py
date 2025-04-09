@@ -91,16 +91,16 @@ ax[0].set_yticks([])  # Remove y-axis ticks
 image_width_px = galaxy_image.shape[1]
 scalebar_fraction = scalebar_px / image_width_px
 
-# Create the scalebar using the axes coordinate system:
-scalebar = AnchoredSizeBar(ax[0].transAxes,
-                           scalebar_fraction,
-                           f'{scalebar_um} µm',
+# Create the scalebar using data coordinates and adjust appearance
+scalebar = AnchoredSizeBar(ax[0].transData,
+                           scalebar_px,            # length in data (pixel) units
+                           f'{scalebar_um} µm',      # label
                            'lower right',
-                           pad=0.4,
+                           pad=0.1,                # less padding
                            color='white',
-                           frameon=True,
-                           size_vertical=0.01,  # vertical size as a fraction of the axes height
-                           fontproperties=fm.FontProperties(size=12))
+                           frameon=False,          # disables drawing a background patch
+                           size_vertical=1,        # makes the line thin (in pixels)
+                           fontproperties=fm.FontProperties(size=10))
 
 
 ax[0].add_artist(scalebar)
