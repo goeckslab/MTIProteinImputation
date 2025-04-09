@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
@@ -9,6 +8,7 @@ from skimage.util import map_array
 from pathlib import Path
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as fm
+from skimage.transform import resize
 
 
 microns_per_pixel = 0.65
@@ -81,8 +81,25 @@ fig, ax = plt.subplots(1, 3, figsize=(18, 6), constrained_layout=True)
 # Ensure all images have the same aspect ratio
 aspect_ratio = galaxy_image.shape[1] / galaxy_image.shape[0]
 
+
+# Get reference shape
+target_shape = galaxy_image.shape[:2]  # (height, width)
+
+# Display the original expression without a colorbar
+colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
+# Display the imputed expression with a colorbar
+colored_mask_imputed = map_array(mask, np.array(df['CellID']), np.array(df['imputed']))
+
+# Resize masks to match galaxy image shape
+colored_mask_original_resized = resize(colored_mask_original, target_shape, order=0, preserve_range=True, anti_aliasing=False).astype(colored_mask_original.dtype)
+colored_mask_imputed_resized = resize(colored_mask_imputed, target_shape, order=0, preserve_range=True, anti_aliasing=False).astype(colored_mask_imputed.dtype)
+
+height, width = target_shape
+
 # Display the galaxy image with the same aspect ratio
 ax[0].imshow(galaxy_image, aspect='equal')
+ax[0].set_xlim(0, width)
+ax[0].set_ylim(height, 0)
 ax[0].set_title('Galaxy Image')
 ax[0].set_xticks([])  # Remove x-axis ticks
 ax[0].set_yticks([])  # Remove y-axis ticks
@@ -105,20 +122,18 @@ scalebar = AnchoredSizeBar(ax[0].transData,
 
 ax[0].add_artist(scalebar)
 
-# Display the original expression without a colorbar
-colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
-ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=vmin, aspect='equal')
-ax[1].set_xlim(0, colored_mask_original.shape[1])
-ax[1].set_ylim(colored_mask_original.shape[0], 0)
+
+ax[1].imshow(colored_mask_original_resized, interpolation='none', cmap=cmap, vmin=vmin, aspect='equal')
+ax[1].set_xlim(0, width)
+ax[1].set_ylim(height, 0)
 ax[1].set_title('Original Expression')
 ax[1].set_xticks([])
 ax[1].set_yticks([])
 
-# Display the imputed expression with a colorbar
-colored_mask_imputed = map_array(mask, np.array(df['CellID']), np.array(df['imputed']))
-s2 = ax[2].imshow(colored_mask_imputed, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='equal')
-ax[2].set_xlim(0, colored_mask_imputed.shape[1])
-ax[2].set_ylim(colored_mask_imputed.shape[0], 0)
+
+s2 = ax[2].imshow(colored_mask_imputed_resized, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='equal')
+ax[2].set_xlim(0, width)
+ax[2].set_ylim(height, 0)
 fig.colorbar(s2, ax=ax[2], fraction=0.025, pad=0.04)
 ax[2].set_title('Imputed Expression')
 ax[2].set_xticks([])
