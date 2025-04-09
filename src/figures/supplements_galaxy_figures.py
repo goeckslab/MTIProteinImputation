@@ -82,7 +82,9 @@ fig, ax = plt.subplots(1, 3, figsize=(18, 6), constrained_layout=True)
 aspect_ratio = galaxy_image.shape[1] / galaxy_image.shape[0]
 
 # Display the galaxy image with the same aspect ratio
-ax[0].imshow(galaxy_image, aspect='auto')
+ax[0].imshow(galaxy_image, aspect='equal')
+ax[0].set_xlim(0, galaxy_image.shape[1])
+ax[0].set_ylim(galaxy_image.shape[0], 0)  # flip y axis because imshow inverts it
 ax[0].set_title('Galaxy Image')
 ax[0].set_xticks([])  # Remove x-axis ticks
 ax[0].set_yticks([])  # Remove y-axis ticks
@@ -95,7 +97,7 @@ scalebar_fraction = scalebar_px / image_width_px
 scalebar = AnchoredSizeBar(ax[0].transData,
                            scalebar_px,            # length in data (pixel) units
                            f'{scalebar_um} µm',      # label
-                           'lower right',
+                           'lower left',
                            pad=0.1,                # less padding
                            color='white',
                            frameon=False,          # disables drawing a background patch
