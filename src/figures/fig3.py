@@ -45,7 +45,7 @@ def plot_ari(color_palette: dict):
     print(f"ARI: {results.groupby('Marker').mean().mean()}")
     print("Boxenplot ARI statistics:")
     print(stats)
-    ax = sns.boxenplot(data=results, x="Marker", y="ARI", palette=color_palette)
+    ax = sns.boxenplot(data=results, x="Marker", y="ARI", palette=["grey"] * len(color_palette))
     ax.set_ylabel("Expression ARI Score")
     ax.yaxis.set_label_coords(-0.07, 0.5)
     ax.set_xlabel("Protein")
