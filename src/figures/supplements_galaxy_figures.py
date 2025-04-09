@@ -83,8 +83,6 @@ aspect_ratio = galaxy_image.shape[1] / galaxy_image.shape[0]
 
 # Display the galaxy image with the same aspect ratio
 ax[0].imshow(galaxy_image, aspect='equal')
-ax[0].set_xlim(0, galaxy_image.shape[1])
-ax[0].set_ylim(galaxy_image.shape[0], 0)  # flip y axis because imshow inverts it
 ax[0].set_title('Galaxy Image')
 ax[0].set_xticks([])  # Remove x-axis ticks
 ax[0].set_yticks([])  # Remove y-axis ticks
