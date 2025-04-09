@@ -109,14 +109,18 @@ ax[0].add_artist(scalebar)
 
 # Display the original expression without a colorbar
 colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
-ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=vmin, aspect='auto')
+ax[1].imshow(colored_mask_original, interpolation='none', cmap=cmap, vmin=vmin, aspect='equal')
+ax[1].set_xlim(0, galaxy_image.shape[1])
+ax[1].set_ylim(galaxy_image.shape[0], 0)
 ax[1].set_title('Original Expression')
 ax[1].set_xticks([])
 ax[1].set_yticks([])
 
 # Display the imputed expression with a colorbar
 colored_mask_imputed = map_array(mask, np.array(df['CellID']), np.array(df['imputed']))
-s2 = ax[2].imshow(colored_mask_imputed, interpolation='none', cmap=cmap, vmin=0.000000001, aspect='auto')
+s2 = ax[2].imshow(colored_mask_imputed, interpolation='none', cmap=cmap, vmin=1e-9, aspect='equal')
+ax[2].set_xlim(0, galaxy_image.shape[1])
+ax[2].set_ylim(galaxy_image.shape[0], 0)
 fig.colorbar(s2, ax=ax[2], fraction=0.025, pad=0.04)
 ax[2].set_title('Imputed Expression')
 ax[2].set_xticks([])
