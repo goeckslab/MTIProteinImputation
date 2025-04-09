@@ -86,15 +86,22 @@ ax[0].imshow(galaxy_image, aspect='auto')
 ax[0].set_title('Galaxy Image')
 ax[0].set_xticks([])  # Remove x-axis ticks
 ax[0].set_yticks([])  # Remove y-axis ticks
-scalebar = AnchoredSizeBar(ax[0].transData,
-                           scalebar_px,
+# Convert pixel length to a fraction of the axis width.
+# Assumes the image spans the full width of the axes.
+image_width_px = galaxy_image.shape[1]
+scalebar_fraction = scalebar_px / image_width_px
+
+# Create the scalebar using the axes coordinate system:
+scalebar = AnchoredSizeBar(ax[0].transAxes,
+                           scalebar_fraction,
                            f'{scalebar_um} µm',
                            'lower right',
                            pad=0.4,
                            color='white',
-                           frameon=False,
-                           size_vertical=2,
-                           fontproperties=fm.FontProperties(size=10))
+                           frameon=True,
+                           size_vertical=0.01,  # vertical size as a fraction of the axes height
+                           fontproperties=fm.FontProperties(size=12))
+
 
 ax[0].add_artist(scalebar)
 
@@ -120,5 +127,8 @@ save_path = Path("figures", "supplements","visualize_original_vs_imputed_cells")
 if not save_path.exists():
     save_path.mkdir(parents=True)
 
+
+save_name = Path(save_path, f'{biopsy}_{protein}_panel.png')
+print(f"Saving figure to {save_name}")
 # Save the figure
-fig.savefig(Path(save_path, f'{biopsy}_{protein}_panel.png', dpi=500))
+fig.savefig(save_name, dpi=500)
