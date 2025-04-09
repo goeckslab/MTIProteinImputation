@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 
-import os
 from argparse import ArgumentParser
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.colors
 from skimage.io import imread
 from skimage.util import map_array
 from pathlib import Path
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+import matplotlib.font_manager as fm
+
+
+microns_per_pixel = 0.65
+scalebar_um = 20  # microns
+scalebar_px = scalebar_um / microns_per_pixel  # ~30.77 px
+
 
 cell_masks = {
     "9_2_1": "/home/groups/OMSAtlas/Staging_Data/HTA9_2/HMS-SORGER/t-CycIF_Tumor_Panel/0000342251/level3/BEMS342251_Mesmer_mask.ome.tiff",
@@ -81,6 +86,17 @@ ax[0].imshow(galaxy_image, aspect='auto')
 ax[0].set_title('Galaxy Image')
 ax[0].set_xticks([])  # Remove x-axis ticks
 ax[0].set_yticks([])  # Remove y-axis ticks
+scalebar = AnchoredSizeBar(ax[0].transData,
+                           scalebar_px,
+                           f'{scalebar_um} µm',
+                           'lower right',
+                           pad=0.4,
+                           color='white',
+                           frameon=False,
+                           size_vertical=2,
+                           fontproperties=fm.FontProperties(size=10))
+
+ax[0].add_artist(scalebar)
 
 # Display the original expression without a colorbar
 colored_mask_original = map_array(mask, np.array(df['CellID']), np.array(df['original']))
