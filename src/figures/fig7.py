@@ -183,15 +183,15 @@ if __name__ == '__main__':
 
     # Place panel labels ("a", "b", "c")
     fig.text(label_x, pos_a.y1 + 0.04, "a", ha='left', va='bottom', fontsize=10)
-    fig.text(label_x, pos_b.y1 + 0.04, "b", ha='left', va='bottom', fontsize=10)
-    fig.text(label_x, pos_c.y1 + 0.04, "c", ha='left', va='bottom', fontsize=10)
+    fig.text(label_x, pos_b.y1 + 0.03, "b", ha='left', va='bottom', fontsize=10)
+    fig.text(label_x, pos_c.y1 + 0.02, "c", ha='left', va='bottom', fontsize=10)
 
     # Place vertical titles for each panel aligned along the same x coordinate
-    fig.text(label_x - 0.003, pos_a.y1, "AE S 0 µm, 30 µm and 60 µm", ha='left', va='top',
+    fig.text(label_x - 0.003, pos_a.y1 + 0.02, "AE S MAE 0 µm, 30 µm and 60 µm", ha='left', va='top',
              rotation='vertical', fontsize=10)
-    fig.text(label_x - 0.003, pos_b.y1, "AE M 0 µm, 30 µm and 60 µm", ha='left', va='top',
+    fig.text(label_x - 0.003, pos_b.y1 + 0.03, "AE M MAE 0 µm, 30 µm and 60 µm", ha='left', va='top',
              rotation='vertical', fontsize=10)
-    fig.text(label_x - 0.003, pos_c.y1, "Performance", ha='left', va='top',
+    fig.text(label_x - 0.003, pos_c.y1 + 0.01, "MAE Performance", ha='left', va='top',
              rotation='vertical', fontsize=10)
 
     plt.savefig(Path(image_folder, "fig7.png"), dpi=dpi, bbox_inches='tight')

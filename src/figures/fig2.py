@@ -9,6 +9,14 @@ from sklearn.preprocessing import MinMaxScaler
 from statannotations.Annotator import Annotator
 import matplotlib.image as mpimg
 from helper import extract_boxplot_statistics
+from matplotlib.patches import FancyBboxPatch
+
+
+# Define scale bar parameters
+microns_per_pixel = 0.65
+scalebar_microns = 10  # desired length of scale bar in microns
+scalebar_pixels = scalebar_microns / microns_per_pixel
+
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -218,8 +226,22 @@ if __name__ == '__main__':
                                   "figures/fig2/Vimentin_Original.png",
                                   "figures/fig2/Vimentin_Imputed.png"]):
         ax = fig.add_subplot(sub_gs_c[0, i])
+
         img = mpimg.imread(img_path)
         img = np.clip(img * 2.5, 0, 1)
+
+        # Positioning: bottom left corner of the image
+        bar_x = 10
+        bar_y = img.shape[0] - 20  # 20 pixels from the bottom
+
+        # Add the scale bar to each axis (or just one, if preferred)
+        # Main bar
+        ax.add_patch(FancyBboxPatch((bar_x, bar_y), scalebar_pixels, 3,
+                                    boxstyle="round,pad=0.3", linewidth=0,
+                                    facecolor='white'))
+        ax.text(bar_x + scalebar_pixels + 10, bar_y - 10, f'{scalebar_microns} μm',
+                color='white', ha='center', va='bottom', fontsize=8)
+
         ax.imshow(img, aspect='auto')
         if i == 0:
             ax.set_title("In Situ")
@@ -239,6 +261,19 @@ if __name__ == '__main__':
         ax = fig.add_subplot(sub_gs_d[0, i])
         img = mpimg.imread(img_path)
         img = np.clip(img * 1.5, 0, 1)
+
+        # Positioning: bottom left corner of the image
+        bar_x = 10
+        bar_y = img.shape[0] - 20  # 20 pixels from the bottom
+
+        # Add the scale bar to each axis (or just one, if preferred)
+        # Main bar
+        ax.add_patch(FancyBboxPatch((bar_x, bar_y), scalebar_pixels, 3,
+                                    boxstyle="round,pad=0.3", linewidth=0,
+                                    facecolor='white'))
+        ax.text(bar_x + scalebar_pixels + 10, bar_y - 10, f'{scalebar_microns} μm',
+                color='white', ha='center', va='bottom', fontsize=8)
+
         ax.imshow(img, aspect='auto')
         if i == 0:
             ax.set_title("In Situ")

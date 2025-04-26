@@ -24,7 +24,6 @@ def create_imputed_vs_original_scores(scores: pd.DataFrame):
     imputed_mean = scores[scores['Type'] == 'Imputed Data']['Score'].mean()
     ground_truth_mean = scores[scores['Type'] == 'Ground Truth Data']['Score'].mean()
     improvement = imputed_mean - ground_truth_mean
-    print(f"Improvement: {improvement}")
     hue_order = ["Ground Truth Data", "Removed Data", "Imputed Data"]
 
     stats = extract_boxplot_statistics(data=scores, metric="Score", group_by="Protein", hue="Type")
